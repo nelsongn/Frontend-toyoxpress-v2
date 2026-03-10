@@ -13,7 +13,7 @@ Interfaz administrativa de alto rendimiento construida con **Next.js** y **Tailw
 - **Componentes:** Shadcn UI / Lucide React
 - **Validación:** Integración con API REST personalizada.
 
-## 🛠️ Instalación
+## Instalación
 1. Clonar el repositorio.
 2. `npm install`
 3. Configurar `.env` con la URL del Backend.
