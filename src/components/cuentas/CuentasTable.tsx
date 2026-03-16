@@ -79,11 +79,11 @@ export default function CuentasTable() {
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-end p-2 bg-gray-50 rounded-xl border">
+            <div className="flex justify-end p-2 bg-muted/50 rounded-xl border border-border">
                 <RequirePermission perm="configurarCuentas">
                     <Button
                         onClick={handleNewClick}
-                        className="bg-[#0b5ed7] hover:bg-[#0a58ca] text-white flex items-center gap-2 font-medium"
+                        className="bg-[#a32240] hover:bg-[#8e1d38] text-white flex items-center gap-2 font-medium transition-colors"
                     >
                         <PlusCircle className="w-4 h-4" />
                         Crear una cuenta
@@ -141,7 +141,7 @@ export default function CuentasTable() {
                                             <Button
                                                 size="sm"
                                                 onClick={() => handleEditClick(cuenta)}
-                                                className="bg-[#0b5ed7] hover:bg-[#0a58ca] text-white"
+                                                className="bg-[#a32240] hover:bg-[#8e1d38] text-white"
                                             >
                                                 <Pen className="w-4 h-4" />
                                             </Button>
