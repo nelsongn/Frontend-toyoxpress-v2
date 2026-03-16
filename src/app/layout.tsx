@@ -18,6 +18,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ToyoXpress - Dashboard",
   description: "Sistema Administrativo Financiero y de Inventario V2",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

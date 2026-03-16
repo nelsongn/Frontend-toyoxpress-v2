@@ -199,7 +199,7 @@ export function InventarioModal({ open, onClose }: Props) {
         setExportError(null);
         try {
             const todos = await fetchAll(search, marcaFiltro, soloConStock);
-            const logoUrl = typeof window !== "undefined" ? `${window.location.origin}/toyoxpress-logo.png` : "";
+            const logoUrl = "https://toyoxpress.com/wp-content/uploads/2017/07/Ai-LOGO-TOYOXPRESS.png";
             const hora = horaActual();
             const filtros = {
                 search: search || undefined,

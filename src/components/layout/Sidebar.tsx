@@ -46,7 +46,11 @@ export function Sidebar() {
     return (
         <div className="flex h-full w-64 flex-col bg-card border-r border-border shadow-sm">
             <div className="flex h-16 items-center flex-shrink-0 px-6 bg-primary text-primary-foreground">
-                <span className="text-xl font-bold tracking-tight">ToyoXpress</span>
+                <img
+                    src="https://toyoxpress.com/wp-content/uploads/2017/07/Ai-LOGO-TOYOXPRESS.png"
+                    alt="ToyoXpress"
+                    className="h-8 w-auto object-contain"
+                />
             </div>
             <div className="flex flex-1 flex-col overflow-y-auto">
                 <nav className="flex-1 space-y-1 px-3 py-4">

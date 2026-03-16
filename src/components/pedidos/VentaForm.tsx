@@ -472,7 +472,7 @@ export function VentaForm({ onSuccess }: Props) {
                                     notaPedido={notaPedido}
                                     vendedor={vendedor}
                                     hora={horaActual()}
-                                    logoUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/toyoxpress-logo.png`}
+                                    logoUrl={`https://toyoxpress.com/wp-content/uploads/2017/07/Ai-LOGO-TOYOXPRESS.png`}
                                 />
                             }
                             fileName={`Pedido_${selectedCliente.Nombre.replace(/\s+/g, "_")}.pdf`}
