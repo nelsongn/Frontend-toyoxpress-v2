@@ -20,6 +20,7 @@ import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useRouter } from "next/navigation";
 import RequirePermission from "@/components/auth/RequirePermission";
 import { MapModal } from "./MapModal";
+import { BASE_URL } from "@/lib/api";
 
 const navigation = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -47,7 +48,7 @@ export function Sidebar() {
         <div className="flex h-full w-64 flex-col bg-card border-r border-border shadow-sm">
             <div className="flex h-16 items-center flex-shrink-0 px-6 bg-primary text-primary-foreground">
                 <img
-                    src="https://toyoxpress.com/wp-content/uploads/2017/07/Ai-LOGO-TOYOXPRESS.png"
+                    src={`${BASE_URL}/assets/toyoxpress-logo.png`}
                     alt="ToyoXpress"
                     className="h-8 w-auto object-contain"
                 />

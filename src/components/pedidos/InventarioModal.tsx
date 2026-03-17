@@ -8,6 +8,7 @@ import { X, Search, Filter, Download, FileSpreadsheet, Loader2, Package, Chevron
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { InventarioDocument } from "./InventarioDocument";
 import RequirePermission from "@/components/auth/RequirePermission";
+import { BASE_URL } from "@/lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -236,7 +237,7 @@ export function InventarioModal({ open, onClose }: Props) {
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
                     <div className="flex items-center gap-4">
                         <img 
-                            src={`${backendUrl}/logo`} 
+                            src={`${BASE_URL}/assets/toyoxpress-logo.png`} 
                             alt="ToyoXpress" 
                             className="h-8 w-auto object-contain hidden sm:block"
                         />
