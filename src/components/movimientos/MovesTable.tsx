@@ -179,7 +179,7 @@ export default function MovesTable() {
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                     <div className="space-y-1">
-                        <span className="text-sm font-medium">Tipo de movimiento</span>
+                        <span className="text-sm font-medium text-foreground">Tipo de movimiento</span>
                         <select
                             className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
                             value={filters.movimiento}
@@ -192,7 +192,7 @@ export default function MovesTable() {
                     </div>
 
                     <div className="space-y-1">
-                        <span className="text-sm font-medium">Name</span>
+                        <span className="text-sm font-medium text-foreground">Name</span>
                         <Popover open={openUserSelect} onOpenChange={setOpenUserSelect}>
                             <PopoverTrigger asChild>
                                 <Button
@@ -259,7 +259,7 @@ export default function MovesTable() {
                     </div>
 
                     <div className="space-y-1">
-                        <span className="text-sm font-medium">Cuenta</span>
+                        <span className="text-sm font-medium text-foreground">Cuenta</span>
                         <select
                             className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
                             value={filters.cuenta}
@@ -277,7 +277,7 @@ export default function MovesTable() {
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                     <div className="space-y-1">
-                        <span className="text-sm font-medium">Nro de aprobacion</span>
+                        <span className="text-sm font-medium text-foreground">Nro de aprobacion</span>
                         <Input
                             placeholder=""
                             className="h-9 w-full"
@@ -287,7 +287,7 @@ export default function MovesTable() {
                     </div>
 
                     <div className="space-y-1">
-                        <span className="text-sm font-medium">Tipo de pago</span>
+                        <span className="text-sm font-medium text-foreground">Tipo de pago</span>
                         <select
                             className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
                             value={filters.tipoPago}
@@ -301,7 +301,7 @@ export default function MovesTable() {
                     </div>
 
                     <div className="space-y-1">
-                        <span className="text-sm font-medium">Concepto</span>
+                        <span className="text-sm font-medium text-foreground">Concepto</span>
                         <Input
                             placeholder=""
                             className="h-9 w-full"
@@ -453,8 +453,8 @@ export default function MovesTable() {
                 <div className="overflow-x-auto">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-muted/30 hover:bg-muted/30 font-bold border-b">
-                                <TableHead className="font-bold text-black py-4">
+                            <TableRow className="bg-muted/50 hover:bg-muted/50 font-bold border-b transition-colors">
+                                <TableHead className="font-bold text-foreground py-4">
                                     <button
                                         className="flex items-center gap-1 hover:text-gray-600 focus:outline-none"
                                         onClick={() => {
@@ -510,11 +510,11 @@ export default function MovesTable() {
                                 const ident = move.identificador || `ID-${move.id}`;
                                 // Format user logic from image
                                 const displayMonto = move.movimiento === 'egreso' ? -Math.abs(move.monto) : Math.abs(move.monto);
-                                const nroAprobacion = move.vale || (move.cuenta === 'CajaChica' ? ident : '');
-                                const displayStatus = nroAprobacion ? "Aprobado" : "Pendiente";
+                                const nroAprobacion = move.vale || "";
+                                const displayStatus = move.status === 'aprobado' || nroAprobacion ? "Aprobado" : "Pendiente";
 
                                 return (
-                                    <TableRow key={move._id} className="border-b last:border-0 hover:bg-gray-50/50">
+                                    <TableRow key={move._id} className="border-b last:border-0 hover:bg-muted/40 transition-colors">
                                         <TableCell className="py-3">
                                             <Badge
                                                 className={`${getIdentificadorColor(ident)} rounded border-none px-2 font-normal text-sm cursor-pointer hover:opacity-80 transition-opacity`}

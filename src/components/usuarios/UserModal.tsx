@@ -212,7 +212,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                         {/* Basic Info */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1 text-sm">
-                                <Label className="text-gray-700 font-medium">Nombre de Usuario</Label>
+                                <Label className="text-foreground font-medium">Nombre de Usuario</Label>
                                 <Input
                                     required
                                     value={formData.username}
@@ -222,7 +222,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                                 />
                             </div>
                             <div className="space-y-1 text-sm">
-                                <Label className="text-gray-700 font-medium">Correo Electrónico</Label>
+                                <Label className="text-foreground font-medium">Correo Electrónico</Label>
                                 <Input
                                     required
                                     type="email"
@@ -233,7 +233,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                                 />
                             </div>
                             <div className="space-y-1 text-sm col-span-2">
-                                <Label className="text-gray-700 font-medium">Contraseña {userToEdit && "(Dejar en blanco para no cambiar)"}</Label>
+                                <Label className="text-foreground font-medium">Contraseña {userToEdit && "(Dejar en blanco para no cambiar)"}</Label>
                                 <Input
                                     required={!userToEdit} // Required only on creation
                                     type="password"
@@ -253,8 +253,8 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                             <h3 className="text-lg font-semibold text-foreground">Permisos Granulares</h3>
 
                             {permissionCategories.map((category) => (
-                                <div key={category.title} className="bg-gray-50/80 p-4 rounded-lg border border-gray-200">
-                                    <h4 className="text-sm font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-2">{category.title}</h4>
+                                <div key={category.title} className="bg-muted/30 p-4 rounded-lg border border-border">
+                                    <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">{category.title}</h4>
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-6">
                                         {category.keys.map((key) => (
                                             <div key={key} className="flex items-start space-x-3">
@@ -267,7 +267,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                                                 />
                                                 <label
                                                     htmlFor={`perm-${key}`}
-                                                    className="text-sm text-gray-700 leading-snug cursor-pointer select-none"
+                                                    className="text-sm text-foreground/80 leading-snug cursor-pointer select-none"
                                                 >
                                                     {permissionLabels[key]}
                                                 </label>
@@ -281,13 +281,13 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                     </div>
 
                     {/* Footer / Actions */}
-                    <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3 mt-auto">
+                    <div className="px-6 py-4 bg-muted/40 border-t border-border flex justify-end gap-3 mt-auto">
                         <Button
                             type="button"
                             variant="secondary"
                             onClick={onClose}
                             disabled={loading}
-                            className="bg-gray-200 hover:bg-gray-300 text-gray-800"
+                            className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
                         >
                             Cancelar
                         </Button>

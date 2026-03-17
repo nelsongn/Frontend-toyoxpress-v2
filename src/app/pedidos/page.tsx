@@ -1,10 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { ShoppingCart, ClipboardList, BookOpen } from "lucide-react";
 import { VentaForm } from "@/components/pedidos/VentaForm";
 import { HistorialPedidos } from "@/components/pedidos/HistorialPedidos";
-import { InventarioModal } from "@/components/pedidos/InventarioModal";
+
+const InventarioModal = dynamic(() => import("@/components/pedidos/InventarioModal").then(mod => mod.InventarioModal), {
+    ssr: false,
+    loading: () => null
+});
 
 type Tab = "nueva" | "historial";
 

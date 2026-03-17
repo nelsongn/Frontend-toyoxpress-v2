@@ -1,13 +1,17 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import axios from "axios";
 import dynamic from "next/dynamic";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { CartTable } from "./CartTable";
 import { PedidoDocument } from "./PedidoDocument";
-import { InventarioModal } from "./InventarioModal";
+const InventarioModal = dynamic(() => import("./InventarioModal").then(mod => mod.InventarioModal), {
+    ssr: false,
+    loading: () => null
+});
 import {
     Search, UserRound, Package, X, Send, Plus,
     Tag, ChevronDown, Download, BookOpen
@@ -171,7 +175,7 @@ export function VentaForm({ onSuccess }: Props) {
     const agregarProducto = (p: Producto) => {
         const stock = Number(p['Existencia Actual'] || p.stock_quantity || 0);
         if (stock <= 0) {
-            Swal.fire('⚠️', 'Este producto no tiene stock disponible.', 'warning');
+            Swal.fire('', 'Este producto no tiene stock disponible.', 'warning');
             return;
         }
 
@@ -182,7 +186,7 @@ export function VentaForm({ onSuccess }: Props) {
             const updated = [...carrito];
             const currentQty = Number(updated[yaExiste].cantidad) || 0;
             if (currentQty + 1 > stock) {
-                Swal.fire('⚠️', `Solo hay ${stock} unidades en stock.`, 'warning');
+                Swal.fire('', `Solo hay ${stock} unidades en stock.`, 'warning');
                 return;
             }
             updated[yaExiste].cantidad = currentQty + 1;
@@ -210,7 +214,7 @@ export function VentaForm({ onSuccess }: Props) {
         let qty: number | '' = val === '' ? '' : Number(val);
 
         if (typeof qty === 'number' && qty > stockMax) {
-            Swal.fire('⚠️', `Solo hay ${stockMax} unidades en stock.`, 'warning');
+            Swal.fire('', `Solo hay ${stockMax} unidades en stock.`, 'warning');
             qty = stockMax;
         }
 
@@ -234,8 +238,8 @@ export function VentaForm({ onSuccess }: Props) {
     // ── Submit ─────────────────────────────────────────────────────────────
 
     const enviarPedido = async () => {
-        if (!selectedCliente) { Swal.fire('⚠️', 'Selecciona un cliente primero.', 'warning'); return; }
-        if (carrito.length === 0) { Swal.fire('⚠️', 'El carrito está vacío.', 'warning'); return; }
+        if (!selectedCliente) { Swal.fire('', 'Selecciona un cliente primero.', 'warning'); return; }
+        if (carrito.length === 0) { Swal.fire('', 'El carrito está vacío.', 'warning'); return; }
 
         setSending(true);
         try {
@@ -345,14 +349,6 @@ export function VentaForm({ onSuccess }: Props) {
                     <div className="bg-card rounded-xl border border-border p-4">
                         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center justify-between gap-1.5">
                             <span className="flex items-center gap-1.5"><Package className="h-3.5 w-3.5" /> Agregar Producto</span>
-                            <button
-                                type="button"
-                                onClick={() => setShowInventario(true)}
-                                className="flex items-center gap-1 text-[10px] font-medium text-primary hover:text-primary/80 hover:bg-primary/10 px-2 py-1 rounded-lg transition-colors border border-primary/20"
-                            >
-                                <BookOpen className="h-3 w-3" />
-                                Ver Inventario
-                            </button>
                         </p>
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -472,7 +468,6 @@ export function VentaForm({ onSuccess }: Props) {
                                     notaPedido={notaPedido}
                                     vendedor={vendedor}
                                     hora={horaActual()}
-                                    logoUrl={`https://toyoxpress.com/wp-content/uploads/2017/07/Ai-LOGO-TOYOXPRESS.png`}
                                 />
                             }
                             fileName={`Pedido_${selectedCliente.Nombre.replace(/\s+/g, "_")}.pdf`}

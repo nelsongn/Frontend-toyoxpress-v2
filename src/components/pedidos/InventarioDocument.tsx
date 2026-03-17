@@ -7,6 +7,7 @@ import {
     StyleSheet,
     Image,
 } from "@react-pdf/renderer";
+import { LOGO_BASE64 } from "@/lib/constants/logo";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -21,7 +22,6 @@ interface ProductoLinea {
 
 interface InventarioDocumentProps {
     productos: ProductoLinea[];
-    logoUrl: string;
     hora: string;
     filtros?: {
         search?: string;
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function InventarioDocument({ productos, logoUrl, hora, filtros }: InventarioDocumentProps) {
+export function InventarioDocument({ productos, hora, filtros }: InventarioDocumentProps) {
     const totalConStock = productos.filter(p => p.stock > 0).length;
 
     return (
@@ -186,7 +186,7 @@ export function InventarioDocument({ productos, logoUrl, hora, filtros }: Invent
 
                 {/* Header */}
                 <View style={styles.header}>
-                    <Image src={logoUrl} style={styles.logo} />
+                    <Image src={LOGO_BASE64} style={styles.logo} />
                     <View style={styles.headerRight}>
                         <Text style={styles.docTitle}>INVENTARIO</Text>
                         <Text style={styles.docMeta}>Generado: {hora}</Text>

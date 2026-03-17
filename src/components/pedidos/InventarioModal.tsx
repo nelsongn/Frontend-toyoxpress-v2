@@ -207,7 +207,7 @@ export function InventarioModal({ open, onClose }: Props) {
                 soloConStock: soloConStock || undefined,
             };
             const blob = await pdf(
-                <InventarioDocument productos={todos} logoUrl={logoUrl} hora={hora} filtros={filtros} />
+                <InventarioDocument productos={todos} hora={hora} filtros={filtros} />
             ).toBlob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -234,14 +234,21 @@ export function InventarioModal({ open, onClose }: Props) {
 
                 {/* ── Header ── */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
-                    <div className="flex items-center gap-2">
-                        <Package className="h-5 w-5 text-primary" />
-                        <h2 className="text-base font-bold text-foreground">Inventario de Productos</h2>
-                        {!loading && total > 0 && (
-                            <span className="ml-2 text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-medium">
-                                {total.toLocaleString()} resultados
-                            </span>
-                        )}
+                    <div className="flex items-center gap-4">
+                        <img 
+                            src={`${backendUrl}/logo`} 
+                            alt="ToyoXpress" 
+                            className="h-8 w-auto object-contain hidden sm:block"
+                        />
+                        <div className="flex items-center gap-2">
+                            <Package className="h-5 w-5 text-primary sm:hidden" />
+                            <h2 className="text-base font-bold text-foreground">Inventario de Productos</h2>
+                            {!loading && total > 0 && (
+                                <span className="ml-2 text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-medium">
+                                    {total.toLocaleString()} resultados
+                                </span>
+                            )}
+                        </div>
                     </div>
                     <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
                         <X className="h-4 w-4" />

@@ -7,6 +7,7 @@ import {
     StyleSheet,
     Image,
 } from "@react-pdf/renderer";
+import { LOGO_BASE64 } from "@/lib/constants/logo";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,7 +38,6 @@ interface PedidoDocumentProps {
     notaPedido?: string;
     vendedor: string;
     hora: string;
-    logoUrl: string;
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -252,7 +252,6 @@ export function PedidoDocument({
     notaPedido,
     vendedor,
     hora,
-    logoUrl,
 }: PedidoDocumentProps) {
     const totalItems = lineas.reduce((s, l) => s + (Number(l.cantidad) || 0), 0);
 
@@ -262,7 +261,7 @@ export function PedidoDocument({
 
                 {/* ─── Header ──────────────────────────────────────────── */}
                 <View style={styles.header}>
-                    <Image src={logoUrl} style={styles.logo} />
+                    <Image src={LOGO_BASE64} style={styles.logo} />
                     <View style={styles.headerRight}>
                         <Text style={styles.docTitle}>PEDIDO</Text>
                         <Text style={styles.docMeta}>Fecha: {hora}</Text>

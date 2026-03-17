@@ -229,30 +229,30 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                         {/* Header Inputs */}
                         <div className="space-y-4">
                             <div className="space-y-1 text-sm">
-                                <Label className="text-gray-700 font-normal">Tipo de Movimiento:</Label>
+                                <Label className="text-foreground font-normal">Tipo de Movimiento:</Label>
                                 <select
                                     required
                                     value={formData.movimiento}
                                     onChange={(e) => setFormData({ ...formData, movimiento: e.target.value })}
                                     className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-[1px]:outline-none focus:ring-1 focus:ring-ring"
                                 >
-                                    <option value="" disabled>Select...</option>
-                                    <option value="ingreso">Ingreso</option>
-                                    <option value="egreso">Egreso</option>
+                                    <option value="" disabled className="bg-background text-foreground">Select...</option>
+                                    <option value="ingreso" className="bg-background text-foreground">Ingreso</option>
+                                    <option value="egreso" className="bg-background text-foreground">Egreso</option>
                                 </select>
                             </div>
 
                             <div className="space-y-1 text-sm">
-                                <Label className="text-gray-700 font-normal">Cuenta Afectada:</Label>
+                                <Label className="text-foreground font-normal">Cuenta Afectada:</Label>
                                 <select
                                     required
                                     value={formData.cuenta}
                                     onChange={(e) => setFormData({ ...formData, cuenta: e.target.value })}
                                     className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-[1px]:outline-none focus:ring-1 focus:ring-ring"
                                 >
-                                    <option value="" disabled>Select...</option>
+                                    <option value="" disabled className="bg-background text-foreground">Select...</option>
                                     {cuentasDB.map((c) => (
-                                        <option key={c.value} value={c.value}>{c.label}</option>
+                                        <option key={c.value} value={c.value} className="bg-background text-foreground">{c.label}</option>
                                     ))}
                                 </select>
                             </div>
@@ -260,12 +260,12 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
 
                         {/* Forma de Pago/Cobro Section */}
                         <div className="space-y-4 pt-2">
-                            <h3 className="text-2xl font-medium tracking-tight text-gray-900 border-none">Forma de Pago/Cobro</h3>
+                            <h3 className="text-2xl font-medium tracking-tight text-foreground border-none">Forma de Pago/Cobro</h3>
 
                             {/* Top row payments */}
                             <div className="grid grid-cols-3 gap-6">
                                 <div className="space-y-1">
-                                    <Label className="text-gray-700 font-normal text-xs">Efectivo:</Label>
+                                    <Label className="text-muted-foreground font-normal text-xs">Efectivo:</Label>
                                     <div className="relative">
                                         <Input
                                             type="number" step="0.01" min="0"
@@ -273,11 +273,11 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                                             onChange={(e) => setFormData({ ...formData, efectivo: e.target.value })}
                                             className="w-full pr-8 h-10"
                                         />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">$</span>
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
                                     </div>
                                 </div>
                                 <div className="space-y-1">
-                                    <Label className="text-gray-700 font-normal text-xs">Zelle:</Label>
+                                    <Label className="text-muted-foreground font-normal text-xs">Zelle:</Label>
                                     <div className="relative">
                                         <Input
                                             type="number" step="0.01" min="0"
@@ -285,11 +285,11 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                                             onChange={(e) => setFormData({ ...formData, zelle: e.target.value })}
                                             className="w-full pr-8 h-10"
                                         />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">$</span>
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
                                     </div>
                                 </div>
                                 <div className="space-y-1">
-                                    <Label className="text-gray-700 font-normal text-xs">Otro:</Label>
+                                    <Label className="text-muted-foreground font-normal text-xs">Otro:</Label>
                                     <div className="relative">
                                         <Input
                                             type="number" step="0.01" min="0"
@@ -297,17 +297,17 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                                             onChange={(e) => setFormData({ ...formData, otro: e.target.value })}
                                             className="w-full pr-8 h-10"
                                         />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">$</span>
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Bolivares row */}
                             <div className="space-y-1 pt-2">
-                                <Label className="text-gray-700 font-normal text-xs">Bolivares:</Label>
+                                <Label className="text-muted-foreground font-normal text-xs">Bolivares:</Label>
                                 <div className="grid grid-cols-3 gap-6">
                                     <div className="relative flex items-center">
-                                        <span className="text-sm text-gray-700 mr-2 whitespace-nowrap">Valor en dolares:</span>
+                                        <span className="text-sm text-foreground mr-2 whitespace-nowrap">Valor en dolares:</span>
                                         <div className="relative w-full">
                                             <Input
                                                 type="number" step="0.01" min="0"
@@ -315,11 +315,11 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                                                 onChange={(e) => setFormData({ ...formData, valorEnDolares: e.target.value })}
                                                 className="w-full pr-8 h-10"
                                             />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">$</span>
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
                                         </div>
                                     </div>
                                     <div className="relative flex items-center">
-                                        <span className="text-sm text-gray-700 mr-2 whitespace-nowrap">Valor de cambio:</span>
+                                        <span className="text-sm text-foreground mr-2 whitespace-nowrap">Valor de cambio:</span>
                                         <div className="relative w-full">
                                             <Input
                                                 type="number" step="0.01" min="0"
@@ -328,11 +328,11 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                                                 onChange={(e) => setFormData({ ...formData, valorDeCambio: e.target.value })}
                                                 className={`w-full pr-8 h-10 ${(!formData.valorEnDolares || parseFloat(formData.valorEnDolares) <= 0) ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''}`}
                                             />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">Bs</span>
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">Bs</span>
                                         </div>
                                     </div>
                                     <div className="relative flex items-center">
-                                        <span className="text-sm text-gray-700 mr-2 whitespace-nowrap leading-tight">Cantidad de<br />bolivares:</span>
+                                        <span className="text-sm text-foreground mr-2 whitespace-nowrap leading-tight">Cantidad de<br />bolivares:</span>
                                         <div className="relative w-full">
                                             <Input
                                                 type="number" step="0.01" min="0"
@@ -340,7 +340,7 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                                                 value={formData.cantidadDeBolivares}
                                                 className="w-full pr-8 h-10 bg-gray-50 text-gray-600 font-medium cursor-default focus-visible:ring-0"
                                             />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">Bs</span>
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">Bs</span>
                                         </div>
                                     </div>
                                 </div>
@@ -349,14 +349,14 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                             {/* Total Row */}
                             <div className="pt-4 pb-2">
                                 <div className="w-1/3 space-y-1">
-                                    <Label className="text-gray-700 font-normal text-xs">Total:</Label>
+                                    <Label className="text-muted-foreground font-normal text-xs">Total:</Label>
                                     <div className="relative">
                                         <Input
                                             disabled
                                             value={formData.total}
                                             className="w-full pr-8 h-10 font-bold bg-transparent"
                                         />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">$</span>
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
                                     </div>
                                 </div>
                             </div>
@@ -365,7 +365,7 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                         {/* Concepto y Fecha */}
                         <div className="space-y-4">
                             <div className="space-y-1">
-                                <Label className="text-gray-700 font-normal text-sm">Concepto de Registro:</Label>
+                                <Label className="text-foreground font-normal text-sm">Concepto de Registro:</Label>
                                 <textarea
                                     required
                                     value={formData.concepto}
@@ -375,7 +375,7 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                             </div>
 
                             <div className="space-y-1 w-32">
-                                <Label className="text-gray-700 font-normal text-sm block mb-1">Fecha:</Label>
+                                <Label className="text-foreground font-normal text-sm block mb-1">Fecha:</Label>
                                 <input
                                     type="date"
                                     required
@@ -389,7 +389,7 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
 
                     </div>
 
-                    <div className="mt-auto px-8 py-4 bg-gray-50 border-t flex justify-end gap-3">
+                    <div className="mt-auto px-8 py-4 bg-muted/30 border-t flex justify-end gap-3">
                         <Button
                             type="button"
                             variant="secondary"

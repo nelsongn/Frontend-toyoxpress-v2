@@ -60,6 +60,7 @@ export function Sidebar() {
                         const linkContent = (
                             <Link
                                 href={item.href}
+                                prefetch={false}
                                 className={cn(
                                     isActive
                                         ? "bg-primary text-primary-foreground"

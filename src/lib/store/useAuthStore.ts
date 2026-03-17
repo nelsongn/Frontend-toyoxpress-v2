@@ -27,6 +27,8 @@ interface AuthState {
     name: string | null
     permissions: UserPermissions | null
     cantidadM: number
+    _hasHydrated: boolean
+    setHasHydrated: (state: boolean) => void
     login: (token: string, user: { email: string; name: string; permissions: UserPermissions; cantidadM: number }) => void
     logout: () => void
 }
@@ -39,6 +41,8 @@ export const useAuthStore = create<AuthState>()(
             name: null,
             permissions: null,
             cantidadM: 10,
+            _hasHydrated: false,
+            setHasHydrated: (state) => set({ _hasHydrated: state }),
             login: (token, user) => set({
                 token,
                 email: user.email,
@@ -49,7 +53,10 @@ export const useAuthStore = create<AuthState>()(
             logout: () => set({ token: null, email: null, name: null, permissions: null, cantidadM: 10 }),
         }),
         {
-            name: 'toyoxpress-auth', // Almacena en localStorage de manera encriptada y reactiva
+            name: 'toyoxpress-auth',
+            onRehydrateStorage: (state) => {
+                return () => state.setHasHydrated(true)
+            }
         }
     )
 )

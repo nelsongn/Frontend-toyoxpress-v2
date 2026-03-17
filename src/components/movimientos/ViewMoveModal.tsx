@@ -96,8 +96,8 @@ export default function ViewMoveModal({ move, onClose, onSuccess }: ViewMoveModa
             </style>
             <DialogContent id="print-modal" className="sm:max-w-[700px] p-0 overflow-hidden">
                 {/* Header from image: White background, title left, badge middle right, close right */}
-                <div className="flex justify-between items-center p-4 border-b">
-                    <DialogTitle className="text-xl font-medium tracking-tight">
+                <div className="flex justify-between items-center p-4 border-b bg-background">
+                    <DialogTitle className="text-xl font-medium tracking-tight text-foreground">
                         Movimiento: {ident}
                     </DialogTitle>
                     <Badge className={`${statusColor} hover:${statusColor} border-none rounded-md px-4 py-1 font-medium text-sm ml-auto mr-6`}>
@@ -113,18 +113,18 @@ export default function ViewMoveModal({ move, onClose, onSuccess }: ViewMoveModa
 
                         {/* Datos Generales */}
                         <div className="space-y-4">
-                            <h3 className="font-bold text-lg border-l-2 border-[#a32240] pl-2">Datos Generales</h3>
+                            <h3 className="font-bold text-lg border-l-2 border-[#a32240] pl-2 text-foreground">Datos Generales</h3>
 
                             <div className="space-y-1">
-                                <span className="text-sm font-semibold text-gray-800">Fecha de Creacion</span>
-                                <p className="text-sm text-gray-600">
+                                <span className="text-sm font-semibold text-foreground">Fecha de Creacion</span>
+                                <p className="text-sm text-muted-foreground">
                                     {move.creado ? format(new Date(move.creado), "dd/MM/yy", { locale: es }) : move.fechaString}
                                 </p>
                             </div>
 
                             <div className="space-y-1">
-                                <span className="text-sm font-semibold text-gray-800">Concepto de movimiento</span>
-                                <p className="text-sm text-gray-600 uppercase">
+                                <span className="text-sm font-semibold text-foreground">Concepto de movimiento</span>
+                                <p className="text-sm text-muted-foreground uppercase">
                                     {move.concepto}
                                 </p>
                             </div>
@@ -132,22 +132,22 @@ export default function ViewMoveModal({ move, onClose, onSuccess }: ViewMoveModa
 
                         {/* Datos de facturacion */}
                         <div className="space-y-4 md:border-l pl-0 md:pl-8">
-                            <h3 className="font-bold text-lg border-l-2 border-[#a32240] md:border-none pl-2 md:pl-0">Datos de facturacion</h3>
+                            <h3 className="font-bold text-lg border-l-2 border-[#a32240] md:border-none pl-2 md:pl-0 text-foreground">Datos de facturacion</h3>
 
                             <div className="space-y-3">
                                 <div className="flex text-sm">
-                                    <span className="font-semibold text-gray-800 w-24">Usuario:</span>
-                                    <span className="text-gray-600">{move.usuario || move.name}</span>
+                                    <span className="font-semibold text-foreground w-24">Usuario:</span>
+                                    <span className="text-muted-foreground">{move.usuario || move.name}</span>
                                 </div>
 
                                 <div className="space-y-1">
-                                    <span className="text-sm font-semibold text-gray-800 block">Correo Electronico</span>
-                                    <span className="text-sm text-gray-600 block">{move.email || `${((move.usuario || move.name) || 'usuario').toLowerCase().replace(' ', '')}@gmail.com`}</span>
+                                    <span className="text-sm font-semibold text-foreground block">Correo Electronico</span>
+                                    <span className="text-sm text-muted-foreground block">{move.email || `${((move.usuario || move.name) || 'usuario').toLowerCase().replace(' ', '')}@gmail.com`}</span>
                                 </div>
 
                                 <div className="space-y-1">
-                                    <span className="text-sm font-semibold text-gray-800 block">Pagos:</span>
-                                    <span className="text-sm text-gray-600 block capitalize">
+                                    <span className="text-sm font-semibold text-foreground block">Pagos:</span>
+                                    <span className="text-sm text-muted-foreground block capitalize">
                                         {(() => {
                                             const payments = [];
                                             if (move.zelle > 0) payments.push("Zelle");
@@ -164,41 +164,41 @@ export default function ViewMoveModal({ move, onClose, onSuccess }: ViewMoveModa
                                 {(move.bs > 0 || (move.pago && String(move.pago).toLowerCase().includes('bs'))) && (
                                     <div className="flex justify-between items-center text-sm pt-1 pb-2">
                                         <div className="flex flex-col">
-                                            <span className="text-gray-600">Valor $:</span>
-                                            <span className="font-medium">${Math.abs(move.monto || 0).toFixed(2)}</span>
+                                            <span className="text-muted-foreground">Valor $:</span>
+                                            <span className="font-medium text-foreground">${Math.abs(move.monto || 0).toFixed(2)}</span>
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className="text-gray-600">Cambio:</span>
-                                            <span className="font-medium">{move.change || (move.bs && move.monto && Math.abs(move.monto) > 0 ? (move.bs / Math.abs(move.monto)).toFixed(2) : 0)}Bs</span>
+                                            <span className="text-muted-foreground">Cambio:</span>
+                                            <span className="font-medium text-foreground">{move.change || (move.bs && move.monto && Math.abs(move.monto) > 0 ? (move.bs / Math.abs(move.monto)).toFixed(2) : 0)}Bs</span>
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className="text-gray-600">Bs:</span>
-                                            <span className="font-medium">{move.bs || 0}Bs</span>
+                                            <span className="text-muted-foreground">Bs:</span>
+                                            <span className="font-medium text-foreground">{move.bs || 0}Bs</span>
                                         </div>
                                     </div>
                                 )}
 
                                 <div className="space-y-1">
-                                    <span className="text-sm font-semibold text-gray-800 block">Cuenta</span>
-                                    <span className="text-sm text-gray-600 block uppercase">{move.cuenta}</span>
+                                    <span className="text-sm font-semibold text-foreground block">Cuenta</span>
+                                    <span className="text-sm text-muted-foreground block uppercase">{move.cuenta}</span>
                                 </div>
 
                                 <div className="space-y-1">
-                                    <span className="text-sm font-semibold text-gray-800 block">Monto</span>
-                                    <span className="text-sm text-gray-600 block">{Math.abs(move.monto).toFixed(2).replace('.', ',')} US$</span>
+                                    <span className="text-sm font-semibold text-foreground block">Monto</span>
+                                    <span className="text-sm text-muted-foreground block">{Math.abs(move.monto).toFixed(2).replace('.', ',')} US$</span>
                                 </div>
                             </div>
                         </div>
 
                     </div>
 
-                    <hr className="my-6 border-gray-200" />
+                    <hr className="my-6 border-muted" />
 
                     {/* Bottom input area matching image */}
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-4 w-full sm:w-1/2">
                             <RequirePermission perm="aprobarMovimientos">
-                                <span className="text-sm font-semibold text-gray-800 whitespace-nowrap">Nro de aprobacion</span>
+                                <span className="text-sm font-semibold text-foreground whitespace-nowrap">Nro de aprobacion</span>
                                 <Input
                                     placeholder={currentVale || ""}
                                     value={vale}

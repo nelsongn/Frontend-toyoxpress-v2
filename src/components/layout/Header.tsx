@@ -13,8 +13,8 @@ export function Header() {
                 <GlobalSyncProgress />
                 <div className="flex items-center gap-4">
                     <div className="flex flex-col items-end">
-                        <span className="text-sm font-medium text-foreground">{user || "Usuario"}</span>
-                        <span className="text-xs text-muted-foreground">Admin</span>
+                        <span className="text-sm font-medium text-foreground">{user || "Invitado"}</span>
+                        <span className="text-xs text-muted-foreground">{user ? "Administrador" : "Sin Sesión"}</span>
                     </div>
                     <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                         <UserCircle className="h-6 w-6" />
