@@ -4,6 +4,8 @@ import Swal from 'sweetalert2';
 
 // URL base del nuevo backend (puedes ajustarla desde .env)
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+// Derived base URL (without /api) for static assets
+export const BASE_URL = API_URL.replace(/\/api$/, '');
 
 export const api = axios.create({
     baseURL: API_URL,

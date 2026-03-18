@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import LoginForm from './LoginForm';
+import { BASE_URL } from '@/lib/api';
 
 export const metadata: Metadata = {
     title: 'Login - ToyoXpress',
@@ -13,7 +14,7 @@ export default function LoginPage() {
                 <div className="text-center">
                     <div className="flex justify-center mb-6">
                         <img
-                            src="https://toyoxpress.com/wp-content/uploads/2017/07/Ai-LOGO-TOYOXPRESS.png"
+                            src={`${BASE_URL}/assets/toyoxpress-logo.png`}
                             alt="ToyoXpress"
                             className="h-16 w-auto object-contain"
                         />
