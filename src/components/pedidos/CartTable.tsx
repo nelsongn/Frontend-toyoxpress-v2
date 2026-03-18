@@ -37,8 +37,8 @@ export function CartTable({ lineas, onCantidadChange, onRemove }: Props) {
 
     return (
         <div className="space-y-2">
-            <div className="rounded-xl border border-border overflow-hidden">
-                <table className="w-full text-sm">
+            <div className="rounded-xl border border-border overflow-x-auto">
+                <table className="w-full text-sm min-w-[700px]">
                     <thead className="bg-muted/50">
                         <tr className="text-xs text-muted-foreground uppercase tracking-wider">
                             <th className="px-3 py-2.5 text-left w-28">Código</th>
