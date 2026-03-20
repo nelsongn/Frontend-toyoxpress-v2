@@ -53,7 +53,10 @@ export function HistorialPedidos({ refreshTrigger }: Props) {
 
     useEffect(() => {
         const socketUrl = backendUrl.replace(/\/api\/?$/, "");
-        const socketInstance = io(socketUrl, { transports: ["websocket", "polling"] });
+        const socketInstance = io(socketUrl, {
+            transports: ["websocket"],
+            withCredentials: true
+        });
 
         socketInstance.on("pedido_completado", () => {
             fetchPedidos(1);

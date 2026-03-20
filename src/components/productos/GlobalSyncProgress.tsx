@@ -46,7 +46,8 @@ export function GlobalSyncProgress() {
 
         const socketInstance = io(socketUrl, {
             query: { token },
-            transports: ["websocket", "polling"],
+            transports: ["websocket"],
+            withCredentials: true
         });
 
         socketInstance.on("connect", () => {

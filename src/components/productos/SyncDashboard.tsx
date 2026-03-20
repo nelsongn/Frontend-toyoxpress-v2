@@ -73,7 +73,9 @@ export function SyncDashboard() {
         const socketUrl = backendApiUrl.replace(/\/api\/?$/, "");
 
         const socketInstance = io(socketUrl, {
-            auth: { token } // Autenticación si el servidor la requiere a futuro
+            auth: { token }, // Autenticación si el servidor la requiere a futuro
+            transports: ["websocket"],
+            withCredentials: true
         });
 
         setSocket(socketInstance);
