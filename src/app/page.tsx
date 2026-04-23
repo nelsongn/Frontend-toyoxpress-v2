@@ -15,6 +15,7 @@ interface DashboardStats {
   esAdmin: boolean;
   puedeVerCuentas: boolean;
   puedeVerMovimientos: boolean;
+  puedeVerPedidos: boolean;
   financiero: {
     ingresosHoy: number;
     egresosHoy: number;
@@ -194,45 +195,47 @@ export default function Dashboard() {
         <div className={`space-y-6 ${stats.puedeVerCuentas ? 'md:col-span-8' : 'md:col-span-12'}`}>
 
           {/* Pedidos */}
-          <Card className="shadow-sm border-border/60 flex flex-col h-[350px]">
-            <CardHeader className="pb-3 border-b border-border/50 bg-muted/20">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <ShoppingBag className="h-4 w-4 text-primary" />
-                Últimos Pedidos
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 overflow-auto flex-1">
-              {stats.recientes.pedidos.length === 0 ? (
-                <div className="p-8 text-center text-sm text-muted-foreground">No hay pedidos recientes.</div>
-              ) : (
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/10">
-                    <tr>
-                      <th className="px-4 py-2 text-left font-medium text-muted-foreground">Cliente / Vendedor</th>
-                      <th className="px-4 py-2 text-center font-medium text-muted-foreground">Monto</th>
-                      <th className="px-4 py-2 text-right font-medium text-muted-foreground">Fecha</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/50">
-                    {stats.recientes.pedidos.map(p => (
-                      <tr key={p._id} className="hover:bg-muted/30">
-                        <td className="px-4 py-3 font-medium text-foreground truncate max-w-[200px]">
-                          <div>{p.payload?.cliente?.Nombre || 'Desconocido'}</div>
-                          <div className="text-[10px] text-muted-foreground mt-0.5">Vendedor: {p.vendedorName || p.vendedorId || 'N/A'}</div>
-                        </td>
-                        <td className="px-4 py-3 text-center font-semibold text-emerald-600">
-                          {formatCurrency(p.payload?.total || 0)}
-                        </td>
-                        <td className="px-4 py-3 text-right text-muted-foreground text-xs">
-                          {formatDate(p.creadoEn || p.createdAt)}
-                        </td>
+          {stats.puedeVerPedidos && (
+            <Card className="shadow-sm border-border/60 flex flex-col h-[350px]">
+              <CardHeader className="pb-3 border-b border-border/50 bg-muted/20">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <ShoppingBag className="h-4 w-4 text-primary" />
+                  Últimos Pedidos
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 overflow-auto flex-1">
+                {stats.recientes.pedidos.length === 0 ? (
+                  <div className="p-8 text-center text-sm text-muted-foreground">No hay pedidos recientes.</div>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/10">
+                      <tr>
+                        <th className="px-4 py-2 text-left font-medium text-muted-foreground">Cliente / Vendedor</th>
+                        <th className="px-4 py-2 text-center font-medium text-muted-foreground">Monto</th>
+                        <th className="px-4 py-2 text-right font-medium text-muted-foreground">Fecha</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </CardContent>
-          </Card>
+                    </thead>
+                    <tbody className="divide-y divide-border/50">
+                      {stats.recientes.pedidos.map(p => (
+                        <tr key={p._id} className="hover:bg-muted/30">
+                          <td className="px-4 py-3 font-medium text-foreground truncate max-w-[200px]">
+                            <div>{p.payload?.cliente?.Nombre || 'Desconocido'}</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">Vendedor: {p.vendedorName || p.vendedorId || 'N/A'}</div>
+                          </td>
+                          <td className="px-4 py-3 text-center font-semibold text-emerald-600">
+                            {formatCurrency(p.payload?.total || 0)}
+                          </td>
+                          <td className="px-4 py-3 text-right text-muted-foreground text-xs">
+                            {formatDate(p.creadoEn || p.createdAt)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Movimientos */}
           {stats.puedeVerMovimientos && (
