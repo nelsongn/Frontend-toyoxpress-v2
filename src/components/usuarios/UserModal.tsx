@@ -41,7 +41,8 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
             consultarPrecios: false,
             verClientes: false,
             verExcel: false,
-            cargarProductos: false
+            cargarProductos: false,
+            verPedidos: false
         }
     });
 
@@ -70,7 +71,8 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                         consultarPrecios: !!perms.consultarPrecios,
                         verClientes: !!perms.verClientes,
                         verExcel: !!perms.verExcel,
-                        cargarProductos: !!perms.cargarProductos
+                        cargarProductos: !!perms.cargarProductos,
+                        verPedidos: !!perms.verPedidos
                     }
                 });
             } else {
@@ -94,7 +96,8 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                         consultarPrecios: false,
                         verClientes: false,
                         verExcel: false,
-                        cargarProductos: false
+                        cargarProductos: false,
+                        verPedidos: false
                     }
                 });
             }
@@ -175,7 +178,8 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
         consultarPrecios: "Consultar Precios",
         verClientes: "Ver Clientes",
         verExcel: "Exportar a Excel",
-        cargarProductos: "Cargar Productos (WooCommerce)"
+        cargarProductos: "Cargar Productos (WooCommerce)",
+        verPedidos: "Ver Pestaña de Pedidos"
     };
 
     const permissionCategories = [
@@ -193,7 +197,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
         },
         {
             title: "Configuración y Generales",
-            keys: ["configurarCuentas", "consultarPrecios", "verClientes", "verExcel", "cargarProductos"]
+            keys: ["configurarCuentas", "consultarPrecios", "verClientes", "verExcel", "cargarProductos", "verPedidos"]
         }
     ];
 
