@@ -217,14 +217,14 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent id="move-modal-content" className="sm:max-w-[700px] p-0 overflow-hidden bg-background">
+            <DialogContent id="move-modal-content" className="sm:max-w-[700px] p-0 overflow-hidden bg-background max-h-[90vh] flex flex-col">
                 <DialogHeader className="sr-only">
                     <DialogTitle>{move ? 'Editar Movimiento' : 'Nuevo Movimiento'}</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="flex flex-col h-full">
+                <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
 
                     {/* V1 Layout Match */}
-                    <div className="p-8 space-y-6">
+                    <div className="p-8 space-y-6 overflow-y-auto flex-1">
 
                         {/* Header Inputs */}
                         <div className="space-y-4">
@@ -389,7 +389,7 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
 
                     </div>
 
-                    <div className="mt-auto px-8 py-4 bg-muted/30 border-t flex justify-end gap-3">
+                    <div className="flex-shrink-0 px-8 py-4 bg-muted/30 border-t flex justify-end gap-3">
                         <Button
                             type="button"
                             variant="secondary"
