@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Dialog,
     DialogContent,
@@ -25,6 +25,11 @@ interface ViewMoveModalProps {
 export default function ViewMoveModal({ move, onClose, onSuccess }: ViewMoveModalProps) {
     const [loading, setLoading] = useState(false);
     const [vale, setVale] = useState("");
+
+    // Reset vale when the selected move changes
+    useEffect(() => {
+        setVale("");
+    }, [move?._id]);
 
     // Initialize vale strictly when modal opens if it already has one
     if (!move) return null;

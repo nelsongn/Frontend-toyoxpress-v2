@@ -10,7 +10,7 @@ export default function ClientesPage() {
     const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     return (
-        <RequirePermission perm="verClientes">
+        <RequirePermission perm="verPedidos">
             <div className="flex flex-col h-full p-6 gap-4">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -21,7 +21,9 @@ export default function ClientesPage() {
                             <p className="text-xs text-muted-foreground">Directorio sincronizado desde Excel</p>
                         </div>
                     </div>
-                    <UploadClientesBtn onSuccess={() => setRefreshTrigger(n => n + 1)} />
+                    <RequirePermission perm="verClientes">
+                        <UploadClientesBtn onSuccess={() => setRefreshTrigger(n => n + 1)} />
+                    </RequirePermission>
                 </div>
 
                 {/* Table card — fills remaining space */}

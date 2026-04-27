@@ -29,8 +29,8 @@ const navigation = [
     { name: "Cuentas", href: "/cuentas", icon: Users, perm: "configurarCuentas" },
     { name: "Usuarios", href: "/usuarios", icon: UserCog, perm: "crearUsuarios" },
     { name: "Productos", href: "/productos", icon: Package, perm: "cargarProductos" },
-    { name: "Clientes", href: "/clientes", icon: ContactRound, perm: "verClientes" },
-    { name: "Pedidos", href: "/pedidos", icon: ShoppingCart },
+    { name: "Clientes", href: "/clientes", icon: ContactRound, perm: "verPedidos" },
+    { name: "Pedidos", href: "/pedidos", icon: ShoppingCart, perm: "verPedidos" },
     { name: "Configuración", href: "/configuracion", icon: Settings },
 ];
 

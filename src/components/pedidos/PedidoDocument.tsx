@@ -143,12 +143,13 @@ const styles = StyleSheet.create({
     },
 
     /* Column widths */
-    colCodigo: { width: "13%", paddingRight: 4 },
-    colNombre: { width: "38%", paddingRight: 4 },
-    colMarca: { width: "14%", paddingRight: 4 },
+    colCodigo: { width: "11%", paddingRight: 4 },
+    colNombre: { width: "34%", paddingRight: 4 },
+    colReferencia: { width: "11%", paddingRight: 4 },
+    colMarca: { width: "11%", paddingRight: 4 },
     colCantidad: { width: "9%", textAlign: "center" },
-    colPU: { width: "12%", textAlign: "right", paddingRight: 4 },
-    colTotal: { width: "14%", textAlign: "right" },
+    colPU: { width: "11%", textAlign: "right", paddingRight: 4 },
+    colTotal: { width: "13%", textAlign: "right" },
 
     thText: {
         fontSize: 7,
@@ -315,6 +316,7 @@ export function PedidoDocument({
                     <View style={styles.tableHeader}>
                         <Text style={[styles.thText, styles.colCodigo]}>Código</Text>
                         <Text style={[styles.thText, styles.colNombre]}>Descripción</Text>
+                        <Text style={[styles.thText, styles.colReferencia]}>Ref.</Text>
                         <Text style={[styles.thText, styles.colMarca]}>Marca</Text>
                         <Text style={[styles.thText, styles.colCantidad]}>Cant.</Text>
                         <Text style={[styles.thText, styles.colPU]}>P.U. $</Text>
@@ -329,6 +331,7 @@ export function PedidoDocument({
                         >
                             <Text style={[styles.tdTextMuted, styles.colCodigo]}>{l.codigo}</Text>
                             <Text style={[styles.tdText, styles.colNombre]}>{l.nombre}</Text>
+                            <Text style={[styles.tdTextMuted, styles.colReferencia]}>{l.referencia || "—"}</Text>
                             <Text style={[styles.tdTextMuted, styles.colMarca]}>{l.marca || "—"}</Text>
                             <Text style={[styles.tdText, styles.colCantidad]}>{Number(l.cantidad) || 0}</Text>
                             <Text style={[styles.tdText, styles.colPU]}>{l.precio.toFixed(2)}</Text>

@@ -236,9 +236,9 @@ export function InventarioModal({ open, onClose }: Props) {
                 {/* ── Header ── */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
                     <div className="flex items-center gap-4">
-                        <img 
-                            src={`${BASE_URL}/assets/toyoxpress-logo.png`} 
-                            alt="ToyoXpress" 
+                        <img
+                            src={`${BASE_URL}/assets/toyoxpress-logo.png`}
+                            alt="ToyoXpress"
                             className="h-8 w-auto object-contain hidden sm:block"
                         />
                         <div className="flex items-center gap-2">
@@ -314,7 +314,7 @@ export function InventarioModal({ open, onClose }: Props) {
                                 <tr>
                                     <th className="text-left px-4 py-2.5 font-semibold text-foreground/70 w-[13%]">Código</th>
                                     <th className="text-left px-4 py-2.5 font-semibold text-foreground/70 w-[40%]">Descripción</th>
-                                    <th className="text-left px-4 py-2.5 font-semibold text-foreground/70 w-[18%]">Marca</th>
+                                    <th className="text-left px-4 py-2.5 font-semibold text-foreground/70 w-[18%]">Modelo</th>
                                     <th className="text-center px-4 py-2.5 font-semibold text-foreground/70 w-[10%]">Stock</th>
                                     <th className="text-right px-4 py-2.5 font-semibold text-foreground/70 w-[19%]">Precio $</th>
                                 </tr>

@@ -209,7 +209,7 @@ export function InventarioDocument({ productos, hora, filtros }: InventarioDocum
                     <View style={styles.tableHeader}>
                         <Text style={[styles.thText, styles.colCodigo]}>Código</Text>
                         <Text style={[styles.thText, styles.colNombre]}>Descripción</Text>
-                        <Text style={[styles.thText, styles.colMarca]}>Marca</Text>
+                        <Text style={[styles.thText, styles.colMarca]}>Modelo</Text>
                         <Text style={[styles.thText, styles.colStock]}>Stock</Text>
                         <Text style={[styles.thText, styles.colPrecio]}>Precio $</Text>
                     </View>

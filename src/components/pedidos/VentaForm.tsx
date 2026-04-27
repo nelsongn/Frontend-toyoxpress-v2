@@ -193,16 +193,24 @@ export function VentaForm({ onSuccess }: Props) {
             updated[yaExiste].total = updated[yaExiste].cantidad * updated[yaExiste].precio;
             setCarrito(updated);
         } else {
-            setCarrito(prev => [...prev, {
-                codigo: p.sku,
-                nombre: p.name,
-                marca: p.brands || p.Marca,
-                referencia: p.Ref,
-                cantidad: 1,
-                precio,
-                total: precio,
-                stockMax: stock,
-            }]);
+            setCarrito(prev => {
+                const newCart = [...prev, {
+                    codigo: p.sku,
+                    nombre: p.name,
+                    marca: p.brands || p.Marca,
+                    referencia: p.Ref,
+                    cantidad: 1,
+                    precio,
+                    total: precio,
+                    stockMax: stock,
+                }];
+                // Ordenar alfabéticamente por referencia como en la V1
+                return newCart.sort((a, b) => {
+                    const rA = String(a.referencia || '');
+                    const rB = String(b.referencia || '');
+                    return rA < rB ? -1 : (rA > rB ? 1 : 0);
+                });
+            });
         }
         setProductoQuery("");
         setProductoResults([]);
@@ -371,7 +379,9 @@ export function VentaForm({ onSuccess }: Props) {
                                             <button key={p._id} onClick={() => agregarProducto(p)}
                                                 className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border last:border-0 flex items-center justify-between gap-4">
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="text-xs font-mono text-muted-foreground">{p.sku}</p>
+                                                    <p className="text-xs font-mono text-muted-foreground">
+                                                        {p.sku} {p.Ref && <span className="ml-2 text-primary/70 bg-primary/5 px-1.5 py-0.5 rounded text-[10px]">REF: {p.Ref}</span>}
+                                                    </p>
                                                     <p className="text-sm font-medium text-foreground truncate">{p.name}</p>
                                                 </div>
                                                 <div className="text-right shrink-0">

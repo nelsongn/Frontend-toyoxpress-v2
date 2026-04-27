@@ -85,6 +85,7 @@ export default function UsersTable() {
                     <tr>
                         <th className="px-6 py-4 font-medium">Nombre de Usuario</th>
                         <th className="px-6 py-4 font-medium">Email</th>
+                        <th className="px-6 py-4 font-medium text-center">Cód. Vendedor</th>
                         <th className="px-6 py-4 font-medium text-center">Permisos Asignados</th>
                         <th className="px-6 py-4 font-medium text-right">Acciones</th>
                     </tr>
@@ -96,6 +97,11 @@ export default function UsersTable() {
                             <tr key={user._id} className="hover:bg-muted/20 transition-colors">
                                 <td className="px-6 py-4 font-medium text-foreground">{user.username}</td>
                                 <td className="px-6 py-4 text-foreground">{user.email}</td>
+                                <td className="px-6 py-4 text-center">
+                                    <span className="font-mono text-muted-foreground">
+                                        {user.vendedor > 0 ? (user.vendedor <= 9 ? `0${user.vendedor}` : user.vendedor) : '--'}
+                                    </span>
+                                </td>
                                 <td className="px-6 py-4 text-center">
                                     <span className="inline-flex items-center justify-center rounded-full bg-blue-100 px-2.5 py-0.5 text-blue-700">
                                         {activePermsCount} activos

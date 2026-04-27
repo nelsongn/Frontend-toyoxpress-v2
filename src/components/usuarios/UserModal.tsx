@@ -25,6 +25,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
         username: "",
         email: "",
         password: "",
+        vendedor: 0,
         permissions: {
             verMovimientos: false,
             verOtrosMovimientos: false,
@@ -41,7 +42,8 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
             consultarPrecios: false,
             verClientes: false,
             verExcel: false,
-            cargarProductos: false
+            cargarProductos: false,
+            verPedidos: false
         }
     });
 
@@ -54,6 +56,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                     username: userToEdit.username || "",
                     email: userToEdit.email || "",
                     password: "", // Leave blank on edit unless they want to change it
+                    vendedor: userToEdit.vendedor || 0,
                     permissions: {
                         verMovimientos: !!perms.verMovimientos,
                         verOtrosMovimientos: !!perms.verOtrosMovimientos,
@@ -70,7 +73,8 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                         consultarPrecios: !!perms.consultarPrecios,
                         verClientes: !!perms.verClientes,
                         verExcel: !!perms.verExcel,
-                        cargarProductos: !!perms.cargarProductos
+                        cargarProductos: !!perms.cargarProductos,
+                        verPedidos: !!perms.verPedidos
                     }
                 });
             } else {
@@ -78,6 +82,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                     username: "",
                     email: "",
                     password: "",
+                    vendedor: 0,
                     permissions: {
                         verMovimientos: false,
                         verOtrosMovimientos: false,
@@ -94,7 +99,8 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                         consultarPrecios: false,
                         verClientes: false,
                         verExcel: false,
-                        cargarProductos: false
+                        cargarProductos: false,
+                        verPedidos: false
                     }
                 });
             }
@@ -119,6 +125,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
             username: formData.username,
             email: formData.email,
             permissions: formData.permissions,
+            vendedor: formData.vendedor || 0,
             ...(formData.password && { password: formData.password }) // Only include password if typed
         };
 
@@ -173,9 +180,10 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
         obviarIngreso: "Obviar Restricción de Horario",
         configurarCuentas: "Configurar Cuentas (Bancos)",
         consultarPrecios: "Consultar Precios",
-        verClientes: "Ver Clientes",
+        verClientes: "Ver Todos Los Clientes",
         verExcel: "Exportar a Excel",
-        cargarProductos: "Cargar Productos (WooCommerce)"
+        cargarProductos: "Cargar Productos (WooCommerce)",
+        verPedidos: "Ver Pestaña de Pedidos"
     };
 
     const permissionCategories = [
@@ -185,7 +193,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
         },
         {
             title: "Módulo de Usuarios",
-            keys: ["crearUsuarios", "modificarUsuarios", "eliminarUsuarios"]
+            keys: ["crearUsuarios", "modificarUsuarios", "eliminarUsuarios", "verPedidos"]
         },
         {
             title: "Horarios y Accesos",
@@ -232,8 +240,8 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                                     className="h-10"
                                 />
                             </div>
-                            <div className="space-y-1 text-sm col-span-2">
-                                <Label className="text-foreground font-medium">Contraseña {userToEdit && "(Dejar en blanco para no cambiar)"}</Label>
+                            <div className="space-y-1 text-sm">
+                                <Label className="text-foreground font-medium">Contraseña {userToEdit && "(Vacío para no cambiar)"}</Label>
                                 <Input
                                     required={!userToEdit} // Required only on creation
                                     type="password"
@@ -242,6 +250,17 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                                     placeholder={userToEdit ? "••••••••" : "Ingresa una contraseña segura"}
                                     className="h-10"
                                     minLength={6}
+                                />
+                            </div>
+                            <div className="space-y-1 text-sm">
+                                <Label className="text-foreground font-medium">Código de Vendedor</Label>
+                                <Input
+                                    type="number"
+                                    value={formData.vendedor || ""}
+                                    onChange={(e) => setFormData({ ...formData, vendedor: parseInt(e.target.value) || 0 })}
+                                    placeholder="Ej. 1"
+                                    className="h-10"
+                                    min={0}
                                 />
                             </div>
                         </div>

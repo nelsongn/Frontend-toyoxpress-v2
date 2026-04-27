@@ -43,7 +43,8 @@ export function CartTable({ lineas, onCantidadChange, onRemove }: Props) {
                         <tr className="text-xs text-muted-foreground uppercase tracking-wider">
                             <th className="px-3 py-2.5 text-left w-28">Código</th>
                             <th className="px-3 py-2.5 text-left">Descripción</th>
-                            <th className="px-3 py-2.5 text-left w-24 border-r border-border/50">Marca</th>
+                            <th className="px-3 py-2.5 text-left w-24">Referencia</th>
+                            <th className="px-3 py-2.5 text-left w-24 border-r border-border/50">Modelo</th>
                             <th className="px-3 py-2.5 text-center w-24 border-r border-border/50">Stock Disp.</th>
                             <th className="px-3 py-2.5 text-center w-24">Cantidad</th>
                             {consultarPrecios && <th className="px-3 py-2.5 text-right w-24">P.U.</th>}
@@ -56,6 +57,7 @@ export function CartTable({ lineas, onCantidadChange, onRemove }: Props) {
                             <tr key={i} className="hover:bg-muted/20 transition-colors">
                                 <td className="px-3 py-2 font-mono text-xs text-muted-foreground">{l.codigo}</td>
                                 <td className="px-3 py-2 font-medium text-foreground">{l.nombre}</td>
+                                <td className="px-3 py-2 text-muted-foreground text-xs">{l.referencia || "—"}</td>
                                 <td className="px-3 py-2 text-muted-foreground text-xs border-r border-border/50">{l.marca || "—"}</td>
                                 <td className="px-3 py-2 text-center">
                                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${Number(l.stockMax) > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
