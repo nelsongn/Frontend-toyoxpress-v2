@@ -14,7 +14,8 @@ import {
     LogOut,
     UserCog,
     ContactRound,
-    Map
+    Map,
+    X
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useRouter } from "next/navigation";
@@ -33,7 +34,7 @@ const navigation = [
     { name: "Configuración", href: "/configuracion", icon: Settings },
 ];
 
-export function Sidebar() {
+export function Sidebar({ onClose }: { onClose?: () => void }) {
     const pathname = usePathname();
     const logout = useAuthStore((state: any) => state.logout);
     const router = useRouter();
@@ -45,8 +46,17 @@ export function Sidebar() {
     };
 
     return (
-        <div className="flex h-full w-64 flex-col bg-card border-r border-border shadow-sm">
-            <div className="flex h-16 items-center flex-shrink-0 px-6 bg-primary text-primary-foreground">
+        <div className="flex h-full w-64 flex-col bg-card border-r border-border shadow-sm relative">
+            {onClose && (
+                <button 
+                    onClick={onClose} 
+                    className="absolute top-4 right-4 md:hidden text-primary-foreground hover:bg-white/20 p-1 rounded-md z-50"
+                    aria-label="Cerrar menú"
+                >
+                    <X className="h-5 w-5" />
+                </button>
+            )}
+            <div className="flex h-16 items-center justify-center flex-shrink-0 px-6 bg-primary text-primary-foreground">
                 <img
                     src={`${BASE_URL}/assets/toyoxpress-logo.png`}
                     alt="ToyoXpress"
@@ -62,6 +72,7 @@ export function Sidebar() {
                             <Link
                                 href={item.href}
                                 prefetch={false}
+                                onClick={() => onClose && onClose()}
                                 className={cn(
                                     isActive
                                         ? "bg-primary text-primary-foreground"
