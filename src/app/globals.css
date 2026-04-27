@@ -101,6 +101,13 @@
   --sidebar-ring: oklch(0.439 0 0);
 }
 
+.dark select, 
+.dark option,
+.dark input,
+.dark textarea {
+  color-scheme: dark;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

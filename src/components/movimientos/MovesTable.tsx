@@ -22,6 +22,13 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import RequirePermission from "@/components/auth/RequirePermission";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 export default function MovesTable() {
     const [movimientos, setMovimientos] = useState<any[]>([]);
@@ -180,15 +187,19 @@ export default function MovesTable() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                     <div className="space-y-1">
                         <span className="text-sm font-medium text-foreground">Tipo de movimiento</span>
-                        <select
-                            className="flex h-9 w-full rounded-md border border-input bg-background text-foreground px-3 py-1 text-sm shadow-sm"
+                        <Select
                             value={filters.movimiento}
-                            onChange={(e) => setFilters(f => ({ ...f, movimiento: e.target.value }))}
+                            onValueChange={(val) => setFilters(f => ({ ...f, movimiento: val === "all" ? "" : val }))}
                         >
-                            <option value="">Select...</option>
-                            <option value="ingreso">Ingreso</option>
-                            <option value="egreso">Egreso</option>
-                        </select>
+                            <SelectTrigger className="h-9 w-full bg-background border-input">
+                                <SelectValue placeholder="Select..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Select...</SelectItem>
+                                <SelectItem value="ingreso">Ingreso</SelectItem>
+                                <SelectItem value="egreso">Egreso</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     <div className="space-y-1">
@@ -260,18 +271,22 @@ export default function MovesTable() {
 
                     <div className="space-y-1">
                         <span className="text-sm font-medium text-foreground">Cuenta</span>
-                        <select
-                            className="flex h-9 w-full rounded-md border border-input bg-background text-foreground px-3 py-1 text-sm shadow-sm"
+                        <Select
                             value={filters.cuenta}
-                            onChange={(e) => setFilters(f => ({ ...f, cuenta: e.target.value }))}
+                            onValueChange={(val) => setFilters(f => ({ ...f, cuenta: val === "all" ? "" : val }))}
                         >
-                            <option value="">Select...</option>
-                            {cuentasDB.map((cuenta: any) => (
-                                <option key={cuenta._id || cuenta.value} value={cuenta.value}>
-                                    {cuenta.label}
-                                </option>
-                            ))}
-                        </select>
+                            <SelectTrigger className="h-9 w-full bg-background border-input">
+                                <SelectValue placeholder="Select..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Select...</SelectItem>
+                                {cuentasDB.map((cuenta: any) => (
+                                    <SelectItem key={cuenta._id || cuenta.value} value={cuenta.value}>
+                                        {cuenta.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
 
@@ -288,16 +303,20 @@ export default function MovesTable() {
 
                     <div className="space-y-1">
                         <span className="text-sm font-medium text-foreground">Tipo de pago</span>
-                        <select
-                            className="flex h-9 w-full rounded-md border border-input bg-background text-foreground px-3 py-1 text-sm shadow-sm"
+                        <Select
                             value={filters.tipoPago}
-                            onChange={(e) => setFilters(f => ({ ...f, tipoPago: e.target.value }))}
+                            onValueChange={(val) => setFilters(f => ({ ...f, tipoPago: val === "all" ? "" : val }))}
                         >
-                            <option value="">Select...</option>
-                            <option value="bs">Bs</option>
-                            <option value="zelle">Zelle</option>
-                            <option value="efectivo">Efectivo</option>
-                        </select>
+                            <SelectTrigger className="h-9 w-full bg-background border-input">
+                                <SelectValue placeholder="Select..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Select...</SelectItem>
+                                <SelectItem value="bs">Bs</SelectItem>
+                                <SelectItem value="zelle">Zelle</SelectItem>
+                                <SelectItem value="efectivo">Efectivo</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     <div className="space-y-1">
@@ -387,18 +406,22 @@ export default function MovesTable() {
             <div className="flex items-center justify-between bg-card border rounded-lg p-2 mb-4 shadow-sm">
                 <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-foreground">Mostrar:</span>
-                    <select
-                        className="h-8 rounded-md border border-input bg-background text-foreground px-2 py-1 text-sm shadow-sm"
-                        value={limit}
-                        onChange={(e) => {
-                            setLimit(Number(e.target.value));
+                    <Select
+                        value={limit.toString()}
+                        onValueChange={(val) => {
+                            setLimit(Number(val));
                             setPage(1);
                         }}
                     >
-                        <option value={10}>10</option>
-                        <option value={20}>20</option>
-                        <option value={50}>50</option>
-                    </select>
+                        <SelectTrigger className="h-8 w-[70px] bg-background border-input">
+                            <SelectValue placeholder={limit.toString()} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="20">20</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 <div className="flex items-center gap-4">
