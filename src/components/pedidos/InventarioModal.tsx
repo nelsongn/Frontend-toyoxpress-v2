@@ -36,6 +36,7 @@ interface ProductoLinea {
     stock: number;
     precio: number;
     precioMayor: number;
+    precioOferta: number;
 }
 
 interface Props {
