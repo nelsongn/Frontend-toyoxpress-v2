@@ -303,9 +303,10 @@ export default function MovesTable() {
 
                     <div className="space-y-1">
                         <span className="text-sm font-medium text-foreground">Tipo de pago</span>
-                        <Select
+                        <select
+                            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
                             value={filters.tipoPago}
-                            onValueChange={(val) => setFilters(f => ({ ...f, tipoPago: val === "all" ? "" : val }))}
+                            onChange={(e) => setFilters(f => ({ ...f, tipoPago: e.target.value }))}
                         >
                             <option value="">Select...</option>
                             <option value="bs">Bs</option>
