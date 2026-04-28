@@ -18,6 +18,7 @@ interface ProductoLinea {
     referencia?: string;
     stock: number;
     precio: number;
+    precioMayor: number;
 }
 
 interface InventarioDocumentProps {
@@ -114,10 +115,11 @@ const styles = StyleSheet.create({
     },
 
     colCodigo: { width: "13%", paddingRight: 4 },
-    colNombre: { width: "42%", paddingRight: 4 },
-    colMarca: { width: "18%", paddingRight: 4 },
-    colStock: { width: "10%", textAlign: "center" },
-    colPrecio: { width: "17%", textAlign: "right" },
+    colNombre: { width: "35%", paddingRight: 4 },
+    colMarca: { width: "16%", paddingRight: 4 },
+    colStock: { width: "8%", textAlign: "center" },
+    colPrecio: { width: "14%", textAlign: "right" },
+    colPrecioMayor: { width: "14%", textAlign: "right" },
 
     thText: {
         fontSize: 7,
@@ -199,7 +201,7 @@ export function InventarioDocument({ productos, hora, filtros }: InventarioDocum
                     <View style={styles.filtrosBadge}>
                         <Text style={[styles.chip, { fontFamily: "Helvetica-Bold" }]}>Filtros: </Text>
                         {filtros?.search && <Text style={styles.chip}>Búsqueda: "{filtros.search}"</Text>}
-                        {filtros?.marca && <Text style={styles.chip}>Marca: {filtros.marca}</Text>}
+                        {filtros?.marca && <Text style={styles.chip}>Modelo: {filtros.marca}</Text>}
                         {filtros?.soloConStock && <Text style={styles.chip}>Solo con stock</Text>}
                     </View>
                 )}
@@ -211,7 +213,8 @@ export function InventarioDocument({ productos, hora, filtros }: InventarioDocum
                         <Text style={[styles.thText, styles.colNombre]}>Descripción</Text>
                         <Text style={[styles.thText, styles.colMarca]}>Modelo</Text>
                         <Text style={[styles.thText, styles.colStock]}>Stock</Text>
-                        <Text style={[styles.thText, styles.colPrecio]}>Precio $</Text>
+                        <Text style={[styles.thText, styles.colPrecio]}>Precio Mín</Text>
+                        <Text style={[styles.thText, styles.colPrecioMayor]}>P. Mayor</Text>
                     </View>
 
                     {productos.map((p, i) => (
@@ -230,6 +233,7 @@ export function InventarioDocument({ productos, hora, filtros }: InventarioDocum
                                 {p.stock}
                             </Text>
                             <Text style={[styles.tdText, styles.colPrecio]}>{p.precio.toFixed(2)}</Text>
+                            <Text style={[styles.tdText, { color: "#2563eb" }, styles.colPrecioMayor]}>{p.precioMayor.toFixed(2)}</Text>
                         </View>
                     ))}
                 </View>

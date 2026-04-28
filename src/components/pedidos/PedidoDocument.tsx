@@ -317,7 +317,7 @@ export function PedidoDocument({
                         <Text style={[styles.thText, styles.colCodigo]}>Código</Text>
                         <Text style={[styles.thText, styles.colNombre]}>Descripción</Text>
                         <Text style={[styles.thText, styles.colReferencia]}>Ref.</Text>
-                        <Text style={[styles.thText, styles.colMarca]}>Marca</Text>
+                        <Text style={[styles.thText, styles.colMarca]}>Modelo</Text>
                         <Text style={[styles.thText, styles.colCantidad]}>Cant.</Text>
                         <Text style={[styles.thText, styles.colPU]}>P.U. $</Text>
                         <Text style={[styles.thText, styles.colTotal]}>Total $</Text>

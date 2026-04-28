@@ -24,6 +24,7 @@ interface ProductoAPI {
     stock_quantity?: number;
     "Precio Minimo"?: number;
     "Precio Mayor"?: number;
+    "Precio Oferta"?: number;
     price?: number;
 }
 
@@ -34,6 +35,7 @@ interface ProductoLinea {
     referencia?: string;
     stock: number;
     precio: number;
+    precioMayor: number;
 }
 
 interface Props {
@@ -67,6 +69,8 @@ function mapToLinea(p: ProductoAPI): ProductoLinea {
         referencia: p.Ref,
         stock: p["Existencia Actual"] ?? p.stock_quantity ?? 0,
         precio: p["Precio Minimo"] ?? p.price ?? 0,
+        precioMayor: p["Precio Mayor"] ?? 0,
+        precioOferta: p["Precio Oferta"] ?? 0,
     };
 }
 
@@ -180,10 +184,11 @@ export function InventarioModal({ open, onClose }: Props) {
                 "Descripción": p.nombre,
                 "Marca": p.marca || "",
                 "Stock": p.stock,
-                "Precio $": Number(p.precio.toFixed(2)),
+                "Precio Mín $": Number(p.precio.toFixed(2)),
+                "Precio Mayor $": Number(p.precioMayor.toFixed(2)),
             }));
             const ws = XLSX.utils.json_to_sheet(rows);
-            ws["!cols"] = [{ width: 14 }, { width: 40 }, { width: 20 }, { width: 8 }, { width: 12 }];
+            ws["!cols"] = [{ width: 14 }, { width: 40 }, { width: 20 }, { width: 8 }, { width: 14 }, { width: 14 }];
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Inventario");
             XLSX.writeFile(wb, "Inventario_ToyoXpress.xlsx");
@@ -279,7 +284,7 @@ export function InventarioModal({ open, onClose }: Props) {
                                 onChange={e => setMarcaFiltro(e.target.value)}
                                 className="w-full pl-8 pr-3 py-2 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 appearance-none"
                             >
-                                <option value="">Todas las marcas</option>
+                                <option value="">Todos los modelos</option>
                                 {marcasDisponibles.map(m => <option key={m} value={m}>{m}</option>)}
                             </select>
                         </div>
@@ -315,8 +320,10 @@ export function InventarioModal({ open, onClose }: Props) {
                                     <th className="text-left px-4 py-2.5 font-semibold text-foreground/70 w-[13%]">Código</th>
                                     <th className="text-left px-4 py-2.5 font-semibold text-foreground/70 w-[40%]">Descripción</th>
                                     <th className="text-left px-4 py-2.5 font-semibold text-foreground/70 w-[18%]">Modelo</th>
-                                    <th className="text-center px-4 py-2.5 font-semibold text-foreground/70 w-[10%]">Stock</th>
-                                    <th className="text-right px-4 py-2.5 font-semibold text-foreground/70 w-[19%]">Precio $</th>
+                                    <th className="text-center px-4 py-2.5 font-semibold text-foreground/70 w-[8%]">Stock</th>
+                                    <th className="text-right px-4 py-2.5 font-semibold text-foreground/70 w-[12%]">P. Mín</th>
+                                    <th className="text-right px-4 py-2.5 font-semibold text-foreground/70 w-[12%]">P. Mayor</th>
+                                    <th className="text-right px-4 py-2.5 font-semibold text-foreground/70 w-[12%]">P. Oferta</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -327,6 +334,8 @@ export function InventarioModal({ open, onClose }: Props) {
                                         <td className="px-4 py-2 text-foreground/70">{p.marca || "—"}</td>
                                         <td className={`px-4 py-2 text-center font-bold ${p.stock > 0 ? "text-emerald-500" : "text-red-400"}`}>{p.stock}</td>
                                         <td className="px-4 py-2 text-right tabular-nums font-semibold text-foreground">${p.precio.toFixed(2)}</td>
+                                        <td className="px-4 py-2 text-right tabular-nums font-semibold text-blue-600 dark:text-blue-400">${p.precioMayor.toFixed(2)}</td>
+                                        <td className="px-4 py-2 text-right tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">${p.precioOferta.toFixed(2)}</td>
                                     </tr>
                                 ))}
                             </tbody>
