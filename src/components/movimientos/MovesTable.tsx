@@ -32,7 +32,7 @@ export default function MovesTable() {
     const [limit, setLimit] = useState(50);
     const [totalPages, setTotalPages] = useState(1);
     const [sortBy, setSortBy] = useState("id");
-    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
     // Financial Totals
     const [saldoTotal, setSaldoTotal] = useState(0);
@@ -462,7 +462,7 @@ export default function MovesTable() {
                                                 setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
                                             } else {
                                                 setSortBy('id');
-                                                setSortOrder('desc');
+                                                setSortOrder('asc');
                                             }
                                         }}
                                     >
@@ -486,7 +486,7 @@ export default function MovesTable() {
                                                 setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
                                             } else {
                                                 setSortBy('creado');
-                                                setSortOrder('desc');
+                                                setSortOrder('asc');
                                             }
                                         }}
                                     >

@@ -52,9 +52,10 @@ export default function ViewMoveModal({ move, onClose, onSuccess }: ViewMoveModa
                 vale: isCajaChica ? ident : vale
             });
             onSuccess();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error approving move:", error);
-            alert("No se pudo aprobar el movimiento.");
+            const msg = error.response?.data?.message || "No se pudo aprobar el movimiento.";
+            alert(msg);
         } finally {
             setLoading(false);
         }

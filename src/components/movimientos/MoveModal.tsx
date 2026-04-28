@@ -207,9 +207,10 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
             })
 
             onSuccess();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error saving movement", error);
-            alert("Error guardando el movimiento.");
+            const msg = error.response?.data?.message || "Error guardando el movimiento.";
+            alert(msg);
         } finally {
             setLoading(false);
         }
