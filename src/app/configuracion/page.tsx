@@ -134,7 +134,7 @@ export default function ConfiguracionPage() {
                     <Sun className="h-5 w-5 text-amber-500" />
                     <h2 className="text-xl font-semibold">Aspecto Visual</h2>
                 </div>
-                <div className="flex items-center justify-between mt-4 bg-muted/30 p-4 rounded-md">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-4 bg-muted/30 p-4 rounded-md gap-4">
                     <div>
                         <p className="font-medium">Modo Oscuro</p>
                         <p className="text-sm text-muted-foreground">Cambia los colores de la aplicación para entornos con poca luz.</p>
@@ -157,7 +157,7 @@ export default function ConfiguracionPage() {
             {/* Horarios */}
             <RequirePermission perm="horasIngreso">
                 <div className="bg-card border rounded-lg p-6 shadow-sm">
-                    <div className="flex items-center justify-between border-b pb-4 mb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4 mb-4 gap-4">
                         <div className="flex items-center gap-2">
                             <Clock className="h-5 w-5 text-blue-500" />
                             <h2 className="text-xl font-semibold">Horario de Operaciones</h2>

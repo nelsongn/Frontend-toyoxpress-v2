@@ -76,8 +76,8 @@ export function HistorialPedidos({ refreshTrigger }: Props) {
                 </p>
             </div>
 
-            <div className="rounded-xl border border-border overflow-hidden shadow-sm">
-                <table className="w-full text-sm">
+            <div className="rounded-xl border border-border overflow-x-auto shadow-sm">
+                <table className="w-full text-sm min-w-[600px]">
                     <thead>
                         <tr className="bg-muted/60 border-b border-border">
                             <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider w-20">#</th>

@@ -13,7 +13,7 @@ export default function ClientesPage() {
         <RequirePermission perm="verPedidos">
             <div className="flex flex-col h-full p-6 gap-4">
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <ContactRound className="h-6 w-6 text-primary" />
                         <div>

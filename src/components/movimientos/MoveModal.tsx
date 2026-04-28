@@ -14,6 +14,13 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { api } from "@/lib/api";
 import Swal from 'sweetalert2';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 interface MoveModalProps {
     isOpen: boolean;
@@ -236,31 +243,35 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                         <div className="space-y-4">
                             <div className="space-y-1 text-sm">
                                 <Label className="text-foreground font-normal">Tipo de Movimiento:</Label>
-                                <select
-                                    required
+                                <Select
                                     value={formData.movimiento}
-                                    onChange={(e) => setFormData({ ...formData, movimiento: e.target.value })}
-                                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-[1px]:outline-none focus:ring-1 focus:ring-ring"
+                                    onValueChange={(val) => setFormData({ ...formData, movimiento: val })}
                                 >
-                                    <option value="" disabled className="bg-background text-foreground">Select...</option>
-                                    <option value="ingreso" className="bg-background text-foreground">Ingreso</option>
-                                    <option value="egreso" className="bg-background text-foreground">Egreso</option>
-                                </select>
+                                    <SelectTrigger className="h-10 w-full bg-background border-input">
+                                        <SelectValue placeholder="Select..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="ingreso">Ingreso</SelectItem>
+                                        <SelectItem value="egreso">Egreso</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
 
                             <div className="space-y-1 text-sm">
                                 <Label className="text-foreground font-normal">Cuenta Afectada:</Label>
-                                <select
-                                    required
+                                <Select
                                     value={formData.cuenta}
-                                    onChange={(e) => setFormData({ ...formData, cuenta: e.target.value })}
-                                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-[1px]:outline-none focus:ring-1 focus:ring-ring"
+                                    onValueChange={(val) => setFormData({ ...formData, cuenta: val })}
                                 >
-                                    <option value="" disabled className="bg-background text-foreground">Select...</option>
-                                    {cuentasDB.map((c) => (
-                                        <option key={c.value} value={c.value} className="bg-background text-foreground">{c.label}</option>
-                                    ))}
-                                </select>
+                                    <SelectTrigger className="h-10 w-full bg-background border-input">
+                                        <SelectValue placeholder="Select..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {cuentasDB.map((c) => (
+                                            <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
 
