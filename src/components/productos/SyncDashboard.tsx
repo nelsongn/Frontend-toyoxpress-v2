@@ -264,7 +264,7 @@ export function SyncDashboard() {
                         <div className="flex flex-col ml-1 justify-end pb-1">
                             {syncData.totalSKUs ? (
                                 <span className="text-sm font-semibold text-foreground mb-0.5">
-                                    {(syncData.metrics.created + syncData.metrics.updated + syncData.metrics.failed)} de {syncData.totalSKUs} Productos
+                                    {((syncData?.metrics?.created || 0) + (syncData?.metrics?.updated || 0) + (syncData?.metrics?.failed || 0))} de {syncData.totalSKUs} Productos
                                 </span>
                             ) : null}
                             <span className="text-xs text-muted-foreground">
@@ -323,7 +323,7 @@ export function SyncDashboard() {
                 </div>
             </div>
 
-            {syncData.metrics.failed > 0 && !isFinished && (
+            {(syncData?.metrics?.failed || 0) > 0 && !isFinished && (
                 <Alert variant="destructive" className="animate-pulse">
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Advertencia en WooCommerce</AlertTitle>
