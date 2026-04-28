@@ -122,7 +122,7 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
         const numValorDolares = parseFloat(formData.valorEnDolares) || 0;
         const numValorCambio = parseFloat(formData.valorDeCambio) || 0;
         if (numValorDolares > 0 && numValorCambio > 0) {
-            setFormData(prev => ({ ...prev, cantidadDeBolivares: (numValorDolares * numValorCambio).toString() }));
+            setFormData(prev => ({ ...prev, cantidadDeBolivares: (numValorDolares * numValorCambio).toFixed(2) }));
         } else {
             setFormData(prev => ({ ...prev, cantidadDeBolivares: "" }));
         }
@@ -134,13 +134,11 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
         const effectivo = parseFloat(formData.efectivo) || 0;
         const zelle = parseFloat(formData.zelle) || 0;
         const otro = parseFloat(formData.otro) || 0;
-        const valorBolivaresEnDolares = parseFloat(formData.cantidadDeBolivares) > 0 && parseFloat(formData.valorDeCambio) > 0
-            ? parseFloat(formData.cantidadDeBolivares) / parseFloat(formData.valorDeCambio)
-            : (parseFloat(formData.valorEnDolares) || 0);
+        const valorDolares = parseFloat(formData.valorEnDolares) || 0;
 
-        const sum = effectivo + zelle + otro + valorBolivaresEnDolares;
+        const sum = effectivo + zelle + otro + valorDolares;
         setFormData(prev => ({ ...prev, total: sum.toFixed(2) }));
-    }, [formData.efectivo, formData.zelle, formData.otro, formData.valorEnDolares, formData.cantidadDeBolivares, formData.valorDeCambio]);
+    }, [formData.efectivo, formData.zelle, formData.otro, formData.valorEnDolares]);
 
 
     const handleSubmit = async (e: React.FormEvent) => {
