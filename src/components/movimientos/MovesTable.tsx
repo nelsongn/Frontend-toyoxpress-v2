@@ -307,16 +307,12 @@ export default function MovesTable() {
                             value={filters.tipoPago}
                             onValueChange={(val) => setFilters(f => ({ ...f, tipoPago: val === "all" ? "" : val }))}
                         >
-                            <SelectTrigger className="h-9 w-full bg-background border-input">
-                                <SelectValue placeholder="Select..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Select...</SelectItem>
-                                <SelectItem value="bs">Bs</SelectItem>
-                                <SelectItem value="zelle">Zelle</SelectItem>
-                                <SelectItem value="efectivo">Efectivo</SelectItem>
-                            </SelectContent>
-                        </Select>
+                            <option value="">Select...</option>
+                            <option value="bs">Bs</option>
+                            <option value="zelle">Zelle</option>
+                            <option value="efectivo">Efectivo</option>
+                            <option value="otro">Otro</option>
+                        </select>
                     </div>
 
                     <div className="space-y-1">

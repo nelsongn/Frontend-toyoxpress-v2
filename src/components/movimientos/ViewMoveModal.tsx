@@ -158,6 +158,7 @@ export default function ViewMoveModal({ move, onClose, onSuccess }: ViewMoveModa
                                             const payments = [];
                                             if (move.zelle > 0) payments.push("Zelle");
                                             if (move.efectivo > 0) payments.push("Efectivo");
+                                            if (move.otro > 0) payments.push("Otro");
                                             if (move.dolares > 0) payments.push("Dólares");
                                             if (move.bs > 0) payments.push("Bolívares");
                                             // legacy support
