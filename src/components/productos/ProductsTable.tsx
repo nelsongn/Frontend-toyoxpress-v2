@@ -20,7 +20,8 @@ interface Producto {
     _id: string;
     Nombre: string;
     Código: string;
-    Marca: string;
+    Marca?: string;
+    Modelo?: string;
     "Existencia Actual": number;
     "Precio Minimo": number;
     "Precio Mayor": number;
@@ -101,7 +102,6 @@ export function ProductsTable() {
                             <TableHead className="text-right">Stock</TableHead>
                             <TableHead className="text-right">P. Mín</TableHead>
                             <TableHead className="text-right">P. Mayor</TableHead>
-                            <TableHead className="text-right">P. Oferta</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -128,7 +128,7 @@ export function ProductsTable() {
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant="outline" className="font-normal text-[10px] uppercase">
-                                            {producto.Marca || 'S/M'}
+                                            {producto.Modelo || 'S/M'}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
@@ -141,9 +141,6 @@ export function ProductsTable() {
                                     </TableCell>
                                     <TableCell className="text-right font-semibold text-blue-600 dark:text-blue-400">
                                         ${producto["Precio Mayor"]?.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
-                                    </TableCell>
-                                    <TableCell className="text-right font-semibold text-emerald-600 dark:text-emerald-400">
-                                        ${producto["Precio Oferta"]?.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                                     </TableCell>
                                 </TableRow>
                             ))

@@ -25,6 +25,7 @@ interface LineaPedido {
     codigo: string;
     nombre: string;
     marca?: string;
+    modelo?: string;
     referencia?: string;
     cantidad: number | "";
     precio: number;
@@ -332,7 +333,7 @@ export function PedidoDocument({
                             <Text style={[styles.tdTextMuted, styles.colCodigo]}>{l.codigo}</Text>
                             <Text style={[styles.tdText, styles.colNombre]}>{l.nombre}</Text>
                             <Text style={[styles.tdTextMuted, styles.colReferencia]}>{l.referencia || "—"}</Text>
-                            <Text style={[styles.tdTextMuted, styles.colMarca]}>{l.marca || "—"}</Text>
+                            <Text style={[styles.tdTextMuted, styles.colMarca]}>{l.modelo || "—"}</Text>
                             <Text style={[styles.tdText, styles.colCantidad]}>{Number(l.cantidad) || 0}</Text>
                             <Text style={[styles.tdText, styles.colPU]}>{l.precio.toFixed(2)}</Text>
                             <Text style={[styles.tdText, styles.colTotal]}>{l.total.toFixed(2)}</Text>

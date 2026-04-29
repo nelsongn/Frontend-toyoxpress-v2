@@ -19,6 +19,7 @@ interface ProductoAPI {
     Nombre?: string;
     name?: string;
     Marca?: string;
+    Modelo?: string;
     Ref?: string;
     "Existencia Actual"?: number;
     stock_quantity?: number;
@@ -32,6 +33,7 @@ interface ProductoLinea {
     codigo: string;
     nombre: string;
     marca?: string;
+    modelo?: string;
     referencia?: string;
     stock: number;
     precio: number;
@@ -67,6 +69,7 @@ function mapToLinea(p: ProductoAPI): ProductoLinea {
         codigo: p["Código"] || p.sku || "",
         nombre: p.Nombre || p.name || "",
         marca: p.Marca,
+        modelo: p.Modelo || "",
         referencia: p.Ref,
         stock: p["Existencia Actual"] ?? p.stock_quantity ?? 0,
         precio: p["Precio Minimo"] ?? p.price ?? 0,
@@ -324,7 +327,6 @@ export function InventarioModal({ open, onClose }: Props) {
                                     <th className="text-center px-4 py-2.5 font-semibold text-foreground/70 w-[8%]">Stock</th>
                                     <th className="text-right px-4 py-2.5 font-semibold text-foreground/70 w-[12%]">P. Mín</th>
                                     <th className="text-right px-4 py-2.5 font-semibold text-foreground/70 w-[12%]">P. Mayor</th>
-                                    <th className="text-right px-4 py-2.5 font-semibold text-foreground/70 w-[12%]">P. Oferta</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -332,11 +334,10 @@ export function InventarioModal({ open, onClose }: Props) {
                                     <tr key={i} className={`border-b border-border/50 hover:bg-muted/40 transition-colors ${p.stock === 0 ? "opacity-60" : ""} ${i % 2 !== 0 ? "bg-muted/20" : ""}`}>
                                         <td className="px-4 py-2 text-foreground/80 font-mono">{p.codigo}</td>
                                         <td className="px-4 py-2 font-medium text-foreground">{p.nombre}</td>
-                                        <td className="px-4 py-2 text-foreground/70">{p.marca || "—"}</td>
+                                        <td className="px-4 py-2 text-foreground/70">{p.modelo || "—"}</td>
                                         <td className={`px-4 py-2 text-center font-bold ${p.stock > 0 ? "text-emerald-500" : "text-red-400"}`}>{p.stock}</td>
                                         <td className="px-4 py-2 text-right tabular-nums font-semibold text-foreground">${p.precio.toFixed(2)}</td>
                                         <td className="px-4 py-2 text-right tabular-nums font-semibold text-blue-600 dark:text-blue-400">${p.precioMayor.toFixed(2)}</td>
-                                        <td className="px-4 py-2 text-right tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">${p.precioOferta.toFixed(2)}</td>
                                     </tr>
                                 ))}
                             </tbody>
