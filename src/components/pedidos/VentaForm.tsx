@@ -44,6 +44,7 @@ interface Producto {
     name: string;      // same as Nombre in Excel
     brands?: string;
     Marca?: string;
+    Modelo?: string;
     Ref?: string;
     'Precio Minimo'?: number;
     'Precio Mayor'?: number;
@@ -227,6 +228,7 @@ export function VentaForm({ onSuccess }: Props) {
                     codigo: p.sku,
                     nombre: p.name,
                     marca: p.brands || p.Marca,
+                    modelo: p.Modelo || "",
                     referencia: p.Ref,
                     cantidad: 1,
                     precio,
