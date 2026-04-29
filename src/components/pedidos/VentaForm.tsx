@@ -202,24 +202,52 @@ export function VentaForm({ onSuccess }: Props) {
 
     // ── Cart operations ────────────────────────────────────────────────────
 
-    const agregarProducto = (p: Producto) => {
+    const agregarProducto = async (p: Producto) => {
         const stock = Number(p['Existencia Actual'] || p.stock_quantity || 0);
         if (stock <= 0) {
             Swal.fire('', 'Este producto no tiene stock disponible.', 'warning');
             return;
         }
 
+        const { value: quantity } = await Swal.fire({
+            title: 'Añadir al Carrito',
+            text: `¿Cuántas unidades de "${p.name}" desea añadir? (Stock: ${stock})`,
+            input: 'number',
+            inputAttributes: {
+                min: '1',
+                max: stock.toString(),
+                step: '1'
+            },
+            inputValue: 1,
+            showCancelButton: true,
+            confirmButtonText: 'Añadir',
+            cancelButtonText: 'Cancelar',
+            inputValidator: (value) => {
+                if (!value || parseInt(value) <= 0) {
+                    return 'Ingrese una cantidad válida';
+                }
+                if (parseInt(value) > stock) {
+                    return `Solo hay ${stock} unidades disponibles`;
+                }
+            }
+        });
+
+        if (!quantity) return;
+        const q = parseInt(quantity);
+
         const precio = getPrecio(p, selectedCliente?.['Tipo de Precio']);
         const yaExiste = carrito.findIndex(l => l.codigo === p.sku);
+
         if (yaExiste >= 0) {
             // Increment existing line
             const updated = [...carrito];
             const currentQty = Number(updated[yaExiste].cantidad) || 0;
-            if (currentQty + 1 > stock) {
-                Swal.fire('', `Solo hay ${stock} unidades en stock.`, 'warning');
-                return;
+            if (currentQty + q > stock) {
+                Swal.fire('', `Solo hay ${stock} unidades en stock totales. Se ajustó al máximo.`, 'warning');
+                updated[yaExiste].cantidad = stock;
+            } else {
+                updated[yaExiste].cantidad = currentQty + q;
             }
-            updated[yaExiste].cantidad = currentQty + 1;
             updated[yaExiste].total = updated[yaExiste].cantidad * updated[yaExiste].precio;
             setCarrito(updated);
         } else {
@@ -230,9 +258,9 @@ export function VentaForm({ onSuccess }: Props) {
                     marca: p.brands || p.Marca,
                     modelo: p.Modelo || "",
                     referencia: p.Ref,
-                    cantidad: 1,
+                    cantidad: q,
                     precio,
-                    total: precio,
+                    total: precio * q,
                     stockMax: stock,
                     pMin: Number(p['Precio Minimo'] || 0),
                     pMayor: Number(p['Precio Mayor'] || 0),

@@ -326,7 +326,7 @@ export function InventarioModal({ open, onClose }: Props) {
                                     <th className="text-left px-4 py-2.5 font-semibold text-foreground/70 w-[18%]">Modelo</th>
                                     <th className="text-center px-4 py-2.5 font-semibold text-foreground/70 w-[8%]">Stock</th>
                                     <th className="text-right px-4 py-2.5 font-semibold text-foreground/70 w-[12%]">P. Mín</th>
-                                    <th className="text-right px-4 py-2.5 font-semibold text-foreground/70 w-[12%]">P. Mayor</th>
+                                    <th className="text-right px-4 py-2.5 font-semibold text-foreground/70 w-[12%]">P. Oferta</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -337,7 +337,7 @@ export function InventarioModal({ open, onClose }: Props) {
                                         <td className="px-4 py-2 text-foreground/70">{p.modelo || "—"}</td>
                                         <td className={`px-4 py-2 text-center font-bold ${p.stock > 0 ? "text-emerald-500" : "text-red-400"}`}>{p.stock}</td>
                                         <td className="px-4 py-2 text-right tabular-nums font-semibold text-foreground">${p.precio.toFixed(2)}</td>
-                                        <td className="px-4 py-2 text-right tabular-nums font-semibold text-blue-600 dark:text-blue-400">${p.precioMayor.toFixed(2)}</td>
+                                        <td className="px-4 py-2 text-right tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">${p.precioOferta.toFixed(2)}</td>
                                     </tr>
                                 ))}
                             </tbody>

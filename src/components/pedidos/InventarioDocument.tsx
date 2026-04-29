@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     colMarca: { width: "13%", paddingRight: 4 },
     colStock: { width: "6%", textAlign: "center" },
     colPrecio: { width: "15%", textAlign: "right" },
-    colPrecioMayor: { width: "15%", textAlign: "right" },
+    colPrecioOferta: { width: "15%", textAlign: "right" },
 
     thText: {
         fontSize: 7,
@@ -216,7 +216,7 @@ export function InventarioDocument({ productos, hora, filtros }: InventarioDocum
                         <Text style={[styles.thText, styles.colMarca]}>Modelo</Text>
                         <Text style={[styles.thText, styles.colStock]}>Stock</Text>
                         <Text style={[styles.thText, styles.colPrecio]}>Precio Mín</Text>
-                        <Text style={[styles.thText, styles.colPrecioMayor]}>P. Mayor</Text>
+                        <Text style={[styles.thText, styles.colPrecioOferta]}>P. Oferta</Text>
                     </View>
 
                     {productos.map((p, i) => (
@@ -235,7 +235,7 @@ export function InventarioDocument({ productos, hora, filtros }: InventarioDocum
                                 {p.stock}
                             </Text>
                             <Text style={[styles.tdText, styles.colPrecio]}>{p.precio.toFixed(2)}</Text>
-                            <Text style={[styles.tdText, { color: "#2563eb" }, styles.colPrecioMayor]}>{p.precioMayor.toFixed(2)}</Text>
+                            <Text style={[styles.tdText, { color: "#16a34a" }, styles.colPrecioOferta]}>{p.precioOferta.toFixed(2)}</Text>
                         </View>
                     ))}
                 </View>

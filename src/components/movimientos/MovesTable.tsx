@@ -45,6 +45,20 @@ export default function MovesTable() {
     const [saldoTotal, setSaldoTotal] = useState(0);
     const [cajaChica, setCajaChica] = useState(0);
 
+    // Helper for initial dates
+    const getInitialDates = () => {
+        const today = new Date();
+        const past = new Date();
+        past.setMonth(today.getMonth() - 3);
+        const format = (d: Date) => {
+            const tzOffset = d.getTimezoneOffset() * 60000;
+            return new Date(d.getTime() - tzOffset).toISOString().split('T')[0];
+        };
+        return { inicio: format(past), cierre: format(today) };
+    };
+
+    const initialDates = getInitialDates();
+
     // Filters state (extended based on user request)
     const [filters, setFilters] = useState({
         movimiento: "",
@@ -53,8 +67,8 @@ export default function MovesTable() {
         vale: "",
         usuario: "",
         tipoPago: "",
-        fechaInicio: "",
-        fechaCierre: "",
+        fechaInicio: initialDates.inicio,
+        fechaCierre: initialDates.cierre,
         status: "no_verificados"
     });
 

@@ -155,8 +155,8 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
             const numDolares = parseFloat(formData.valorEnDolares) || 0;
 
             const payload = {
-                usuario: user || "Admin",
-                id_usuario: id_usuario || "123",
+                usuario: (move && move.usuario) ? move.usuario : (user || "Admin"),
+                id_usuario: (move && move.id_usuario) ? move.id_usuario : (id_usuario || "123"),
                 cuenta: formData.cuenta,
                 movimiento: formData.movimiento,
                 concepto: formData.concepto,
@@ -363,16 +363,37 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
 
                             {/* Total Row */}
                             <div className="pt-4 pb-2">
-                                <div className="w-1/3 space-y-1">
-                                    <Label className="text-muted-foreground font-normal text-xs">Total:</Label>
-                                    <div className="relative">
-                                        <Input
-                                            disabled
-                                            value={formData.total}
-                                            className="w-full pr-8 h-10 font-bold bg-transparent no-spinner"
-                                        />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
+                                <div className="grid grid-cols-3 gap-6 items-end">
+                                    <div className="space-y-1">
+                                        <Label className="text-muted-foreground font-normal text-xs">Total:</Label>
+                                        <div className="relative">
+                                            <Input
+                                                disabled
+                                                value={formData.total}
+                                                className="w-full pr-8 h-12 text-lg font-bold bg-muted/20 border-none no-spinner"
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-lg">$</span>
+                                        </div>
                                     </div>
+
+                                    {move && (
+                                        <>
+                                            <div className="space-y-1">
+                                                <Label className="text-muted-foreground font-normal text-xs">Creado por:</Label>
+                                                <div className="text-[10px] leading-tight text-foreground/80 bg-muted/30 p-2 rounded-md border border-border/50 h-12 flex flex-col justify-center">
+                                                    <p className="font-semibold truncate">{move.usuario || move.name || '—'}</p>
+                                                    <p className="opacity-70">{move.creado ? new Date(move.creado).toLocaleString() : (move.createdAt ? new Date(move.createdAt).toLocaleString() : '—')}</p>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-muted-foreground font-normal text-xs">Modificado por:</Label>
+                                                <div className="text-[10px] leading-tight text-foreground/80 bg-muted/30 p-2 rounded-md border border-border/50 h-12 flex flex-col justify-center">
+                                                    <p className="font-semibold truncate">{move.usuario_modifico || '—'}</p>
+                                                    <p className="opacity-70">{move.usuario_modifico ? new Date(move.updatedAt).toLocaleString() : '—'}</p>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
