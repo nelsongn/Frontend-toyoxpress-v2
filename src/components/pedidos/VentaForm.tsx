@@ -36,6 +36,7 @@ interface Cliente {
     Estado?: string;
     Ciudad?: string;
     Direccion?: string;
+    'Ultima Venta Credito'?: string;
 }
 
 interface Producto {
@@ -391,7 +392,14 @@ export function VentaForm({ onSuccess }: Props) {
                         <div className="flex items-start justify-between gap-4 p-3 bg-muted/30 rounded-lg">
                             <div className="flex-1 min-w-0">
                                 <p className="font-semibold text-sm truncate">{selectedCliente.Nombre}</p>
-                                <p className="text-xs text-muted-foreground">RIF: {selectedCliente.Rif} · {selectedCliente.Ciudad}</p>
+                                <p className="text-xs text-muted-foreground">
+                                    RIF: {selectedCliente.Rif} · {selectedCliente.Ciudad}
+                                    {selectedCliente['Ultima Venta Credito'] && (
+                                        <span className="ml-2 px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded-md font-medium">
+                                            Última Venta: {selectedCliente['Ultima Venta Credito']}
+                                        </span>
+                                    )}
+                                </p>
                                 <div className="mt-2 flex flex-wrap gap-2">
                                     <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full ${PRECIO_BADGE[tipoPrecio] || 'bg-gray-100 text-gray-600'}`}>
                                         <Tag className="h-2.5 w-2.5" /> Precio Aplicado: {tipoPrecio}
