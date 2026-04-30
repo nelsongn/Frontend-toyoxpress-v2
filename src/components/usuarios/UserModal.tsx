@@ -43,7 +43,9 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
             verClientes: false,
             verExcel: false,
             cargarProductos: false,
-            verPedidos: false
+            verPedidos: false,
+            verCajaChica: false,
+            verSaldoTotal: false
         }
     });
 
@@ -74,7 +76,9 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                         verClientes: !!perms.verClientes,
                         verExcel: !!perms.verExcel,
                         cargarProductos: !!perms.cargarProductos,
-                        verPedidos: !!perms.verPedidos
+                        verPedidos: !!perms.verPedidos,
+                        verCajaChica: !!perms.verCajaChica,
+                        verSaldoTotal: !!perms.verSaldoTotal
                     }
                 });
             } else {
@@ -100,7 +104,9 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                         verClientes: false,
                         verExcel: false,
                         cargarProductos: false,
-                        verPedidos: false
+                        verPedidos: false,
+                        verCajaChica: false,
+                        verSaldoTotal: false
                     }
                 });
             }
@@ -183,13 +189,15 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
         verClientes: "Ver Todos Los Clientes",
         verExcel: "Exportar a Excel",
         cargarProductos: "Cargar Productos (WooCommerce)",
-        verPedidos: "Ver Pestaña de Pedidos"
+        verPedidos: "Ver Pestaña de Pedidos",
+        verCajaChica: "Ver Saldo Caja Chica",
+        verSaldoTotal: "Ver Saldo Total (General)"
     };
 
     const permissionCategories = [
         {
             title: "Módulo de Movimientos",
-            keys: ["verMovimientos", "verOtrosMovimientos", "aprobarMovimientos", "editarMovimientos", "eliminarMovimientos", "modificarFechas"]
+            keys: ["verMovimientos", "verOtrosMovimientos", "aprobarMovimientos", "editarMovimientos", "eliminarMovimientos", "modificarFechas", "verCajaChica", "verSaldoTotal"]
         },
         {
             title: "Módulo de Usuarios",
