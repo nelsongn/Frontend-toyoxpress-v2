@@ -29,8 +29,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 
 export default function MovesTable() {
+    const permissions = useAuthStore(state => state.permissions);
     const [movimientos, setMovimientos] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -342,23 +344,29 @@ export default function MovesTable() {
                 </div>
 
                 {/* Legacy V1 layout: Summary Pills immediately under Filters row */}
-                <div className="flex flex-col sm:flex-row justify-between items-center bg-muted/40 rounded-lg pt-2 pb-2 mb-4 px-2">
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">Caja Chica:</span>
-                        <div className={`px-[6px] py-[2px] rounded-[5px] text-white font-bold text-[16px] leading-tight ${cajaChica >= 0 ? "bg-[green]" : "bg-[#B21F00]"
-                            }`}>
-                            {cajaChica.toFixed(2)}$
-                        </div>
-                    </div>
+                {(permissions?.verCajaChica || permissions?.verSaldoTotal) && (
+                    <div className="flex flex-col sm:flex-row justify-between items-center bg-muted/40 rounded-lg pt-2 pb-2 mb-4 px-2">
+                        {permissions?.verCajaChica && (
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">Caja Chica:</span>
+                                <div className={`px-[6px] py-[2px] rounded-[5px] text-white font-bold text-[16px] leading-tight ${cajaChica >= 0 ? "bg-[green]" : "bg-[#B21F00]"
+                                    }`}>
+                                    {cajaChica.toFixed(2)}$
+                                </div>
+                            </div>
+                        )}
 
-                    <div className="flex items-center gap-2 mt-2 sm:mt-0">
-                        <span className="text-sm font-medium">Saldo Total:</span>
-                        <div className={`px-[6px] py-[2px] rounded-[5px] text-white font-bold text-[16px] leading-tight ${saldoTotal >= 0 ? "bg-[green]" : "bg-[#B21F00]"
-                            }`}>
-                            {saldoTotal.toFixed(2)}$
-                        </div>
+                        {permissions?.verSaldoTotal && (
+                            <div className="flex items-center gap-2 mt-2 sm:mt-0">
+                                <span className="text-sm font-medium">Saldo Total:</span>
+                                <div className={`px-[6px] py-[2px] rounded-[5px] text-white font-bold text-[16px] leading-tight ${saldoTotal >= 0 ? "bg-[green]" : "bg-[#B21F00]"
+                                    }`}>
+                                    {saldoTotal.toFixed(2)}$
+                                </div>
+                            </div>
+                        )}
                     </div>
-                </div>
+                )}
 
 
                 {/* Bottom Filter options: Dates and status */}

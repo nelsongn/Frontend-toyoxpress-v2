@@ -209,18 +209,30 @@ export function VentaForm({ onSuccess }: Props) {
             return;
         }
 
+        const yaExisteIdx = carrito.findIndex(l => l.codigo === p.sku);
+        let initialQty = 1;
+        let title = 'Añadir al Carrito';
+        let text = `¿Cuántas unidades de "${p.name}" desea añadir? (Stock: ${stock})`;
+
+        if (yaExisteIdx >= 0) {
+            const currentQty = Number(carrito[yaExisteIdx].cantidad) || 0;
+            title = 'Producto ya en carrito';
+            text = `"${p.name}" ya tiene ${currentQty} unidades en el carrito. Ingrese la NUEVA cantidad total deseada: (Stock: ${stock})`;
+            initialQty = currentQty;
+        }
+
         const { value: quantity } = await Swal.fire({
-            title: 'Añadir al Carrito',
-            text: `¿Cuántas unidades de "${p.name}" desea añadir? (Stock: ${stock})`,
+            title,
+            text,
             input: 'number',
             inputAttributes: {
                 min: '1',
                 max: stock.toString(),
                 step: '1'
             },
-            inputValue: 1,
+            inputValue: initialQty,
             showCancelButton: true,
-            confirmButtonText: 'Añadir',
+            confirmButtonText: yaExisteIdx >= 0 ? 'Actualizar' : 'Añadir',
             cancelButtonText: 'Cancelar',
             inputValidator: (value) => {
                 if (!value || parseInt(value) <= 0) {
@@ -236,20 +248,26 @@ export function VentaForm({ onSuccess }: Props) {
         const q = parseInt(quantity);
 
         const precio = getPrecio(p, selectedCliente?.['Tipo de Precio']);
-        const yaExiste = carrito.findIndex(l => l.codigo === p.sku);
 
-        if (yaExiste >= 0) {
-            // Increment existing line
+        if (yaExisteIdx >= 0) {
+            // Update existing line with the new TOTAL quantity
             const updated = [...carrito];
-            const currentQty = Number(updated[yaExiste].cantidad) || 0;
-            if (currentQty + q > stock) {
-                Swal.fire('', `Solo hay ${stock} unidades en stock totales. Se ajustó al máximo.`, 'warning');
-                updated[yaExiste].cantidad = stock;
-            } else {
-                updated[yaExiste].cantidad = currentQty + q;
-            }
-            updated[yaExiste].total = updated[yaExiste].cantidad * updated[yaExiste].precio;
+            updated[yaExisteIdx].cantidad = q;
+            updated[yaExisteIdx].total = q * updated[yaExisteIdx].precio;
             setCarrito(updated);
+            
+            // Subtle toast instead of big alert for success
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true,
+            });
+            Toast.fire({
+                icon: 'success',
+                title: 'Cantidad actualizada'
+            });
         } else {
             setCarrito(prev => {
                 const newCart = [...prev, {
@@ -266,7 +284,6 @@ export function VentaForm({ onSuccess }: Props) {
                     pMayor: Number(p['Precio Mayor'] || 0),
                     pOferta: Number(p['Precio Oferta'] || 0),
                 }];
-                // Ordenar alfabéticamente por referencia como en la V1
                 return newCart.sort((a, b) => {
                     const rA = String(a.referencia || '');
                     const rB = String(b.referencia || '');
