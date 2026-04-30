@@ -64,7 +64,7 @@ export default function MovesTable() {
     // Filters state (extended based on user request)
     const [filters, setFilters] = useState({
         movimiento: "",
-        cuenta: "",
+        cuenta: [] as string[],
         concepto: "",
         vale: "",
         usuario: "",
@@ -84,6 +84,7 @@ export default function MovesTable() {
     const [openUserSelect, setOpenUserSelect] = useState(false);
     const [inputPage, setInputPage] = useState(page.toString());
     const [cuentasDB, setCuentasDB] = useState<any[]>([]);
+    const [openCuentaSelect, setOpenCuentaSelect] = useState(false);
 
     useEffect(() => {
         setInputPage(page.toString());
@@ -99,7 +100,9 @@ export default function MovesTable() {
             params.append('sortBy', sortBy);
             params.append('sortOrder', sortOrder);
             if (filters.movimiento) params.append('movimiento', filters.movimiento);
-            if (filters.cuenta) params.append('cuenta', filters.cuenta);
+            if (filters.cuenta && filters.cuenta.length > 0) {
+                params.append('cuenta', filters.cuenta.join(','));
+            }
             if (filters.concepto) params.append('concepto', filters.concepto);
             if (filters.vale) params.append('vale', filters.vale);
             if (filters.usuario) params.append('usuario', filters.usuario);
@@ -287,22 +290,71 @@ export default function MovesTable() {
 
                     <div className="space-y-1">
                         <span className="text-sm font-medium text-foreground">Cuenta</span>
-                        <Select
-                            value={filters.cuenta}
-                            onValueChange={(val) => setFilters(f => ({ ...f, cuenta: val === "all" ? "" : val }))}
-                        >
-                            <SelectTrigger className="h-9 w-full bg-background border-input">
-                                <SelectValue placeholder="Select..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Select...</SelectItem>
-                                {cuentasDB.map((cuenta: any) => (
-                                    <SelectItem key={cuenta._id || cuenta.value} value={cuenta.value}>
-                                        {cuenta.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <Popover open={openCuentaSelect} onOpenChange={setOpenCuentaSelect}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={openCuentaSelect}
+                                    className="w-full justify-between h-9 px-3 font-normal"
+                                >
+                                    <span className="truncate">
+                                        {filters.cuenta.length === 0 
+                                            ? "Select..." 
+                                            : filters.cuenta.length === 1 
+                                                ? cuentasDB.find(c => c.value === filters.cuenta[0])?.label || filters.cuenta[0]
+                                                : `${filters.cuenta.length} seleccionadas`}
+                                    </span>
+                                    <div className="flex items-center gap-1">
+                                        {filters.cuenta.length > 0 && (
+                                            <div
+                                                className="h-4 w-4 shrink-0 opacity-50 hover:opacity-100 flex items-center justify-center cursor-pointer"
+                                                onPointerDown={(e) => {
+                                                    e.stopPropagation();
+                                                    setFilters(f => ({ ...f, cuenta: [] }));
+                                                }}
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </div>
+                                        )}
+                                        <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+                                    </div>
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[300px] p-0" align="start">
+                                <Command>
+                                    <CommandInput placeholder="Search account..." />
+                                    <CommandList>
+                                        <CommandEmpty>No account found.</CommandEmpty>
+                                        <CommandGroup className="max-h-64 overflow-y-auto">
+                                            {cuentasDB.map((cuenta) => (
+                                                <CommandItem
+                                                    key={cuenta._id || cuenta.value}
+                                                    value={cuenta.value}
+                                                    onSelect={() => {
+                                                        const isSelected = filters.cuenta.includes(cuenta.value);
+                                                        const newCuentas = isSelected
+                                                            ? filters.cuenta.filter(c => c !== cuenta.value)
+                                                            : [...filters.cuenta, cuenta.value];
+                                                        setFilters(f => ({ ...f, cuenta: newCuentas }));
+                                                    }}
+                                                >
+                                                    <div className={cn(
+                                                        "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                                        filters.cuenta.includes(cuenta.value)
+                                                            ? "bg-primary text-primary-foreground"
+                                                            : "opacity-50 [&_svg]:invisible"
+                                                    )}>
+                                                        <Check className={cn("h-4 w-4")} />
+                                                    </div>
+                                                    {cuenta.label}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
                 </div>
 
