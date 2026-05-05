@@ -122,7 +122,9 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
         const numValorDolares = parseFloat(formData.valorEnDolares) || 0;
         const numValorCambio = parseFloat(formData.valorDeCambio) || 0;
         if (numValorDolares > 0 && numValorCambio > 0) {
-            setFormData(prev => ({ ...prev, cantidadDeBolivares: (numValorDolares * numValorCambio).toFixed(2) }));
+            // Round to 2 decimals to avoid floating point errors
+            const bolivares = Math.round((numValorDolares * numValorCambio) * 100) / 100;
+            setFormData(prev => ({ ...prev, cantidadDeBolivares: bolivares.toFixed(2) }));
         } else {
             setFormData(prev => ({ ...prev, cantidadDeBolivares: "" }));
         }
@@ -136,7 +138,8 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
         const otro = parseFloat(formData.otro) || 0;
         const valorDolares = parseFloat(formData.valorEnDolares) || 0;
 
-        const sum = effectivo + zelle + otro + valorDolares;
+        // Use rounding to avoid floating point issues (e.g. 299.9999999)
+        const sum = Math.round((effectivo + zelle + otro + valorDolares) * 100) / 100;
         setFormData(prev => ({ ...prev, total: sum.toFixed(2) }));
     }, [formData.efectivo, formData.zelle, formData.otro, formData.valorEnDolares]);
 
@@ -286,6 +289,7 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                                             type="number" step="0.01" min="0"
                                             value={formData.efectivo}
                                             onChange={(e) => setFormData({ ...formData, efectivo: e.target.value })}
+                                            onWheel={(e) => e.currentTarget.blur()}
                                             className="w-full pr-8 h-10 no-spinner"
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
@@ -298,6 +302,7 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                                             type="number" step="0.01" min="0"
                                             value={formData.zelle}
                                             onChange={(e) => setFormData({ ...formData, zelle: e.target.value })}
+                                            onWheel={(e) => e.currentTarget.blur()}
                                             className="w-full pr-8 h-10 no-spinner"
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
@@ -310,6 +315,7 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                                             type="number" step="0.01" min="0"
                                             value={formData.otro}
                                             onChange={(e) => setFormData({ ...formData, otro: e.target.value })}
+                                            onWheel={(e) => e.currentTarget.blur()}
                                             className="w-full pr-8 h-10 no-spinner"
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
@@ -328,6 +334,7 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                                                 type="number" step="0.01" min="0"
                                                 value={formData.valorEnDolares}
                                                 onChange={(e) => setFormData({ ...formData, valorEnDolares: e.target.value })}
+                                                onWheel={(e) => e.currentTarget.blur()}
                                                 className="w-full pr-8 h-10 no-spinner"
                                             />
                                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
@@ -341,6 +348,7 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                                                 disabled={!formData.valorEnDolares || parseFloat(formData.valorEnDolares) <= 0}
                                                 value={formData.valorDeCambio}
                                                 onChange={(e) => setFormData({ ...formData, valorDeCambio: e.target.value })}
+                                                onWheel={(e) => e.currentTarget.blur()}
                                                 className={`w-full pr-8 h-10 no-spinner ${(!formData.valorEnDolares || parseFloat(formData.valorEnDolares) <= 0) ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''}`}
                                             />
                                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">Bs</span>
@@ -353,6 +361,7 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                                                 type="number" step="0.01" min="0"
                                                 readOnly
                                                 value={formData.cantidadDeBolivares}
+                                                onWheel={(e) => e.currentTarget.blur()}
                                                 className="w-full pr-8 h-10 bg-gray-50 text-gray-600 font-medium cursor-default focus-visible:ring-0 no-spinner"
                                             />
                                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">Bs</span>
