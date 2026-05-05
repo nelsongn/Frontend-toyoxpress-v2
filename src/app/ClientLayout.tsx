@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { Loader2 } from "lucide-react";
+import { api } from "@/lib/api";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -22,6 +23,25 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             router.push("/");
         }
     }, [token, isAuthPage, _hasHydrated, router]);
+
+    // SESSION HEARTBEAT: Checks token expiration and store schedule every 60 seconds
+    useEffect(() => {
+        if (!token || isAuthPage) return;
+
+        // Perform initial check
+        const checkSession = async () => {
+            try {
+                await api.get('/auth/verify');
+            } catch (error) {
+                // Interceptor in @/lib/api.ts will handle 401/403 and redirect
+                console.warn("Session check failed, handling via interceptor");
+            }
+        };
+
+        const interval = setInterval(checkSession, 60000); // 60 seconds
+
+        return () => clearInterval(interval);
+    }, [token, isAuthPage]);
 
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
