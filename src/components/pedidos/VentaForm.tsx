@@ -16,6 +16,7 @@ import {
     Search, UserRound, Package, X, Send, Plus,
     Tag, ChevronDown, Download, BookOpen
 } from "lucide-react";
+import { formatExcelDate } from "@/lib/utils";
 import Swal from "sweetalert2";
 
 // PDFDownloadLink must be dynamically imported to prevent SSR errors in Next.js
@@ -204,7 +205,7 @@ export function VentaForm({ onSuccess }: Props) {
     // ── Cart operations ────────────────────────────────────────────────────
 
     const agregarProducto = async (p: Producto) => {
-        const stock = Number(p['Existencia Actual'] || p.stock_quantity || 0);
+        const stock = Number(p['Existencia Actual'] ?? p.stock_quantity ?? 0);
         if (stock <= 0) {
             Swal.fire('', 'Este producto no tiene stock disponible.', 'warning');
             return;
@@ -396,7 +397,7 @@ export function VentaForm({ onSuccess }: Props) {
                                     RIF: {selectedCliente.Rif} · {selectedCliente.Ciudad}
                                     {selectedCliente['Ultima Venta Credito'] && (
                                         <span className="ml-2 px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded-md font-medium">
-                                            Última Venta: {selectedCliente['Ultima Venta Credito']}
+                                            Última Venta: {formatExcelDate(selectedCliente['Ultima Venta Credito'])}
                                         </span>
                                     )}
                                 </p>
