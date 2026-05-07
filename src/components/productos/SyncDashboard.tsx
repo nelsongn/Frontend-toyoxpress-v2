@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -59,7 +59,7 @@ export function SyncDashboard() {
     const [showHistory, setShowHistory] = useState(false);
     const token = useAuthStore((state: any) => state.token);
 
-    useEffect(() => {
+    const fetchLastSync = useCallback(() => {
         // Fetch last sync job for persistent display
         const backendApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
         axios.get(`${backendApiUrl}/productos/last-sync`, {
@@ -68,6 +68,10 @@ export function SyncDashboard() {
             if (res.data?.data) setLastSync(res.data.data);
         }).catch(() => { }); // Silently ignore if no jobs yet
     }, [token]);
+
+    useEffect(() => {
+        fetchLastSync();
+    }, [fetchLastSync]);
 
     useEffect(() => {
         // Extraemos la URL base (quitando el sufijo /api) para WebSockets nativo
@@ -89,11 +93,15 @@ export function SyncDashboard() {
         socketInstance.on("sync_progress", (data: SyncProgressData) => {
             console.log("Evento SQS Recibido:", data);
 
-            // If job is done, wipe the dashboard back to the empty state
+            // If job is done, update last sync summary and clear active view after a delay
             if (data.status === "completed") {
-                setSyncData(null);
-                setChunksHistory([]);
-                setLogs([]);
+                setSyncData(data); // Final update to show 100%
+                fetchLastSync();
+                setTimeout(() => {
+                    setSyncData(null);
+                    setChunksHistory([]);
+                    setLogs([]);
+                }, 4000); // 4 seconds of "Completed" glory before switching to summary
                 return;
             }
 
