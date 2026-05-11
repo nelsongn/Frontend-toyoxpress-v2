@@ -321,23 +321,23 @@ export function InventarioModal({ open, onClose }: Props) {
                         <table className="w-full text-xs">
                             <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
                                 <tr>
-                                    <th className="text-left px-4 py-2.5 font-semibold text-foreground/70 w-[13%]">Código</th>
-                                    <th className="text-left px-4 py-2.5 font-semibold text-foreground/70 w-[40%]">Descripción</th>
-                                    <th className="text-left px-4 py-2.5 font-semibold text-foreground/70 w-[18%]">Modelo</th>
-                                    <th className="text-center px-4 py-2.5 font-semibold text-foreground/70 w-[8%]">Stock</th>
-                                    <th className="text-right px-4 py-2.5 font-semibold text-foreground/70 w-[12%]">P. Mín</th>
-                                    <th className="text-right px-4 py-2.5 font-semibold text-foreground/70 w-[12%]">P. Oferta</th>
+                                    <th className="text-left px-4 py-2.5 font-semibold text-foreground/70 w-[130px]">Código</th>
+                                    <th className="text-left px-4 py-2.5 font-semibold text-foreground/70">Descripción</th>
+                                    <th className="text-right px-4 py-2.5 font-semibold text-foreground/70 w-[100px]">Modelo</th>
+                                    <th className="text-right px-4 py-2.5 font-semibold text-foreground/70 w-[80px]">Stock</th>
+                                    <th className="text-right px-4 py-2.5 font-semibold text-foreground/70 w-[100px]">P. Mín</th>
+                                    <th className="text-right px-4 py-2.5 font-semibold text-foreground/70 w-[100px]">P. Oferta</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {productos.map((p, i) => (
                                     <tr key={i} className={`border-b border-border/50 hover:bg-muted/40 transition-colors ${p.stock === 0 ? "opacity-60" : ""} ${i % 2 !== 0 ? "bg-muted/20" : ""}`}>
-                                        <td className="px-4 py-2 text-foreground/80 font-mono">{p.codigo}</td>
-                                        <td className="px-4 py-2 font-medium text-foreground">{p.nombre}</td>
-                                        <td className="px-4 py-2 text-foreground/70">{p.modelo || "—"}</td>
-                                        <td className={`px-4 py-2 text-center font-bold ${p.stock > 0 ? "text-emerald-500" : "text-red-400"}`}>{p.stock}</td>
-                                        <td className="px-4 py-2 text-right tabular-nums font-semibold text-foreground">${p.precio.toFixed(2)}</td>
-                                        <td className="px-4 py-2 text-right tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">${p.precioOferta.toFixed(2)}</td>
+                                        <td className="px-4 py-2 text-foreground/80 font-mono whitespace-nowrap">{p.codigo}</td>
+                                        <td className="px-4 py-2 font-medium text-foreground py-3">{p.nombre}</td>
+                                        <td className="px-4 py-2 text-right text-foreground/70 whitespace-nowrap">{p.modelo || "—"}</td>
+                                        <td className={`px-4 py-2 text-right font-bold ${p.stock > 0 ? "text-emerald-500" : "text-red-400"}`}>{p.stock}</td>
+                                        <td className="px-4 py-2 text-right tabular-nums font-semibold text-foreground whitespace-nowrap">${p.precio.toFixed(2)}</td>
+                                        <td className="px-4 py-2 text-right tabular-nums font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">${p.precioOferta.toFixed(2)}</td>
                                     </tr>
                                 ))}
                             </tbody>
