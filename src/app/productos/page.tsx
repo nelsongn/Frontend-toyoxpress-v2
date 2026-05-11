@@ -24,8 +24,8 @@ export default function ProductosPage() {
                     <UploadProductsBtn />
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-2">
-                    <Card className="col-span-1 shadow-md border-border/40">
+                <div className="grid gap-6">
+                    <Card className="shadow-md border-border/40">
                         <CardHeader>
                             <CardTitle className="text-xl">Datos Locales</CardTitle>
                             <CardDescription>
@@ -37,7 +37,7 @@ export default function ProductosPage() {
                         </CardContent>
                     </Card>
 
-                    <Card className="col-span-1 shadow-md border-border/40 overflow-hidden">
+                    <Card className="shadow-md border-border/40 overflow-hidden">
                         <CardHeader className="bg-blue-50/50 dark:bg-blue-950/20 border-b border-border/40">
                             <CardTitle className="text-xl flex items-center gap-2">
                                 Centro de Sincronización
