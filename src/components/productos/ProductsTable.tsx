@@ -43,6 +43,23 @@ export function ProductsTable() {
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
     const [limit, setLimit] = useState(10);
+
+    // Cargar el límite desde localStorage al montar el componente
+    useEffect(() => {
+        const savedLimit = localStorage.getItem("products_table_limit");
+        if (savedLimit) {
+            setLimit(parseInt(savedLimit));
+        }
+    }, []);
+
+    // Guardar el límite en localStorage cuando cambie
+    const handleLimitChange = (value: string) => {
+        const newLimit = parseInt(value);
+        setLimit(newLimit);
+        setPage(1);
+        localStorage.setItem("products_table_limit", value);
+    };
+
     const token = useAuthStore((state: any) => state.token);
 
     const fetchProductos = async (currentPage: number, searchTerm: string, currentLimit: number) => {
@@ -101,10 +118,7 @@ export function ProductsTable() {
                         <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Mostrar:</span>
                         <Select
                             value={limit.toString()}
-                            onValueChange={(value) => {
-                                setLimit(parseInt(value));
-                                setPage(1);
-                            }}
+                            onValueChange={handleLimitChange}
                         >
                             <SelectTrigger className="w-[100px] h-10 bg-background">
                                 <SelectValue placeholder="10" />
@@ -155,7 +169,7 @@ export function ProductsTable() {
                             productos.map((producto) => (
                                 <TableRow key={producto._id} className="hover:bg-muted/50 transition-colors">
                                     <TableCell className="font-mono text-[11px] whitespace-nowrap">{producto.Código}</TableCell>
-                                    <TableCell className="font-medium py-3" title={producto.Nombre}>
+                                    <TableCell className="font-medium py-3 max-w-[400px] xl:max-w-[600px] truncate" title={producto.Nombre}>
                                         {producto.Nombre}
                                     </TableCell>
                                     <TableCell className="text-right">
