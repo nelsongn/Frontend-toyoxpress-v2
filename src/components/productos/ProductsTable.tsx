@@ -13,7 +13,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Search, Package, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Search, Package, ChevronLeft, ChevronRight, ListRows } from "lucide-react";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 
 interface Producto {
@@ -35,12 +42,13 @@ export function ProductsTable() {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
+    const [limit, setLimit] = useState(10);
     const token = useAuthStore((state: any) => state.token);
 
-    const fetchProductos = async (currentPage: number, searchTerm: string) => {
+    const fetchProductos = async (currentPage: number, searchTerm: string, currentLimit: number) => {
         try {
             setLoading(true);
-            const res = await api.get(`/productos?page=${currentPage}&limit=10&search=${searchTerm}`);
+            const res = await api.get(`/productos?page=${currentPage}&limit=${currentLimit}&search=${searchTerm}`);
             setProductos(res.data.data);
             setTotalPages(res.data.totalPages);
             setTotal(res.data.total);
@@ -55,11 +63,11 @@ export function ProductsTable() {
         if (token) {
             // Un pequeño debounce para la búsqueda
             const timer = setTimeout(() => {
-                fetchProductos(page, search);
+                fetchProductos(page, search, limit);
             }, 500);
 
             // Escuchar el evento de carga del Excel para recargar la tabla solitos
-            const handleRefresh = () => fetchProductos(page, search);
+            const handleRefresh = () => fetchProductos(page, search, limit);
             window.addEventListener("local_inventory_updated", handleRefresh);
 
             return () => {
@@ -67,7 +75,7 @@ export function ProductsTable() {
                 window.removeEventListener("local_inventory_updated", handleRefresh);
             }
         }
-    }, [page, search, token]);
+    }, [page, search, limit, token]);
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearch(e.target.value);
@@ -76,18 +84,40 @@ export function ProductsTable() {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <div className="relative w-full max-w-sm">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        type="search"
-                        placeholder="Buscar por Nombre o SKU..."
-                        className="pl-8 bg-background"
-                        value={search}
-                        onChange={handleSearchChange}
-                    />
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                    <div className="relative w-full max-w-sm">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Buscar por Nombre o SKU..."
+                            className="pl-8 bg-background"
+                            value={search}
+                            onChange={handleSearchChange}
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Select
+                            value={limit.toString()}
+                            onValueChange={(value) => {
+                                setLimit(parseInt(value));
+                                setPage(1);
+                            }}
+                        >
+                            <SelectTrigger className="w-[110px] h-10 bg-background">
+                                <ListRows className="h-4 w-4 mr-2 text-muted-foreground" />
+                                <SelectValue placeholder="Mostrar" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="10">10 productos</SelectItem>
+                                <SelectItem value="25">25 productos</SelectItem>
+                                <SelectItem value="50">50 productos</SelectItem>
+                                <SelectItem value="100">100 productos</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
-                <Badge variant="secondary" className="px-3 py-1 font-normal bg-muted">
+                <Badge variant="secondary" className="px-3 py-1 font-normal bg-muted whitespace-nowrap">
                     {total} Productos Locales
                 </Badge>
             </div>
