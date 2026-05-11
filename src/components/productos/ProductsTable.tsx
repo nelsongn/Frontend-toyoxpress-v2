@@ -84,19 +84,21 @@ export function ProductsTable() {
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4 w-full md:w-auto">
-                    <div className="relative w-full max-w-sm">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            type="search"
-                            placeholder="Buscar por Nombre o SKU..."
-                            className="pl-8 bg-background"
-                            value={search}
-                            onChange={handleSearchChange}
-                        />
-                    </div>
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                <div className="relative w-full lg:max-w-md">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Buscar por Nombre o SKU..."
+                        className="pl-10 h-10 bg-background"
+                        value={search}
+                        onChange={handleSearchChange}
+                    />
+                </div>
+
+                <div className="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end">
                     <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Mostrar:</span>
                         <Select
                             value={limit.toString()}
                             onValueChange={(value) => {
@@ -104,22 +106,22 @@ export function ProductsTable() {
                                 setPage(1);
                             }}
                         >
-                            <SelectTrigger className="w-[110px] h-10 bg-background">
-                                <ListRows className="h-4 w-4 mr-2 text-muted-foreground" />
-                                <SelectValue placeholder="Mostrar" />
+                            <SelectTrigger className="w-[100px] h-10 bg-background">
+                                <SelectValue placeholder="10" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="10">10 productos</SelectItem>
-                                <SelectItem value="25">25 productos</SelectItem>
-                                <SelectItem value="50">50 productos</SelectItem>
-                                <SelectItem value="100">100 productos</SelectItem>
+                                <SelectItem value="10">10 filas</SelectItem>
+                                <SelectItem value="25">25 filas</SelectItem>
+                                <SelectItem value="50">50 filas</SelectItem>
+                                <SelectItem value="100">100 filas</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
+
+                    <Badge variant="secondary" className="h-10 px-3 flex items-center font-normal bg-muted whitespace-nowrap">
+                        {total} Productos Locales
+                    </Badge>
                 </div>
-                <Badge variant="secondary" className="px-3 py-1 font-normal bg-muted whitespace-nowrap">
-                    {total} Productos Locales
-                </Badge>
             </div>
 
             <div className="rounded-md border bg-card overflow-hidden">
