@@ -96,12 +96,12 @@ export function ProductsTable() {
                 <Table>
                     <TableHeader className="bg-muted/50">
                         <TableRow>
-                            <TableHead>SKU</TableHead>
+                            <TableHead className="w-[140px]">SKU</TableHead>
                             <TableHead>Nombre</TableHead>
-                            <TableHead>Modelo</TableHead>
-                            <TableHead className="text-right">Stock</TableHead>
-                            <TableHead className="text-right">P. Mín</TableHead>
-                            <TableHead className="text-right">P. Oferta</TableHead>
+                            <TableHead className="w-[100px] text-right">Modelo</TableHead>
+                            <TableHead className="w-[80px] text-right">Stock</TableHead>
+                            <TableHead className="w-[100px] text-right">P. Mín</TableHead>
+                            <TableHead className="w-[100px] text-right">P. Oferta</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -122,12 +122,12 @@ export function ProductsTable() {
                         ) : (
                             productos.map((producto) => (
                                 <TableRow key={producto._id} className="hover:bg-muted/50 transition-colors">
-                                    <TableCell className="font-mono text-xs">{producto.Código}</TableCell>
-                                    <TableCell className="font-medium max-w-[200px] truncate" title={producto.Nombre}>
+                                    <TableCell className="font-mono text-[11px] whitespace-nowrap">{producto.Código}</TableCell>
+                                    <TableCell className="font-medium py-3" title={producto.Nombre}>
                                         {producto.Nombre}
                                     </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className="font-normal text-[10px] uppercase">
+                                    <TableCell className="text-right">
+                                        <Badge variant="outline" className="font-normal text-[10px] uppercase whitespace-nowrap">
                                             {producto.Modelo || 'S/M'}
                                         </Badge>
                                     </TableCell>
@@ -136,10 +136,10 @@ export function ProductsTable() {
                                             {producto["Existencia Actual"]}
                                         </span>
                                     </TableCell>
-                                    <TableCell className="text-right font-semibold">
+                                    <TableCell className="text-right font-semibold whitespace-nowrap">
                                         ${producto["Precio Minimo"]?.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                                     </TableCell>
-                                    <TableCell className="text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                                    <TableCell className="text-right font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                                         ${producto["Precio Oferta"]?.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                                     </TableCell>
                                 </TableRow>
