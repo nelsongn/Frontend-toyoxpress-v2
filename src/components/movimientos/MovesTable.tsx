@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
     Table,
     TableBody,
@@ -165,8 +165,13 @@ export default function MovesTable() {
         loadFiltersData();
     }, []);
 
+    const fetchMovimientosRef = useRef(fetchMovimientos);
     useEffect(() => {
-        const handleRefresh = () => fetchMovimientos();
+        fetchMovimientosRef.current = fetchMovimientos;
+    });
+
+    useEffect(() => {
+        const handleRefresh = () => fetchMovimientosRef.current();
         window.addEventListener("refresh_movimientos", handleRefresh);
 
         return () => window.removeEventListener("refresh_movimientos", handleRefresh);
