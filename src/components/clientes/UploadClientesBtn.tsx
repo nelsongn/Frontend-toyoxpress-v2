@@ -6,7 +6,7 @@ import { CloudUpload, Loader2 } from "lucide-react";
 import * as XLSX from "xlsx";
 import Swal from "sweetalert2";
 import { useAuthStore } from "@/lib/store/useAuthStore";
-import axios from "axios";
+import { api } from "@/lib/api";
 
 interface UploadClientesBtnProps {
     onSuccess?: () => void;
@@ -14,7 +14,6 @@ interface UploadClientesBtnProps {
 
 export function UploadClientesBtn({ onSuccess }: UploadClientesBtnProps) {
     const [isUploading, setIsUploading] = useState(false);
-    const token = useAuthStore((state: any) => state.token);
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -46,11 +45,9 @@ export function UploadClientesBtn({ onSuccess }: UploadClientesBtnProps) {
                 throw new Error("El archivo Excel parece estar vacío o mal formateado.");
             }
 
-            const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
-            const res = await axios.post(
-                `${backendUrl}/clientes/upload`,
-                { data: rows },
-                { headers: { Authorization: `Bearer ${token}` } }
+            const res = await api.post(
+                '/clientes/upload',
+                { data: rows }
             );
 
             const { total, inserted, updated } = res.data;

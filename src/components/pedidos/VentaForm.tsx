@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import axios from "axios";
 import dynamic from "next/dynamic";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";

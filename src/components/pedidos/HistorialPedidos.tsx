@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/lib/store/useAuthStore";
-import axios from "axios";
+import { api } from "@/lib/api";
 import { PedidoStatusBadge } from "./PedidoStatusBadge";
 import { ChevronLeft, ChevronRight, ClipboardList } from "lucide-react";
 import { io } from "socket.io-client";
@@ -38,16 +38,15 @@ export function HistorialPedidos({ refreshTrigger }: Props) {
         if (!token) return;
         setLoading(true);
         try {
-            const r = await axios.get(`${backendUrl}/pedidos`, {
+            const r = await api.get('/pedidos', {
                 params: { page: currentPage, limit: LIMIT },
-                headers: { Authorization: `Bearer ${token}` },
             });
             setPedidos(r.data.data || []);
             setTotal(r.data.total || 0);
             setTotalPages(r.data.totalPages || 1);
         } catch { setPedidos([]); }
         finally { setLoading(false); }
-    }, [token, backendUrl]);
+    }, [token]);
 
     useEffect(() => { fetchPedidos(page); }, [page, fetchPedidos, refreshTrigger]);
 

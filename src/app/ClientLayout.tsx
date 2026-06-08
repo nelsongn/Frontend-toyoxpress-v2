@@ -24,11 +24,79 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         }
     }, [token, isAuthPage, _hasHydrated, router]);
 
-    // SESSION HEARTBEAT: Checks token expiration and store schedule every 60 seconds
+    // Helper to extract JWT expiration time in milliseconds
+    const getJwtExpiry = (jwtToken: string | null): number | null => {
+        if (!jwtToken) return null;
+        try {
+            const parts = jwtToken.split('.');
+            if (parts.length !== 3) return null;
+            const payload = JSON.parse(
+                atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'))
+            );
+            return payload.exp ? payload.exp * 1000 : null;
+        } catch {
+            return null;
+        }
+    };
+
+    // JWT EXPIRATION AUTO-LOGOUT: Schedules timer and listens for mobile wake/tab switch events
     useEffect(() => {
         if (!token || isAuthPage) return;
 
-        // Perform initial check
+        const logout = useAuthStore.getState().logout;
+
+        const checkTokenExpiration = () => {
+            const exp = getJwtExpiry(token);
+            if (!exp) return false;
+
+            const now = Date.now();
+            if (now >= exp) {
+                console.warn("Session expired (JWT reached expiration time). Logging out.");
+                logout();
+                router.push("/login");
+                return true;
+            }
+            return false;
+        };
+
+        // 1. Initial check immediately
+        const expired = checkTokenExpiration();
+        if (expired) return;
+
+        // 2. Schedule timeout for exact expiration moment
+        const exp = getJwtExpiry(token);
+        let timeoutId: NodeJS.Timeout | null = null;
+        if (exp) {
+            const delay = exp - Date.now();
+            if (delay > 0) {
+                timeoutId = setTimeout(() => {
+                    console.warn("Session expired automatically via JWT timer.");
+                    logout();
+                    router.push("/login");
+                }, delay);
+            }
+        }
+
+        // 3. Listen to focus and visibility change events (robust for mobile sleep/wake)
+        const handleActivity = () => {
+            checkTokenExpiration();
+        };
+
+        window.addEventListener("focus", handleActivity);
+        document.addEventListener("visibilitychange", handleActivity);
+
+        return () => {
+            if (timeoutId) clearTimeout(timeoutId);
+            window.removeEventListener("focus", handleActivity);
+            document.removeEventListener("visibilitychange", handleActivity);
+        };
+    }, [token, isAuthPage, router]);
+
+    // SESSION HEARTBEAT: Checks token expiration and store schedule on the backend every 60 seconds
+    useEffect(() => {
+        if (!token || isAuthPage) return;
+
+        // Perform check
         const checkSession = async () => {
             try {
                 await api.get('/auth/verify');

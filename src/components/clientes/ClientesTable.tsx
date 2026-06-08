@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/lib/store/useAuthStore";
-import axios from "axios";
+import { api } from "@/lib/api";
 import { Search, ChevronLeft, ChevronRight, Users } from "lucide-react";
 
 interface Cliente {
@@ -36,10 +36,8 @@ export function ClientesTable({ refreshTrigger }: Props) {
         if (!token) return;
         setLoading(true);
         try {
-            const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
-            const res = await axios.get(`${backendUrl}/clientes`, {
+            const res = await api.get('/clientes', {
                 params: { page: currentPage, limit: LIMIT, search: searchTerm },
-                headers: { Authorization: `Bearer ${token}` },
             });
             setClientes(res.data.data || []);
             setTotal(res.data.total || 0);

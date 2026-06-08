@@ -60,3 +60,19 @@ api.interceptors.response.use(
         return Promise.reject(error);
     }
 );
+
+// Interceptor global de Axios para asegurar que cualquier importación directa de axios
+// también responda limpiando sesión y redirigiendo ante un 401.
+axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            useAuthStore.getState().logout();
+            if (typeof window !== 'undefined') {
+                window.location.href = '/login';
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+

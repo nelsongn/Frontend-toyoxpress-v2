@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { api } from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   ArrowUpRight, ArrowDownLeft, DollarSign, Activity,
@@ -39,7 +39,6 @@ interface DashboardStats {
 
 export default function Dashboard() {
   const token = useAuthStore((state: any) => state.token);
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,9 +48,7 @@ export default function Dashboard() {
 
     const fetchStats = async () => {
       try {
-        const res = await axios.get(`${backendUrl}/dashboard/stats`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await api.get('/dashboard/stats');
         setStats(res.data);
       } catch (err) {
         console.error(err);
@@ -62,7 +59,7 @@ export default function Dashboard() {
     };
 
     fetchStats();
-  }, [token, backendUrl]);
+  }, [token]);
 
   if (loading) {
     return (
