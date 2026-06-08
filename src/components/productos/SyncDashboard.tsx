@@ -8,7 +8,7 @@ import { AlertCircle, CheckCircle2, CloudUpload, RefreshCw, Clock } from "lucide
 import { io, Socket } from "socket.io-client";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import axios from "axios";
+import { api } from "@/lib/api";
 
 // Definición de tipos basada en el esquema Mongoose SyncJob
 interface SyncMetrics {
@@ -61,13 +61,10 @@ export function SyncDashboard() {
 
     const fetchLastSync = useCallback(() => {
         // Fetch last sync job for persistent display
-        const backendApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
-        axios.get(`${backendApiUrl}/productos/last-sync`, {
-            headers: { Authorization: `Bearer ${token}` }
-        }).then(res => {
+        api.get('/productos/last-sync').then(res => {
             if (res.data?.data) setLastSync(res.data.data);
         }).catch(() => { }); // Silently ignore if no jobs yet
-    }, [token]);
+    }, []);
 
     useEffect(() => {
         fetchLastSync();

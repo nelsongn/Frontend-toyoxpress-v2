@@ -6,12 +6,11 @@ import { CloudUpload, Loader2 } from "lucide-react";
 import * as XLSX from "xlsx";
 import Swal from "sweetalert2";
 import { useAuthStore } from "@/lib/store/useAuthStore";
-import axios from "axios";
+import { api } from "@/lib/api";
 import RequirePermission from "@/components/auth/RequirePermission";
 
 export function UploadProductsBtn() {
     const [isUploading, setIsUploading] = useState(false);
-    const token = useAuthStore((state: any) => state.token);
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -51,19 +50,12 @@ export function UploadProductsBtn() {
             event.target.value = '';
 
             // Disparar carga local en backend
-            const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
-
-            await axios.post(
-                `${backendUrl}/productos/upload`,
+            await api.post(
+                '/productos/upload',
                 {
                     data: arrayCrudo,
                     length: arrayCrudo.length,
                     nombre: file.name
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
                 }
             );
 

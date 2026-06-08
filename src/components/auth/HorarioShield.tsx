@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAuthStore } from '@/lib/store/useAuthStore';
 import { useRouter, usePathname } from 'next/navigation';
-import axios from 'axios';
+import { api } from '@/lib/api';
 import Swal from 'sweetalert2';
 
 interface HorarioData {
@@ -41,14 +41,10 @@ export default function HorarioShield({ children }: { children: React.ReactNode 
             return;
         }
 
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
-
         // Función que descarga la hora y evalúa
         const evaluarHorario = async () => {
             try {
-                const res = await axios.get(`${backendUrl}/configuracion`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const res = await api.get('/configuracion');
 
                 const schedule: HorarioData[] = res.data.data.horario;
                 const serverTimeMs = res.data.serverTimeMs;

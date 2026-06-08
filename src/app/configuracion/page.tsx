@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -20,7 +20,6 @@ interface DiaHorario {
 
 export default function ConfiguracionPage() {
     const token = useAuthStore((state) => state.token);
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
     const [horario, setHorario] = useState<DiaHorario[]>([]);
     const [loading, setLoading] = useState(true);
@@ -38,9 +37,7 @@ export default function ConfiguracionPage() {
         if (!token) return;
         setLoading(true);
         try {
-            const res = await axios.get(`${backendUrl}/configuracion`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await api.get('/configuracion');
             const data = res.data.data;
             if (data.horario) setHorario(data.horario);
             // temaLocal is now managed by next-themes, no need to set it from backend here
@@ -95,10 +92,7 @@ export default function ConfiguracionPage() {
         if (!token) return;
         setSaving(true);
         try {
-            await axios.put(`${backendUrl}/configuracion`,
-                { horario, temaLocal: theme },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            await api.put('/configuracion', { horario, temaLocal: theme });
             Swal.fire({
                 icon: 'success',
                 title: 'Guardado',

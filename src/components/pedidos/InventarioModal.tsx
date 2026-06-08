@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import axios from "axios";
 import * as XLSX from "xlsx";
 import { pdf } from "@react-pdf/renderer";
 import { X, Search, Filter, Download, FileSpreadsheet, Loader2, Package, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { InventarioDocument } from "./InventarioDocument";
 import RequirePermission from "@/components/auth/RequirePermission";
-import { BASE_URL } from "@/lib/api";
+import { api, BASE_URL } from "@/lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -89,9 +88,6 @@ function buildParams(search: string, marca: string, soloConStock: boolean, extra
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function InventarioModal({ open, onClose }: Props) {
-    const token = useAuthStore((s: any) => s.token);
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
-
     // ── Pagination + data ──────────────────────────────────────────────────
     const [productos, setProductos] = useState<ProductoLinea[]>([]);
     const [total, setTotal] = useState(0);
@@ -118,8 +114,7 @@ export function InventarioModal({ open, onClose }: Props) {
         setExportError(null);
         try {
             const params = buildParams(s, m, stock, { page: String(p), limit: String(PAGE_SIZE) });
-            const res = await axios.get(`${backendUrl}/productos/inventario`, {
-                headers: { Authorization: `Bearer ${token}` },
+            const res = await api.get('/productos/inventario', {
                 params,
             });
             const raw: ProductoAPI[] = res.data.data || [];
@@ -137,17 +132,16 @@ export function InventarioModal({ open, onClose }: Props) {
         } finally {
             setLoading(false);
         }
-    }, [token, backendUrl]);
+    }, []);
 
     // ── Fetch ALL for export (no pagination) ──────────────────────────────
     const fetchAll = useCallback(async (s: string, m: string, stock: boolean): Promise<ProductoLinea[]> => {
         const params = buildParams(s, m, stock);
-        const res = await axios.get(`${backendUrl}/productos/inventario`, {
-            headers: { Authorization: `Bearer ${token}` },
+        const res = await api.get('/productos/inventario', {
             params,
         });
         return (res.data.data || []).map(mapToLinea);
-    }, [token, backendUrl]);
+    }, []);
 
     // ── Open: reset and load page 1 ────────────────────────────────────────
     useEffect(() => {
