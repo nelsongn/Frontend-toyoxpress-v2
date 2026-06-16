@@ -148,6 +148,43 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
         e.preventDefault();
         setLoading(true);
 
+        // Validaciones en el frontend
+        if (!formData.cuenta) {
+            Swal.fire({
+                title: 'Campo Requerido',
+                text: 'Por favor seleccione la Cuenta Afectada.',
+                icon: 'warning',
+                confirmButtonColor: '#c43224',
+                target: document.getElementById('move-modal-content')
+            });
+            setLoading(false);
+            return;
+        }
+
+        if (!formData.concepto || formData.concepto.trim() === '') {
+            Swal.fire({
+                title: 'Campo Requerido',
+                text: 'Por favor ingrese el Concepto de Registro.',
+                icon: 'warning',
+                confirmButtonColor: '#c43224',
+                target: document.getElementById('move-modal-content')
+            });
+            setLoading(false);
+            return;
+        }
+
+        if (!formData.fecha) {
+            Swal.fire({
+                title: 'Campo Requerido',
+                text: 'Por favor seleccione una Fecha.',
+                icon: 'warning',
+                confirmButtonColor: '#c43224',
+                target: document.getElementById('move-modal-content')
+            });
+            setLoading(false);
+            return;
+        }
+
         try {
             const numTotal = parseFloat(formData.total);
             const numEfectivo = parseFloat(formData.efectivo) || 0;
