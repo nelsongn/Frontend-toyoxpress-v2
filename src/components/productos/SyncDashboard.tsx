@@ -146,7 +146,7 @@ export function SyncDashboard() {
     if (!syncData || syncData.totalChunks === 0) {
         if (lastSync) {
             const lastDate = new Date(lastSync.updatedAt).toLocaleString('es-VE', {
-                dateStyle: 'medium', timeStyle: 'short'
+                dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Caracas'
             });
             const lastPct = Math.round((lastSync.chunksProcessed / lastSync.totalChunks) * 100);
             return (

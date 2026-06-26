@@ -350,7 +350,7 @@ export function VentaForm({ onSuccess }: Props) {
                     notaPedido,
                     notaCorreo,
                     emails,
-                    hora: new Date().toLocaleString('es-VE'),
+                    hora: new Date().toLocaleString('es-VE', { timeZone: 'America/Caracas' }),
                 },
             });
 

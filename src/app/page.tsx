@@ -87,7 +87,7 @@ export default function Dashboard() {
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleString('es-VE', {
-      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Caracas'
     });
   };
 
