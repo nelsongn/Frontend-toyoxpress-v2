@@ -13,7 +13,7 @@ const InventarioModal = dynamic(() => import("./InventarioModal").then(mod => mo
 });
 import {
     Search, UserRound, Package, X, Send, Plus,
-    Tag, ChevronDown, Download, BookOpen
+    Tag, ChevronDown, Download, BookOpen, MapPin
 } from "lucide-react";
 import { formatExcelDate } from "@/lib/utils";
 import Swal from "sweetalert2";
@@ -472,7 +472,8 @@ export function VentaForm({ onSuccess }: Props) {
                                                 className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border last:border-0 flex items-center justify-between gap-4">
                                                 <div className="min-w-0 flex-1">
                                                     <p className="text-xs font-mono text-muted-foreground">
-                                                        {p.sku} {p.Ref && <span className="ml-2 inline-flex items-center gap-1 rounded border border-border bg-muted px-1.5 py-0.5 text-xs font-semibold text-foreground">
+                                                        {p.sku} {p.Ref && <span className="ml-3 inline-flex items-center gap-1 rounded border border-border border-l-2 border-l-primary bg-muted px-1.5 py-0.5 font-sans text-xs font-semibold text-foreground">
+                                                            <MapPin className="h-3 w-3 text-primary dark:text-red-400" aria-hidden="true" />
                                                             <span className="font-normal text-muted-foreground">REF</span>{p.Ref}
                                                         </span>}
                                                     </p>
