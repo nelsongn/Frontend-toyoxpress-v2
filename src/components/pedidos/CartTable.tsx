@@ -58,7 +58,7 @@ export function CartTable({ lineas, onCantidadChange, onRemove }: Props) {
                             <tr key={i} className="hover:bg-muted/20 transition-colors">
                                 <td className="px-3 py-2 font-mono text-xs text-muted-foreground">{l.codigo}</td>
                                 <td className="px-3 py-2 font-medium text-foreground">{l.nombre}</td>
-                                <td className="px-3 py-2 text-muted-foreground text-xs">{l.referencia || "—"}</td>
+                                <td className="px-3 py-2 text-foreground text-xs font-semibold">{l.referencia || "—"}</td>
                                 <td className="px-3 py-2 text-muted-foreground text-xs border-r border-border/50">{l.modelo || "—"}</td>
                                 <td className="px-3 py-2 text-center">
                                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${Number(l.stockMax) > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
