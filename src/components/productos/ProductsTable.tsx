@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Search, Package, ChevronLeft, ChevronRight } from "lucide-react";
+import { RefBadge } from "./RefBadge";
 import {
     Select,
     SelectContent,
@@ -29,6 +30,7 @@ interface Producto {
     Código: string;
     Marca?: string;
     Modelo?: string;
+    Ref?: string;
     "Existencia Actual": number;
     "Precio Minimo": number;
     "Precio Mayor": number;
@@ -143,6 +145,7 @@ export function ProductsTable() {
                     <TableHeader className="bg-muted/50">
                         <TableRow>
                             <TableHead className="w-[140px]">SKU</TableHead>
+                            <TableHead className="w-[130px]">REF</TableHead>
                             <TableHead>Nombre</TableHead>
                             <TableHead className="w-[100px] text-right">Modelo</TableHead>
                             <TableHead className="w-[80px] text-right">Stock</TableHead>
@@ -153,14 +156,14 @@ export function ProductsTable() {
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="h-48 text-center">
+                                <TableCell colSpan={7} className="h-48 text-center">
                                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto mb-2" />
                                     <p className="text-sm text-muted-foreground">Cargando inventario...</p>
                                 </TableCell>
                             </TableRow>
                         ) : productos.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="h-48 text-center text-muted-foreground">
+                                <TableCell colSpan={7} className="h-48 text-center text-muted-foreground">
                                     <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
                                     <p>No se encontraron productos.</p>
                                 </TableCell>
@@ -169,6 +172,9 @@ export function ProductsTable() {
                             productos.map((producto) => (
                                 <TableRow key={producto._id} className="hover:bg-muted/50 transition-colors">
                                     <TableCell className="font-mono text-[11px] whitespace-nowrap">{producto.Código}</TableCell>
+                                    <TableCell>
+                                        {producto.Ref ? <RefBadge value={producto.Ref} /> : <span className="text-muted-foreground">—</span>}
+                                    </TableCell>
                                     <TableCell className="font-medium py-3 max-w-[400px] xl:max-w-[600px] truncate" title={producto.Nombre}>
                                         {producto.Nombre}
                                     </TableCell>
