@@ -115,7 +115,11 @@
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
+  /* Primary y ring van como hex literal (no var) para que Tailwind precalcule
+     bg-primary/10, ring-ring/50, etc. con alfa. Con var() el respaldo para
+     navegadores sin color-mix() (Chrome < 111, Windows 7) es el color SÓLIDO.
+     Mantener igual a --primary, que es el mismo en claro y oscuro. */
+  --color-primary: #a32240;
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -127,7 +131,7 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
-  --color-ring: var(--ring);
+  --color-ring: #a32240;
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);

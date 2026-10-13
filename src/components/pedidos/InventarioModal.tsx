@@ -291,7 +291,7 @@ export function InventarioModal({ open, onClose }: Props) {
                         <label className="flex items-center gap-2 cursor-pointer select-none">
                             <div className="relative">
                                 <input type="checkbox" className="sr-only" checked={soloConStock} onChange={e => setSoloConStock(e.target.checked)} />
-                                <div className={`w-9 h-5 rounded-full transition-colors ${soloConStock ? "bg-primary" : "bg-muted-foreground/30"}`} />
+                                <div className={`w-9 h-5 rounded-full transition-colors ${soloConStock ? "bg-primary" : "bg-neutral-300 dark:bg-neutral-600"}`} />
                                 <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${soloConStock ? "translate-x-4" : ""}`} />
                             </div>
                             <span className="text-xs font-medium text-foreground whitespace-nowrap">Solo con stock</span>

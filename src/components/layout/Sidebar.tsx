@@ -113,7 +113,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                 </button>
                 <button
                     onClick={handleLogout}
-                    className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                    className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-destructive hover:bg-red-500/10 transition-colors"
                 >
                     <LogOut className="mr-3 h-5 w-5 flex-shrink-0" aria-hidden="true" />
                     Cerrar Sesión
