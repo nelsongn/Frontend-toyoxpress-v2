@@ -31,6 +31,20 @@ import {
 } from "@/components/ui/select";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 
+const getVenezuelaDate = (d: Date = new Date()): string => {
+    const formatter = new Intl.DateTimeFormat('es-VE', {
+        timeZone: 'America/Caracas',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+    const parts = formatter.formatToParts(d);
+    const year = parts.find(p => p.type === 'year')?.value;
+    const month = parts.find(p => p.type === 'month')?.value;
+    const day = parts.find(p => p.type === 'day')?.value;
+    return `${year}-${month}-${day}`;
+};
+
 export default function MovesTable() {
     const permissions = useAuthStore(state => state.permissions);
     const [movimientos, setMovimientos] = useState<any[]>([]);
@@ -52,11 +66,7 @@ export default function MovesTable() {
         const today = new Date();
         const past = new Date();
         past.setMonth(today.getMonth() - 3);
-        const format = (d: Date) => {
-            const tzOffset = d.getTimezoneOffset() * 60000;
-            return new Date(d.getTime() - tzOffset).toISOString().split('T')[0];
-        };
-        return { inicio: format(past), cierre: format(today) };
+        return { inicio: getVenezuelaDate(past), cierre: getVenezuelaDate(today) };
     };
 
     const initialDates = getInitialDates();

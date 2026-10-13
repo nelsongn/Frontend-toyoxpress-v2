@@ -22,6 +22,20 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
+const getVenezuelaDate = (d: Date = new Date()): string => {
+    const formatter = new Intl.DateTimeFormat('es-VE', {
+        timeZone: 'America/Caracas',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+    const parts = formatter.formatToParts(d);
+    const year = parts.find(p => p.type === 'year')?.value;
+    const month = parts.find(p => p.type === 'month')?.value;
+    const day = parts.find(p => p.type === 'day')?.value;
+    return `${year}-${month}-${day}`;
+};
+
 interface MoveModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -48,7 +62,7 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
         cantidadDeBolivares: "",
         total: "0.00",
         concepto: "",
-        fecha: new Date().toISOString().split('T')[0]
+        fecha: getVenezuelaDate()
     });
 
     useEffect(() => {
@@ -67,9 +81,12 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
 
             if (move) {
                 // Formatting date for HTML input type="date"
-                let formattedDate = new Date().toISOString().split('T')[0];
+                let formattedDate = getVenezuelaDate();
                 if (move.fecha) {
-                    formattedDate = new Date(move.fecha).toISOString().split('T')[0];
+                    const parsed = new Date(move.fecha);
+                    if (!isNaN(parsed.getTime())) {
+                        formattedDate = getVenezuelaDate(parsed);
+                    }
                 } else if (move.fechaString && move.fechaString.includes('/')) {
                     // Try to parse DD/MM/YYYY if that's what's saved
                     const parts = move.fechaString.split('/');
@@ -111,7 +128,7 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                     cantidadDeBolivares: "",
                     total: "0.00",
                     concepto: "",
-                    fecha: new Date().toISOString().split('T')[0]
+                    fecha: getVenezuelaDate()
                 });
             }
         }
@@ -253,7 +270,7 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                 cantidadDeBolivares: "",
                 total: "0.00",
                 concepto: "",
-                fecha: new Date().toISOString().split('T')[0]
+                fecha: getVenezuelaDate()
             })
 
             onSuccess();

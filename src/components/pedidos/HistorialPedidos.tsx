@@ -119,7 +119,7 @@ export function HistorialPedidos({ refreshTrigger }: Props) {
                                         <PedidoStatusBadge estado={p.estado} />
                                     </td>
                                     <td className="px-4 py-3 text-xs text-muted-foreground">
-                                        {new Date(p.creadoEn).toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' })}
+                                        {new Date(p.creadoEn).toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Caracas' })}
                                     </td>
                                 </tr>
                             ))
