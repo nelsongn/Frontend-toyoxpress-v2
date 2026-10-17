@@ -71,6 +71,7 @@ export default function Dashboard() {
   const puedeRegistrarMovimiento = permisos?.verMovimientos === true;
   const puedeVender = stats.puedeVerPedidos;
   const verSincronizacion = !!stats.sincronizacion && (stats.puedeVerPedidos || permisos?.cargarProductos === true);
+  const columnaDerecha = stats.puedeVerCuentas || verSincronizacion;
 
   return (
     <div className="space-y-6">
@@ -106,8 +107,8 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Fila superior: caja de hoy, pendientes + catálogo, sincronización */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {/* Fila superior: caja de hoy, pendientes + catálogo */}
+      <div className="grid gap-4 md:grid-cols-2">
         {stats.puedeVerMovimientos && (
           <CajaHoy ingresos={stats.financiero.ingresosHoy} egresos={stats.financiero.egresosHoy} />
         )}
@@ -147,31 +148,32 @@ export default function Dashboard() {
             </dl>
           </section>
         </div>
-
-        {verSincronizacion && stats.sincronizacion && (
-          <EstadoSincronizacion
-            datos={stats.sincronizacion}
-            verPedidos={stats.puedeVerPedidos}
-            verProductos={permisos?.cargarProductos === true}
-          />
-        )}
       </div>
 
-      {/* Actividad reciente y saldos */}
+      {/* Actividad reciente (izquierda) y saldos + sincronización (derecha) */}
       <div className="grid gap-4 lg:grid-cols-3">
         {(stats.puedeVerPedidos || stats.puedeVerMovimientos) && (
-          <div className={`space-y-4 ${stats.puedeVerCuentas ? "lg:col-span-2" : "lg:col-span-3"}`}>
+          <div className={`space-y-4 ${columnaDerecha ? "lg:col-span-2" : "lg:col-span-3"}`}>
             {stats.puedeVerPedidos && <UltimosPedidos pedidos={stats.recientes.pedidos} />}
             {stats.puedeVerMovimientos && <UltimosMovimientos movimientos={stats.recientes.movimientos} />}
           </div>
         )}
 
-        {stats.puedeVerCuentas && (
-          <div className={stats.puedeVerPedidos || stats.puedeVerMovimientos ? "" : "lg:col-span-3"}>
-            <SaldosCuentas
-              cuentas={stats.cuentas}
-              total={permisos?.verSaldoTotal === true ? stats.financiero.saldoTotal : null}
-            />
+        {columnaDerecha && (
+          <div className={`space-y-4 ${stats.puedeVerPedidos || stats.puedeVerMovimientos ? "" : "lg:col-span-3"}`}>
+            {stats.puedeVerCuentas && (
+              <SaldosCuentas
+                cuentas={stats.cuentas}
+                total={permisos?.verSaldoTotal === true ? stats.financiero.saldoTotal : null}
+              />
+            )}
+            {verSincronizacion && stats.sincronizacion && (
+              <EstadoSincronizacion
+                datos={stats.sincronizacion}
+                verPedidos={stats.puedeVerPedidos}
+                verProductos={permisos?.cargarProductos === true}
+              />
+            )}
           </div>
         )}
       </div>
