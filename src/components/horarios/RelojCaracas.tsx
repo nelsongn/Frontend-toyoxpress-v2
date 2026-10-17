@@ -51,10 +51,10 @@ export function RelojCaracas({ horario, desfaseServidorMs }: Props) {
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                         Hora de Caracas · UTC−4
                     </p>
-                    <div className="mt-2">
+                    <div className="mt-1">
                         <DisplayLed horas={hora.horas} minutos={hora.minutos} segundos={hora.segundos} />
                     </div>
-                    <p className="mt-2 text-sm text-muted-foreground">
+                    <p className="mt-1 text-sm text-muted-foreground">
                         {hora.dia}, {hora.fecha}
                     </p>
                 </div>

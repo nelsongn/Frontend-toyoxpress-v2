@@ -1,9 +1,9 @@
 // Display de 7 segmentos (estilo reloj LED), dibujado en SVG: sin fuentes externas y nítido a
 // cualquier tamaño. Funciona en Chrome 109 (Windows 7).
 
-// Color del LED encendido y del segmento apagado (blanco sobre negro)
-const LED_ENCENDIDO = "#f5f5f5";
-const LED_APAGADO = "#1c1c1c";
+// Los segmentos toman el color del texto (currentColor), así se ven bien en tema claro y oscuro
+// directamente sobre el fondo del card; los apagados apenas se insinúan.
+const OPACIDAD_APAGADO = 0.07;
 
 type Segmento = "a" | "b" | "c" | "d" | "e" | "f" | "g";
 
@@ -39,7 +39,7 @@ function Digito({ valor }: { valor: string }) {
     return (
         <g>
             {(Object.keys(SEGMENTOS) as Segmento[]).map((s) => (
-                <polygon key={s} points={SEGMENTOS[s]} fill={encendidos.includes(s) ? LED_ENCENDIDO : LED_APAGADO} />
+                <polygon key={s} points={SEGMENTOS[s]} fill="currentColor" fillOpacity={encendidos.includes(s) ? 1 : OPACIDAD_APAGADO} />
             ))}
         </g>
     );
@@ -47,7 +47,7 @@ function Digito({ valor }: { valor: string }) {
 
 function DosPuntos({ encendido }: { encendido: boolean }) {
     return (
-        <g fill={encendido ? LED_ENCENDIDO : LED_APAGADO}>
+        <g fill="currentColor" fillOpacity={encendido ? 1 : OPACIDAD_APAGADO}>
             <rect x="4" y="28" width="10" height="10" rx="2" />
             <rect x="4" y="62" width="10" height="10" rx="2" />
         </g>
@@ -59,7 +59,7 @@ interface Props {
     minutos: number;
     /** Los dos puntos parpadean: encendidos en segundos pares (el reloj se ve en marcha) */
     segundos: number;
-    /** Altura de los dígitos en px */
+    /** Altura de los dígitos en px (48 = el alto del reloj de texto text-5xl que había antes) */
     alto?: number;
 }
 
@@ -69,19 +69,13 @@ const X_PUNTOS = 128;
 const ANCHO = 218 + 60 + 12; // último dígito + margen para la inclinación
 
 /** "HH:MM" en estilo LED de 7 segmentos, con los dos puntos parpadeando cada segundo. */
-export function DisplayLed({ horas, minutos, segundos, alto = 64 }: Props) {
+export function DisplayLed({ horas, minutos, segundos, alto = 48 }: Props) {
     const hh = String(horas).padStart(2, "0");
     const mm = String(minutos).padStart(2, "0");
     const digitos = hh + mm;
 
     return (
-        <div
-            role="img"
-            aria-label={`${hh}:${mm}`}
-            className="inline-flex rounded-lg border border-neutral-800 bg-neutral-950 px-4 py-3"
-            // Brillo del LED encendido
-            style={{ filter: `drop-shadow(0 0 4px ${LED_ENCENDIDO}66)` }}
-        >
+        <div role="img" aria-label={`${hh}:${mm}`} className="inline-flex text-foreground">
             <svg viewBox={`0 0 ${ANCHO} 100`} height={alto} width={(alto * ANCHO) / 100} aria-hidden="true">
                 {/* Inclinación leve, como los relojes LED */}
                 <g transform="skewX(-6) translate(6 0)">
