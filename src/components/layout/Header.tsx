@@ -3,6 +3,7 @@
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { UserCircle, Menu } from "lucide-react";
 import { GlobalSyncProgress } from "../productos/GlobalSyncProgress";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function Header({ toggleSidebar }: { toggleSidebar?: () => void }) {
     const user = useAuthStore((state: any) => state.name);
@@ -18,7 +19,8 @@ export function Header({ toggleSidebar }: { toggleSidebar?: () => void }) {
             
         <div className="flex items-center justify-end w-full gap-2 md:gap-6">
             <GlobalSyncProgress />
-            <div className="flex items-center gap-2 md:gap-4 ml-2">
+            <ThemeToggle />
+            <div className="flex items-center gap-2 md:gap-4 ml-2 pl-2 md:pl-6 border-l border-border">
                 <div className="flex flex-col items-end">
                     <span className="text-xs md:text-sm font-medium text-foreground">{user || "Invitado"}</span>
                     <span className="text-[10px] md:text-xs text-muted-foreground">

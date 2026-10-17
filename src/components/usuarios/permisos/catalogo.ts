@@ -4,7 +4,6 @@ import {
     UserCog,
     Package,
     ShoppingCart,
-    Tag,
     Clock,
     type LucideIcon,
 } from "lucide-react";
@@ -76,7 +75,9 @@ export const MODULOS_PERMISOS: ModuloPermisos[] = [
         acceso: { key: "verProductos", label: "Acceso a Productos" },
         permisos: [
             { key: "cargarProductos", label: "Subir Excel y sincronizar con WooCommerce", ayuda: "También da acceso a la sección" },
+            { key: "consultarPrecios", label: "Ver precios", ayuda: "También en ventas e inventario de Pedidos" },
         ],
+        // Independientes: "Cargar" da acceso por sí solo y "Ver precios" aplica también en Pedidos
         subpermisosIndependientes: true,
     },
     {
@@ -91,19 +92,12 @@ export const MODULOS_PERMISOS: ModuloPermisos[] = [
         ],
     },
     {
-        id: "precios",
-        titulo: "Precios",
-        descripcion: "Montos en ventas, inventario y productos.",
-        icon: Tag,
-        permisos: [{ key: "consultarPrecios", label: "Ver precios" }],
-    },
-    {
         id: "horario",
         titulo: "Horario",
         descripcion: "Control de ingreso al sistema.",
         icon: Clock,
         permisos: [
-            { key: "horasIngreso", label: "Configurar el horario de ingreso", ayuda: "En Configuración" },
+            { key: "horasIngreso", label: "Configurar el horario de ingreso", ayuda: "Da acceso a Configuración" },
             { key: "obviarIngreso", label: "Entrar fuera del horario" },
         ],
     },

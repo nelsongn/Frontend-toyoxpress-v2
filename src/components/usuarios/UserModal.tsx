@@ -37,8 +37,8 @@ function escaparHtml(texto: string) {
 
 // Los gestores de contraseñas (extensiones) ignoran autoComplete="off" y rellenaban este
 // formulario con el login de quien lo usa. Defensas: (1) al editar, el campo contraseña solo
-// aparece al pedirlo; (2) los campos son de solo lectura hasta que se hace clic en ellos (los
-// gestores no rellenan campos readOnly); (3) la confirmación muestra qué datos cambian.
+// aparece al pedirlo; (2) los campos son de solo lectura hasta un clic o un Tab real
+// (los gestores no rellenan campos readOnly) y, mientras tanto, se ignora lo que escriban en ellos; (3) la confirmación muestra qué datos cambian.
 type CampoTexto = "nombre" | "correo" | "clave" | "vendedor";
 
 export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: UserModalProps) {
@@ -46,6 +46,12 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
     const [cambiarClave, setCambiarClave] = useState(false);
     const [desbloqueados, setDesbloqueados] = useState<Record<CampoTexto, boolean>>({ nombre: false, correo: false, clave: false, vendedor: false });
     const desbloquear = (campo: CampoTexto) => setDesbloqueados((d) => (d[campo] ? d : { ...d, [campo]: true }));
+    // Solo una interacción real desbloquea un campo: clic/toque o llegar con Tab. El foco por sí
+    // solo no, porque los gestores de contraseñas enfocan los campos por código antes de rellenarlos.
+    const interaccion = (campo: CampoTexto) => ({
+        onPointerDown: () => desbloquear(campo),
+        onKeyUp: (e: React.KeyboardEvent) => { if (e.key === "Tab") desbloquear(campo); },
+    });
 
     const [formData, setFormData] = useState({
         username: "",
@@ -210,12 +216,12 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                                     <Input
                                         id="campo-nombre"
                                         readOnly={!desbloqueados.nombre}
-                                        onFocus={() => desbloquear("nombre")}
+                                        {...interaccion("nombre")}
                                         name="campo-nombre"
                                         autoComplete="off"
                                         required
                                         value={formData.username}
-                                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                                        onChange={(e) => { if (desbloqueados.nombre) setFormData({ ...formData, username: e.target.value }); }}
                                         placeholder="admin_miguel"
                                         className="h-10"
                                     />
@@ -225,13 +231,13 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                                     <Input
                                         id="campo-correo"
                                         readOnly={!desbloqueados.correo}
-                                        onFocus={() => desbloquear("correo")}
+                                        {...interaccion("correo")}
                                         name="campo-correo"
                                         autoComplete="off"
                                         required
                                         type="email"
                                         value={formData.email}
-                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                        onChange={(e) => { if (desbloqueados.correo) setFormData({ ...formData, email: e.target.value }); }}
                                         placeholder="correo@ejemplo.com"
                                         className="h-10"
                                     />
@@ -255,12 +261,12 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                                             name="campo-clave"
                                             autoComplete="new-password"
                                             readOnly={!desbloqueados.clave}
-                                            onFocus={() => desbloquear("clave")}
+                                            {...interaccion("clave")}
                                             autoFocus={!!userToEdit}
                                             required={!userToEdit} // Required only on creation
                                             type="password"
                                             value={formData.password}
-                                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                            onChange={(e) => { if (desbloqueados.clave) setFormData({ ...formData, password: e.target.value }); }}
                                             placeholder={userToEdit ? "Nueva contraseña" : "Mínimo 6 caracteres"}
                                             className="h-10"
                                             minLength={6}
@@ -272,12 +278,12 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                                     <Input
                                         id="campo-vendedor"
                                         readOnly={!desbloqueados.vendedor}
-                                        onFocus={() => desbloquear("vendedor")}
+                                        {...interaccion("vendedor")}
                                         name="campo-vendedor"
                                         autoComplete="off"
                                         type="number"
                                         value={formData.vendedor || ""}
-                                        onChange={(e) => setFormData({ ...formData, vendedor: parseInt(e.target.value) || 0 })}
+                                        onChange={(e) => { if (desbloqueados.vendedor) setFormData({ ...formData, vendedor: parseInt(e.target.value) || 0 }); }}
                                         placeholder="Sin código"
                                         className="h-10"
                                         min={0}
