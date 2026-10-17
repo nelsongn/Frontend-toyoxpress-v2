@@ -1,51 +1,33 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { api } from "@/lib/api";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { EstadoSincronizacion, type DatosSincronizacion } from "@/components/dashboard/EstadoSincronizacion";
-import {
-  ArrowUpRight, ArrowDownLeft, DollarSign, Activity,
-  Users, Package, TrendingUp, AlertCircle, ShoppingBag,
-  Clock, CreditCard, ChevronRight, ArrowLeftRight
-} from "lucide-react";
+import { Activity, AlertCircle, ArrowRight, ArrowLeftRight, ShoppingCart, ContactRound, Package } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { EstadoSincronizacion } from "@/components/dashboard/EstadoSincronizacion";
+import { CajaHoy } from "@/components/dashboard/CajaHoy";
+import { UltimosMovimientos, UltimosPedidos } from "@/components/dashboard/ListasRecientes";
+import { SaldosCuentas } from "@/components/dashboard/SaldosCuentas";
+import type { DashboardStats } from "@/components/dashboard/tipos";
+import { horaCaracas } from "@/lib/horario";
 
-interface DashboardStats {
-  ok: boolean;
-  esAdmin: boolean;
-  puedeVerCuentas: boolean;
-  puedeVerMovimientos: boolean;
-  puedeVerPedidos: boolean;
-  financiero: {
-    ingresosHoy: number;
-    egresosHoy: number;
-    saldoTotal: number;
-  };
-  catalogo: {
-    totalClientes: number;
-    totalProductos: number;
-  };
-  pendientesAprobar: number;
-  cuentas: Array<{
-    nombre: string;
-    balance: number;
-    color: string;
-  }>;
-  recientes: {
-    pedidos: any[];
-    movimientos: any[];
-  };
-  /** Opcional: no viene si el backend aún no está actualizado */
-  sincronizacion?: DatosSincronizacion;
+function saludo(hora: number) {
+  if (hora < 12) return "Buenos días";
+  if (hora < 19) return "Buenas tardes";
+  return "Buenas noches";
 }
 
 export default function Dashboard() {
-  const token = useAuthStore((state: any) => state.token);
-  const puedeCargarProductos = useAuthStore((state) => state.permissions?.cargarProductos === true);
+  const token = useAuthStore((state) => state.token);
+  const nombre = useAuthStore((state) => state.name);
+  const permisos = useAuthStore((state) => state.permissions);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Hora de referencia para el saludo y la fecha (Caracas)
+  const [ahora] = useState(() => Date.now());
 
   useEffect(() => {
     if (!token) return;
@@ -85,243 +67,111 @@ export default function Dashboard() {
     );
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-  };
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleString('es-VE', {
-      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Caracas'
-    });
-  };
+  const hora = horaCaracas(ahora);
+  const puedeRegistrarMovimiento = permisos?.verMovimientos === true;
+  const puedeVender = stats.puedeVerPedidos;
+  const verSincronizacion = !!stats.sincronizacion && (stats.puedeVerPedidos || permisos?.cargarProductos === true);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Encabezado: título, saludo con fecha de Caracas y accesos rápidos */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            {stats.esAdmin ? "Dashboard General" : "Mi Resumen Diario"}
+            {stats.esAdmin ? "Dashboard general" : "Mi resumen diario"}
           </h1>
-          <p className="text-muted-foreground mt-2">
-            {stats.esAdmin
-              ? "Resumen financiero y de operaciones del sistema de ToyoXpress."
-              : "Resumen de tus operaciones de caja y pedidos procesados hoy."}
+          <p className="mt-2 text-muted-foreground">
+            {saludo(hora.horas)}{nombre ? `, ${nombre}` : ""} · {hora.dia} {hora.fecha}, hora de Caracas
           </p>
         </div>
+        {(puedeRegistrarMovimiento || puedeVender) && (
+          <div className="flex flex-wrap gap-2">
+            {puedeRegistrarMovimiento && (
+              <Button asChild variant="outline">
+                <Link href="/movimientos?nuevo=1">
+                  <ArrowLeftRight className="h-4 w-4" />
+                  Registrar movimiento
+                </Link>
+              </Button>
+            )}
+            {puedeVender && (
+              <Button asChild>
+                <Link href="/pedidos">
+                  <ShoppingCart className="h-4 w-4" />
+                  Nueva venta
+                </Link>
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Top Metrics row */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Solos los Admins o los que ven Movimientos verán la suma total, pero los vendedores verán "sus ventas" */}
+      {/* Fila superior: caja de hoy, pendientes + catálogo, sincronización */}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {stats.puedeVerMovimientos && (
-          <>
-            <Card className="shadow-sm border-border/60">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Ingresos (Hoy)</CardTitle>
-                <ArrowUpRight className="h-4 w-4 text-emerald-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-emerald-600">
-                  {formatCurrency(stats.financiero.ingresosHoy)}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Registrados en movimientos</p>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm border-border/60">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Egresos (Hoy)</CardTitle>
-                <ArrowDownLeft className="h-4 w-4 text-destructive" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-destructive">
-                  {formatCurrency(stats.financiero.egresosHoy)}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Salidas registradas</p>
-              </CardContent>
-            </Card>
-          </>
+          <CajaHoy ingresos={stats.financiero.ingresosHoy} egresos={stats.financiero.egresosHoy} />
         )}
 
-        {stats.esAdmin ? (
-          <Card className="shadow-sm border-border/60 bg-amber-500/10">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pendientes por Aprobar</CardTitle>
-              <AlertCircle className="h-4 w-4 text-amber-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-extrabold text-amber-600 mt-2">
-                {stats.pendientesAprobar}
+        <div className="grid content-start gap-4">
+          {stats.esAdmin && (
+            <section aria-label="Pendientes por aprobar" className="rounded-lg border border-border border-l-4 border-l-amber-500 bg-card p-5 shadow-sm">
+              <p className="font-mono text-3xl font-semibold tabular-nums text-foreground">{stats.pendientesAprobar}</p>
+              <div className="mt-1 flex items-center justify-between gap-3">
+                <p className="text-sm text-muted-foreground">
+                  {stats.pendientesAprobar === 1 ? "Movimiento pendiente por aprobar" : "Movimientos pendientes por aprobar"}
+                </p>
+                {puedeRegistrarMovimiento && stats.pendientesAprobar > 0 && (
+                  <Link href="/movimientos" className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-amber-600 hover:underline dark:text-amber-400">
+                    Revisar
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                )}
               </div>
-              <p className="text-xs text-muted-foreground mt-2">Movimientos sin verificar</p>
-            </CardContent>
-          </Card>
-        ) : stats.sincronizacion ? (
+            </section>
+          )}
+
+          <section aria-label="Catálogo" className="rounded-lg border border-border bg-card px-5 py-4 shadow-sm">
+            <dl className="space-y-2 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <dt className="flex items-center gap-2 text-muted-foreground">
+                  <ContactRound className="h-4 w-4" aria-hidden="true" /> Clientes
+                </dt>
+                <dd className="font-mono font-semibold tabular-nums text-foreground">{stats.catalogo.totalClientes.toLocaleString("es-VE")}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="flex items-center gap-2 text-muted-foreground">
+                  <Package className="h-4 w-4" aria-hidden="true" /> Productos
+                </dt>
+                <dd className="font-mono font-semibold tabular-nums text-foreground">{stats.catalogo.totalProductos.toLocaleString("es-VE")}</dd>
+              </div>
+            </dl>
+          </section>
+        </div>
+
+        {verSincronizacion && stats.sincronizacion && (
           <EstadoSincronizacion
             datos={stats.sincronizacion}
             verPedidos={stats.puedeVerPedidos}
-            verProductos={puedeCargarProductos}
+            verProductos={permisos?.cargarProductos === true}
           />
-        ) : null}
-
-        <div className="grid grid-rows-2 gap-4">
-          <Card className="shadow-sm border-border/60 flex items-center p-4">
-            <div className="h-10 w-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-4">
-              <Users className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Clientes</p>
-              <p className="text-xl font-bold">{stats.catalogo.totalClientes}</p>
-            </div>
-          </Card>
-          <Card className="shadow-sm border-border/60 flex items-center p-4">
-            <div className="h-10 w-10 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mr-4">
-              <Package className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Productos</p>
-              <p className="text-xl font-bold">{stats.catalogo.totalProductos}</p>
-            </div>
-          </Card>
-        </div>
+        )}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-12">
-        {/* Columna Principal: Actividades Recientes */}
-        <div className={`space-y-6 ${stats.puedeVerCuentas ? 'md:col-span-8' : 'md:col-span-12'}`}>
+      {/* Actividad reciente y saldos */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        {(stats.puedeVerPedidos || stats.puedeVerMovimientos) && (
+          <div className={`space-y-4 ${stats.puedeVerCuentas ? "lg:col-span-2" : "lg:col-span-3"}`}>
+            {stats.puedeVerPedidos && <UltimosPedidos pedidos={stats.recientes.pedidos} />}
+            {stats.puedeVerMovimientos && <UltimosMovimientos movimientos={stats.recientes.movimientos} />}
+          </div>
+        )}
 
-          {/* Pedidos */}
-          {stats.puedeVerPedidos && (
-            <Card className="shadow-sm border-border/60 flex flex-col h-[350px]">
-              <CardHeader className="pb-3 border-b border-border/50 bg-muted/20">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <ShoppingBag className="h-4 w-4 text-primary" />
-                  Últimos Pedidos
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0 overflow-auto flex-1">
-                {stats.recientes.pedidos.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-muted-foreground">No hay pedidos recientes.</div>
-                ) : (
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted/10">
-                      <tr>
-                        <th className="px-4 py-2 text-left font-medium text-muted-foreground">Cliente / Vendedor</th>
-                        <th className="px-4 py-2 text-center font-medium text-muted-foreground">Monto</th>
-                        <th className="px-4 py-2 text-right font-medium text-muted-foreground">Fecha</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/50">
-                      {stats.recientes.pedidos.map(p => (
-                        <tr key={p._id} className="hover:bg-muted/30">
-                          <td className="px-4 py-3 font-medium text-foreground truncate max-w-[200px]">
-                            <div>{p.payload?.cliente?.Nombre || 'Desconocido'}</div>
-                            <div className="text-[10px] text-muted-foreground mt-0.5">Vendedor: {p.vendedorName || p.vendedorId || 'N/A'}</div>
-                          </td>
-                          <td className="px-4 py-3 text-center font-semibold text-emerald-600">
-                            {formatCurrency(p.payload?.total || 0)}
-                          </td>
-                          <td className="px-4 py-3 text-right text-muted-foreground text-xs">
-                            {formatDate(p.creadoEn || p.createdAt)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Movimientos */}
-          {stats.puedeVerMovimientos && (
-            <Card className="shadow-sm border-border/60 flex flex-col h-[350px]">
-              <CardHeader className="pb-3 border-b border-border/50 bg-muted/20">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <ArrowLeftRight className="h-4 w-4 text-primary" />
-                  Últimos Movimientos
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0 overflow-auto flex-1">
-                {stats.recientes.movimientos.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-muted-foreground">No hay movimientos registrados.</div>
-                ) : (
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted/10">
-                      <tr>
-                        <th className="px-4 py-2 text-left font-medium text-muted-foreground">Detalle</th>
-                        <th className="px-4 py-2 text-left font-medium text-muted-foreground">Tipo</th>
-                        <th className="px-4 py-2 text-right font-medium text-muted-foreground">Monto</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/50">
-                      {stats.recientes.movimientos.map(m => (
-                        <tr key={m._id} className="hover:bg-muted/30">
-                          <td className="px-4 py-3 font-medium text-foreground truncate max-w-[250px]">
-                            {m.referencia}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase ${m.tipo === 'ingreso' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                              {m.tipo}
-                            </span>
-                          </td>
-                          <td className={`px-4 py-3 text-right font-semibold ${m.tipo === 'ingreso' ? 'text-emerald-600' : 'text-red-500'}`}>
-                            {m.tipo === 'ingreso' ? '+' : '-'}{formatCurrency(m.monto)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-        </div>
-
-        {/* Columna Secundaria: Distribución de Saldos (Solo Mánagers/Admins) */}
         {stats.puedeVerCuentas && (
-          <div className="md:col-span-4 space-y-6">
-            <Card className="shadow-sm border-border/60">
-              <CardHeader className="bg-muted/20 border-b border-border/50 pb-3">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <CreditCard className="h-4 w-4 text-primary" />
-                  Distribución de Saldos
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4">
-                {stats.cuentas.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center my-6">No hay cuentas fiduciarias configuradas.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {stats.cuentas.map(c => {
-                      return (
-                        <div key={c.nombre} className="space-y-1.5 py-1">
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="font-medium text-foreground flex items-center gap-2">
-                              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: c.color || '#94a3b8' }}></span>
-                              {c.nombre}
-                            </span>
-                            <span className={`font-semibold ${c.balance < 0 ? 'text-destructive' : 'text-emerald-600'}`}>
-                              {formatCurrency(c.balance)}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Estado real de la sincronización (antes era un texto fijo "Worker SQS Activo") */}
-            {stats.sincronizacion && (
-              <EstadoSincronizacion
-                datos={stats.sincronizacion}
-                verPedidos={stats.puedeVerPedidos}
-                verProductos={puedeCargarProductos}
-              />
-            )}
+          <div className={stats.puedeVerPedidos || stats.puedeVerMovimientos ? "" : "lg:col-span-3"}>
+            <SaldosCuentas
+              cuentas={stats.cuentas}
+              total={permisos?.verSaldoTotal === true ? stats.financiero.saldoTotal : null}
+            />
           </div>
         )}
       </div>
