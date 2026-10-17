@@ -30,5 +30,6 @@ export const navigation: ItemNavegacion[] = [
     { name: "Productos", href: "/productos", icon: Package, perm: PERMISOS_PRODUCTOS },
     { name: "Clientes", href: "/clientes", icon: ContactRound, perm: "verPedidos" },
     { name: "Pedidos", href: "/pedidos", icon: ShoppingCart, perm: "verPedidos" },
-    { name: "Configuración", href: "/configuracion", icon: Settings, general: true },
+    // Configuración solo tiene el horario de ingreso (el tema está en el Header)
+    { name: "Configuración", href: "/configuracion", icon: Settings, general: true, perm: "horasIngreso" },
 ];

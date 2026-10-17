@@ -6,8 +6,7 @@ import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Clock, Settings, Save, AlertCircle, CalendarRange, Sun, Moon, Copy } from "lucide-react";
-import { useTheme } from "next-themes";
+import { Clock, Settings, Save, AlertCircle, CalendarRange, Copy } from "lucide-react";
 import Swal from "sweetalert2";
 import RequirePermission from "@/components/auth/RequirePermission";
 
@@ -25,11 +24,8 @@ export default function ConfiguracionPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    const { theme, setTheme, resolvedTheme } = useTheme();
-    const [mounted, setMounted] = useState(false);
-
+    // El tema claro/oscuro se cambia desde el Header (ThemeToggle)
     useEffect(() => {
-        setMounted(true);
         fetchConfig();
     }, []);
 
@@ -92,7 +88,7 @@ export default function ConfiguracionPage() {
         if (!token) return;
         setSaving(true);
         try {
-            await api.put('/configuracion', { horario, temaLocal: theme });
+            await api.put('/configuracion', { horario });
             Swal.fire({
                 icon: 'success',
                 title: 'Guardado',
@@ -107,10 +103,6 @@ export default function ConfiguracionPage() {
         }
     };
 
-    const toggleTheme = (val: boolean) => {
-        setTheme(val ? 'dark' : 'light');
-    };
-
     if (loading) {
         return <div className="p-8 text-center text-muted-foreground">Cargando configuración...</div>;
     }
@@ -122,34 +114,11 @@ export default function ConfiguracionPage() {
                 <h1 className="text-3xl font-bold tracking-tight">Configuración General</h1>
             </div>
 
-            {/* Tema Visual */}
-            <div className="bg-card border rounded-lg p-6 shadow-sm">
-                <div className="flex items-center gap-2 border-b pb-4 mb-4">
-                    <Sun className="h-5 w-5 text-amber-500" />
-                    <h2 className="text-xl font-semibold">Aspecto Visual</h2>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-4 bg-muted/30 p-4 rounded-md gap-4">
-                    <div>
-                        <p className="font-medium">Modo Oscuro</p>
-                        <p className="text-sm text-muted-foreground">Cambia los colores de la aplicación para entornos con poca luz.</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground flex items-center gap-1">
-                            <Sun className="h-4 w-4" /> Claro
-                        </span>
-                        <Switch
-                            checked={mounted ? (theme === 'dark' || resolvedTheme === 'dark') : false}
-                            onCheckedChange={toggleTheme}
-                        />
-                        <span className="text-sm text-muted-foreground flex items-center gap-1">
-                            Oscuro <Moon className="h-4 w-4" />
-                        </span>
-                    </div>
-                </div>
-            </div>
-
             {/* Horarios */}
-            <RequirePermission perm="horasIngreso">
+            <RequirePermission
+                perm="horasIngreso"
+                fallback={<p className="text-sm text-muted-foreground">No tienes opciones de configuración disponibles.</p>}
+            >
                 <div className="bg-card border rounded-lg p-6 shadow-sm">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4 mb-4 gap-4">
                         <div className="flex items-center gap-2">
