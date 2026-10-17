@@ -9,13 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Clock, Save, AlertCircle, CalendarRange, Copy } from "lucide-react";
 import Swal from "sweetalert2";
 import RequirePermission from "@/components/auth/RequirePermission";
-
-interface DiaHorario {
-    dia: string;
-    cerrado: boolean;
-    apertura: string;
-    cierre: string;
-}
+import { RelojCaracas } from "@/components/horarios/RelojCaracas";
+import type { DiaHorario } from "@/lib/horario";
 
 export default function HorariosPage() {
     const token = useAuthStore((state) => state.token);
@@ -23,6 +18,8 @@ export default function HorariosPage() {
     const [horario, setHorario] = useState<DiaHorario[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    // Hora del servidor − hora de este equipo: el reloj muestra la del servidor
+    const [desfaseServidorMs, setDesfaseServidorMs] = useState<number | null>(null);
 
     // El tema claro/oscuro se cambia desde el Header (ThemeToggle)
     useEffect(() => {
@@ -36,6 +33,7 @@ export default function HorariosPage() {
             const res = await api.get('/configuracion');
             const data = res.data.data;
             if (data.horario) setHorario(data.horario);
+            if (typeof res.data.serverTimeMs === "number") setDesfaseServidorMs(res.data.serverTimeMs - Date.now());
             // temaLocal is now managed by next-themes, no need to set it from backend here
             // if (data.temaLocal) setTemaLocal(data.temaLocal);
         } catch (error) {
@@ -116,6 +114,10 @@ export default function HorariosPage() {
                     <p className="text-muted-foreground mt-1">Define en qué horario pueden ingresar los usuarios al sistema.</p>
                 </div>
             </div>
+
+            <RequirePermission perm="horasIngreso">
+                <RelojCaracas horario={horario} desfaseServidorMs={desfaseServidorMs} />
+            </RequirePermission>
 
             {/* Horarios */}
             <RequirePermission
