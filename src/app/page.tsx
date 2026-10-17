@@ -13,6 +13,10 @@ import { SaldosCuentas } from "@/components/dashboard/SaldosCuentas";
 import type { DashboardStats } from "@/components/dashboard/tipos";
 import { horaCaracas } from "@/lib/horario";
 
+// Columnas de abajo: el grid las estira a la misma altura y la última tarjeta de cada una
+// crece para llenarla, así los bordes inferiores quedan al mismo nivel.
+const COLUMNA_INFERIOR = "flex flex-col gap-4 [&>*:last-child]:flex-1";
+
 function saludo(hora: number) {
   if (hora < 12) return "Buenos días";
   if (hora < 19) return "Buenas tardes";
@@ -153,14 +157,14 @@ export default function Dashboard() {
       {/* Actividad reciente (izquierda) y saldos + sincronización (derecha) */}
       <div className="grid gap-4 lg:grid-cols-3">
         {(stats.puedeVerPedidos || stats.puedeVerMovimientos) && (
-          <div className={`space-y-4 ${columnaDerecha ? "lg:col-span-2" : "lg:col-span-3"}`}>
+          <div className={`${COLUMNA_INFERIOR} ${columnaDerecha ? "lg:col-span-2" : "lg:col-span-3"}`}>
             {stats.puedeVerPedidos && <UltimosPedidos pedidos={stats.recientes.pedidos} />}
             {stats.puedeVerMovimientos && <UltimosMovimientos movimientos={stats.recientes.movimientos} />}
           </div>
         )}
 
         {columnaDerecha && (
-          <div className={`space-y-4 ${stats.puedeVerPedidos || stats.puedeVerMovimientos ? "" : "lg:col-span-3"}`}>
+          <div className={`${COLUMNA_INFERIOR} ${stats.puedeVerPedidos || stats.puedeVerMovimientos ? "" : "lg:col-span-3"}`}>
             {stats.puedeVerCuentas && (
               <SaldosCuentas
                 cuentas={stats.cuentas}
