@@ -31,8 +31,21 @@ function iniciales(nombre: string) {
     return (partes.length > 1 ? partes[0][0] + partes[1][0] : limpio.slice(0, 2)).toUpperCase();
 }
 
+function escaparHtml(texto: string) {
+    return texto.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+}
+
+// Los gestores de contraseñas (extensiones) ignoran autoComplete="off" y rellenaban este
+// formulario con el login de quien lo usa. Defensas: (1) al editar, el campo contraseña solo
+// aparece al pedirlo; (2) los campos son de solo lectura hasta que se hace clic en ellos (los
+// gestores no rellenan campos readOnly); (3) la confirmación muestra qué datos cambian.
+type CampoTexto = "nombre" | "correo" | "clave" | "vendedor";
+
 export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: UserModalProps) {
     const [loading, setLoading] = useState(false);
+    const [cambiarClave, setCambiarClave] = useState(false);
+    const [desbloqueados, setDesbloqueados] = useState<Record<CampoTexto, boolean>>({ nombre: false, correo: false, clave: false, vendedor: false });
+    const desbloquear = (campo: CampoTexto) => setDesbloqueados((d) => (d[campo] ? d : { ...d, [campo]: true }));
 
     const [formData, setFormData] = useState({
         username: "",
@@ -44,6 +57,8 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
 
     useEffect(() => {
         if (isOpen) {
+            setCambiarClave(false);
+            setDesbloqueados({ nombre: false, correo: false, clave: false, vendedor: false });
             if (userToEdit) {
                 setFormData({
                     username: userToEdit.username || "",
@@ -77,6 +92,22 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Validación manual: el navegador no valida "required"/"minLength" en campos readOnly
+        const faltante = !formData.username.trim()
+            ? "Escribe el nombre de usuario."
+            : !formData.email.trim()
+                ? "Escribe el correo electrónico."
+                : (!userToEdit || cambiarClave) && formData.password.length > 0 && formData.password.length < 6
+                    ? "La contraseña debe tener al menos 6 caracteres."
+                    : !userToEdit && !formData.password
+                        ? "Escribe una contraseña para el nuevo usuario."
+                        : null;
+        if (faltante) {
+            Swal.fire({ title: 'Falta un dato', text: faltante, icon: 'info', confirmButtonColor: COLOR_MARCA, target: document.getElementById('user-modal-content') });
+            return;
+        }
+
         setLoading(true);
 
         const payload = {
@@ -89,9 +120,23 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
 
         try {
             if (userToEdit && userToEdit._id) {
+                // Mostrar explícitamente los datos de acceso que cambian, para detectar
+                // un autocompletado del navegador antes de guardarlo.
+                const cambios: string[] = [];
+                if (formData.username !== (userToEdit.username || "")) {
+                    cambios.push(`Nombre de usuario: <b>${escaparHtml(userToEdit.username || "")}</b> → <b>${escaparHtml(formData.username)}</b>`);
+                }
+                if (formData.email !== (userToEdit.email || "")) {
+                    cambios.push(`Correo: <b>${escaparHtml(userToEdit.email || "")}</b> → <b>${escaparHtml(formData.email)}</b>`);
+                }
+                if (formData.password) cambios.push("Se cambiará la <b>contraseña</b>");
+                const detalle = cambios.length
+                    ? `<p style="margin-bottom:8px">Atención, también cambian sus datos de acceso:</p><ul style="text-align:left;display:inline-block;margin:0">${cambios.map((c) => `<li>• ${c}</li>`).join("")}</ul>`
+                    : "Se actualizarán los permisos y datos de este usuario.";
+
                 const result = await Swal.fire({
                     title: '¿Confirmar Edición?',
-                    text: 'Se actualizarán los datos y permisos de este usuario.',
+                    html: detalle,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: COLOR_MARCA,
@@ -125,8 +170,9 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
     };
 
     const totalActivos = Object.values(formData.permissions).filter(Boolean).length;
+    // Encabezado con los datos guardados del usuario (no con lo que haya en los campos)
     const subtitulo = userToEdit
-        ? [formData.email, formData.vendedor ? `vendedor ${formData.vendedor}` : null].filter(Boolean).join(" · ")
+        ? [userToEdit.email, userToEdit.vendedor ? `vendedor ${userToEdit.vendedor}` : null].filter(Boolean).join(" · ")
         : "Completa los datos y elige qué secciones podrá usar.";
 
     return (
@@ -137,11 +183,11 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                         aria-hidden="true"
                         className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary dark:text-red-400"
                     >
-                        {iniciales(formData.username)}
+                        {iniciales(userToEdit?.username || formData.username)}
                     </div>
                     <div className="min-w-0 flex-1">
                         <DialogTitle className="text-lg truncate">
-                            {userToEdit ? `Editar usuario · ${formData.username || userToEdit.username}` : 'Nuevo usuario'}
+                            {userToEdit ? `Editar usuario · ${userToEdit.username}` : 'Nuevo usuario'}
                         </DialogTitle>
                         <DialogDescription className="truncate">{subtitulo}</DialogDescription>
                     </div>
@@ -163,6 +209,8 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                                     <Label htmlFor="campo-nombre">Nombre de usuario</Label>
                                     <Input
                                         id="campo-nombre"
+                                        readOnly={!desbloqueados.nombre}
+                                        onFocus={() => desbloquear("nombre")}
                                         name="campo-nombre"
                                         autoComplete="off"
                                         required
@@ -176,6 +224,8 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                                     <Label htmlFor="campo-correo">Correo electrónico</Label>
                                     <Input
                                         id="campo-correo"
+                                        readOnly={!desbloqueados.correo}
+                                        onFocus={() => desbloquear("correo")}
                                         name="campo-correo"
                                         autoComplete="off"
                                         required
@@ -187,26 +237,42 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="campo-clave">
-                                        Contraseña {userToEdit && <span className="font-normal text-muted-foreground">(déjala vacía para no cambiarla)</span>}
-                                    </Label>
-                                    <Input
-                                        id="campo-clave"
-                                        name="campo-clave"
-                                        autoComplete="new-password"
-                                        required={!userToEdit} // Required only on creation
-                                        type="password"
-                                        value={formData.password}
-                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                        placeholder={userToEdit ? "••••••••" : "Mínimo 6 caracteres"}
-                                        className="h-10"
-                                        minLength={6}
-                                    />
+                                    <Label htmlFor="campo-clave">Contraseña</Label>
+                                    {userToEdit && !cambiarClave ? (
+                                        // Al editar, sin campo de contraseña hasta pedirlo: así los
+                                        // gestores de contraseñas no detectan un formulario de login.
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="h-10 w-full justify-start font-normal text-muted-foreground"
+                                            onClick={() => { setCambiarClave(true); desbloquear("clave"); }}
+                                        >
+                                            Cambiar contraseña
+                                        </Button>
+                                    ) : (
+                                        <Input
+                                            id="campo-clave"
+                                            name="campo-clave"
+                                            autoComplete="new-password"
+                                            readOnly={!desbloqueados.clave}
+                                            onFocus={() => desbloquear("clave")}
+                                            autoFocus={!!userToEdit}
+                                            required={!userToEdit} // Required only on creation
+                                            type="password"
+                                            value={formData.password}
+                                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                            placeholder={userToEdit ? "Nueva contraseña" : "Mínimo 6 caracteres"}
+                                            className="h-10"
+                                            minLength={6}
+                                        />
+                                    )}
                                 </div>
                                 <div className="space-y-1.5">
                                     <Label htmlFor="campo-vendedor">Código de vendedor</Label>
                                     <Input
                                         id="campo-vendedor"
+                                        readOnly={!desbloqueados.vendedor}
+                                        onFocus={() => desbloquear("vendedor")}
                                         name="campo-vendedor"
                                         autoComplete="off"
                                         type="number"
