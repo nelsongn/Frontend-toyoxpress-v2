@@ -63,6 +63,8 @@ export function ProductsTable() {
     };
 
     const token = useAuthStore((state: any) => state.token);
+    const verPrecios = useAuthStore((state) => state.permissions?.consultarPrecios === true);
+    const columnas = verPrecios ? 7 : 5;
 
     const fetchProductos = async (currentPage: number, searchTerm: string, currentLimit: number) => {
         try {
@@ -149,21 +151,21 @@ export function ProductsTable() {
                             <TableHead>Nombre</TableHead>
                             <TableHead className="w-[100px] text-right">Modelo</TableHead>
                             <TableHead className="w-[80px] text-right">Stock</TableHead>
-                            <TableHead className="w-[100px] text-right">P. Mín</TableHead>
-                            <TableHead className="w-[100px] text-right">P. Oferta</TableHead>
+                            {verPrecios && <TableHead className="w-[100px] text-right">P. Mín</TableHead>}
+                            {verPrecios && <TableHead className="w-[100px] text-right">P. Oferta</TableHead>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="h-48 text-center">
+                                <TableCell colSpan={columnas} className="h-48 text-center">
                                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto mb-2" />
                                     <p className="text-sm text-muted-foreground">Cargando inventario...</p>
                                 </TableCell>
                             </TableRow>
                         ) : productos.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="h-48 text-center text-muted-foreground">
+                                <TableCell colSpan={columnas} className="h-48 text-center text-muted-foreground">
                                     <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
                                     <p>No se encontraron productos.</p>
                                 </TableCell>
@@ -188,12 +190,16 @@ export function ProductsTable() {
                                             {producto["Existencia Actual"]}
                                         </span>
                                     </TableCell>
-                                    <TableCell className="text-right font-semibold whitespace-nowrap">
-                                        ${producto["Precio Minimo"]?.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
-                                    </TableCell>
-                                    <TableCell className="text-right font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                                        ${producto["Precio Oferta"]?.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
-                                    </TableCell>
+                                    {verPrecios && (
+                                        <>
+                                            <TableCell className="text-right font-semibold whitespace-nowrap">
+                                                ${producto["Precio Minimo"]?.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                                            </TableCell>
+                                            <TableCell className="text-right font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                                                ${producto["Precio Oferta"]?.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                                            </TableCell>
+                                        </>
+                                    )}
                                 </TableRow>
                             ))
                         )}

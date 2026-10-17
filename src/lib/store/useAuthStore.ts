@@ -18,6 +18,7 @@ interface UserPermissions {
     verClientes: boolean;
     verExcel: boolean;
     cargarProductos: boolean;
+    verProductos: boolean;
     [key: string]: boolean; // Allows for dynamic checks
 }
 

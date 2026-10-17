@@ -43,6 +43,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
             verClientes: false,
             verExcel: false,
             cargarProductos: false,
+            verProductos: false,
             verPedidos: false,
             verCajaChica: false,
             verSaldoTotal: false
@@ -76,6 +77,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                         verClientes: !!perms.verClientes,
                         verExcel: !!perms.verExcel,
                         cargarProductos: !!perms.cargarProductos,
+                        verProductos: !!perms.verProductos,
                         verPedidos: !!perms.verPedidos,
                         verCajaChica: !!perms.verCajaChica,
                         verSaldoTotal: !!perms.verSaldoTotal
@@ -104,6 +106,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                         verClientes: false,
                         verExcel: false,
                         cargarProductos: false,
+                        verProductos: false,
                         verPedidos: false,
                         verCajaChica: false,
                         verSaldoTotal: false
@@ -189,6 +192,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
         verClientes: "Ver Todos Los Clientes",
         verExcel: "Exportar a Excel",
         cargarProductos: "Cargar Productos (WooCommerce)",
+        verProductos: "Ver Productos (Inventario)",
         verPedidos: "Ver Pestaña de Pedidos",
         verCajaChica: "Ver Saldo Caja Chica",
         verSaldoTotal: "Ver Saldo Total (General)"
@@ -209,7 +213,11 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
         },
         {
             title: "Configuración y Generales",
-            keys: ["configurarCuentas", "consultarPrecios", "verClientes", "verExcel", "cargarProductos"]
+            keys: ["configurarCuentas", "consultarPrecios", "verClientes", "verExcel"]
+        },
+        {
+            title: "Módulo de Productos",
+            keys: ["verProductos", "cargarProductos"]
         }
     ];
 

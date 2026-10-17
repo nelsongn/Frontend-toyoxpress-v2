@@ -7,12 +7,18 @@ import { Header } from "@/components/layout/Header";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
+import { inicioPara, veSeccionesGenerales } from "@/lib/permissions";
+
+// Páginas que solo ve quien entra por el Dashboard (ver veSeccionesGenerales).
+const PAGINAS_GENERALES = ["/", "/configuracion"];
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
-    const { token, _hasHydrated } = useAuthStore();
+    const { token, permissions, _hasHydrated } = useAuthStore();
     const isAuthPage = pathname === "/login";
+    // Usuario sin acceso al Dashboard (p. ej. solo "Ver Productos") en "/" o en Configuración
+    const fueraDeSusSecciones = !!token && PAGINAS_GENERALES.includes(pathname) && !veSeccionesGenerales(permissions);
 
     useEffect(() => {
         if (!_hasHydrated) return;
@@ -20,9 +26,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         if (!token && !isAuthPage) {
             router.push("/login");
         } else if (token && isAuthPage) {
-            router.push("/");
+            router.push(inicioPara(permissions));
+        } else if (fueraDeSusSecciones) {
+            router.replace(inicioPara(permissions));
         }
-    }, [token, isAuthPage, _hasHydrated, router]);
+    }, [token, permissions, isAuthPage, fueraDeSusSecciones, _hasHydrated, router]);
 
     // Helper to extract JWT expiration time in milliseconds
     const getJwtExpiry = (jwtToken: string | null): number | null => {
@@ -131,6 +139,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
     // If not logged in and not on auth page, show nothing while redirecting
     if (!token && !isAuthPage) {
+        return null;
+    }
+
+    // Mientras se redirige a la sección del usuario, no mostrar el Dashboard/Configuración
+    if (fueraDeSusSecciones) {
         return null;
     }
 
