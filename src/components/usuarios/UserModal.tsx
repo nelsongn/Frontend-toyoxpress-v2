@@ -147,7 +147,10 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                     </div>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+                {/* autoComplete: el navegador NO debe rellenar este formulario con el login guardado
+                    (pisaba nombre, correo y contraseña del usuario que se edita). Por eso los ids
+                    tampoco dicen "username"/"email"/"password", que activan su detección de login. */}
+                <form onSubmit={handleSubmit} autoComplete="off" className="flex flex-col flex-1 overflow-hidden">
                     <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
 
                         {/* Datos del usuario */}
@@ -157,9 +160,11 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                             </h3>
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="user-username">Nombre de usuario</Label>
+                                    <Label htmlFor="campo-nombre">Nombre de usuario</Label>
                                     <Input
-                                        id="user-username"
+                                        id="campo-nombre"
+                                        name="campo-nombre"
+                                        autoComplete="off"
                                         required
                                         value={formData.username}
                                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
@@ -168,9 +173,11 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="user-email">Correo electrónico</Label>
+                                    <Label htmlFor="campo-correo">Correo electrónico</Label>
                                     <Input
-                                        id="user-email"
+                                        id="campo-correo"
+                                        name="campo-correo"
+                                        autoComplete="off"
                                         required
                                         type="email"
                                         value={formData.email}
@@ -180,11 +187,13 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="user-password">
+                                    <Label htmlFor="campo-clave">
                                         Contraseña {userToEdit && <span className="font-normal text-muted-foreground">(déjala vacía para no cambiarla)</span>}
                                     </Label>
                                     <Input
-                                        id="user-password"
+                                        id="campo-clave"
+                                        name="campo-clave"
+                                        autoComplete="new-password"
                                         required={!userToEdit} // Required only on creation
                                         type="password"
                                         value={formData.password}
@@ -195,9 +204,11 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="user-vendedor">Código de vendedor</Label>
+                                    <Label htmlFor="campo-vendedor">Código de vendedor</Label>
                                     <Input
-                                        id="user-vendedor"
+                                        id="campo-vendedor"
+                                        name="campo-vendedor"
+                                        autoComplete="off"
                                         type="number"
                                         value={formData.vendedor || ""}
                                         onChange={(e) => setFormData({ ...formData, vendedor: parseInt(e.target.value) || 0 })}
