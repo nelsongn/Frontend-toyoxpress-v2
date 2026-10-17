@@ -92,14 +92,16 @@ export const MODULOS_PERMISOS: ModuloPermisos[] = [
         ],
     },
     {
-        id: "horario",
-        titulo: "Horario",
-        descripcion: "Control de ingreso al sistema.",
+        id: "horarios",
+        titulo: "Horarios",
+        descripcion: "Con acceso puede ver y cambiar el horario de ingreso al sistema.",
         icon: Clock,
+        acceso: { key: "horasIngreso", label: "Acceso a Horarios" },
         permisos: [
-            { key: "horasIngreso", label: "Configurar el horario de ingreso", ayuda: "Da acceso a Configuración" },
-            { key: "obviarIngreso", label: "Entrar fuera del horario" },
+            { key: "obviarIngreso", label: "Entrar fuera del horario", ayuda: "Funciona aunque no tenga acceso a Horarios" },
         ],
+        // "Entrar fuera del horario" aplica siempre, no depende de la sección
+        subpermisosIndependientes: true,
     },
 ];
 

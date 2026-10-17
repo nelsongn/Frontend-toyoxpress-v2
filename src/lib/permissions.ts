@@ -21,6 +21,7 @@ const SECCIONES: { href: string; perm: string | string[] }[] = [
     { href: "/productos", perm: PERMISOS_PRODUCTOS },
     { href: "/clientes", perm: "verPedidos" },
     { href: "/pedidos", perm: "verPedidos" },
+    { href: "/horarios", perm: "horasIngreso" },
 ];
 
 /**
@@ -33,7 +34,7 @@ export function inicioPara(permisos: Permisos): string {
     return SECCIONES.find((s) => tienePermiso(permisos, s.perm))?.href ?? "/";
 }
 
-/** Dashboard, Configuración y Mapa solo se muestran a quien entra por el Dashboard. */
+/** Dashboard y Mapa solo se muestran a quien entra por el Dashboard. */
 export function veSeccionesGenerales(permisos: Permisos): boolean {
     return inicioPara(permisos) === "/";
 }
