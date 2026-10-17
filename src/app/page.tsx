@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { api } from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { EstadoSincronizacion, type DatosSincronizacion } from "@/components/dashboard/EstadoSincronizacion";
 import {
   ArrowUpRight, ArrowDownLeft, DollarSign, Activity,
   Users, Package, TrendingUp, AlertCircle, ShoppingBag,
@@ -35,10 +36,13 @@ interface DashboardStats {
     pedidos: any[];
     movimientos: any[];
   };
+  /** Opcional: no viene si el backend aún no está actualizado */
+  sincronizacion?: DatosSincronizacion;
 }
 
 export default function Dashboard() {
   const token = useAuthStore((state: any) => state.token);
+  const puedeCargarProductos = useAuthStore((state) => state.permissions?.cargarProductos === true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -152,18 +156,13 @@ export default function Dashboard() {
               <p className="text-xs text-muted-foreground mt-2">Movimientos sin verificar</p>
             </CardContent>
           </Card>
-        ) : (
-          <Card className="shadow-sm border-border/60">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Worker SQS</CardTitle>
-              <Activity className="h-4 w-4 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">Activo</div>
-              <p className="text-xs text-muted-foreground mt-1">Sincronización en línea</p>
-            </CardContent>
-          </Card>
-        )}
+        ) : stats.sincronizacion ? (
+          <EstadoSincronizacion
+            datos={stats.sincronizacion}
+            verPedidos={stats.puedeVerPedidos}
+            verProductos={puedeCargarProductos}
+          />
+        ) : null}
 
         <div className="grid grid-rows-2 gap-4">
           <Card className="shadow-sm border-border/60 flex items-center p-4">
@@ -245,7 +244,7 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent className="p-0 overflow-auto flex-1">
                 {stats.recientes.movimientos.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-muted-foreground">No hay movimientos registrados hoy.</div>
+                  <div className="p-8 text-center text-sm text-muted-foreground">No hay movimientos registrados.</div>
                 ) : (
                   <table className="w-full text-sm">
                     <thead className="bg-muted/10">
@@ -315,20 +314,14 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            {/* Pequeña tarjeta informativa de SQS para rellenar espacio lateral si hay saldos */}
-            <Card className="shadow-sm border-border/60 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">
-              <CardContent className="p-5 flex items-start gap-4">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-lg shrink-0">
-                  <Activity className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-sm">Worker SQS Activo</h4>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Las operaciones locales se están replicando de manera asíncrona hacia los servidores de la nube.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Estado real de la sincronización (antes era un texto fijo "Worker SQS Activo") */}
+            {stats.sincronizacion && (
+              <EstadoSincronizacion
+                datos={stats.sincronizacion}
+                verPedidos={stats.puedeVerPedidos}
+                verProductos={puedeCargarProductos}
+              />
+            )}
           </div>
         )}
       </div>

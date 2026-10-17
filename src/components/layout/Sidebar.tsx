@@ -4,38 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import {
-    LayoutDashboard,
-    ArrowLeftRight,
-    Package,
-    ShoppingCart,
-    Users,
-    Settings,
-    LogOut,
-    UserCog,
-    ContactRound,
-    Map,
-    X
-} from "lucide-react";
+import { LogOut, Map, X } from "lucide-react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useRouter } from "next/navigation";
 import RequirePermission from "@/components/auth/RequirePermission";
 import { MapModal } from "./MapModal";
 import { BASE_URL } from "@/lib/api";
-import { PERMISOS_PRODUCTOS, veSeccionesGenerales } from "@/lib/permissions";
-
-// general: Dashboard y Configuración se ocultan a quien solo tiene acceso a secciones
-// puntuales (p. ej. solo "Ver Productos"); ver veSeccionesGenerales en lib/permissions.
-const navigation: { name: string; href: string; icon: typeof LayoutDashboard; perm?: string | string[]; general?: boolean }[] = [
-    { name: "Dashboard", href: "/", icon: LayoutDashboard, general: true },
-    { name: "Movimientos", href: "/movimientos", icon: ArrowLeftRight, perm: "verMovimientos" },
-    { name: "Cuentas", href: "/cuentas", icon: Users, perm: "configurarCuentas" },
-    { name: "Usuarios", href: "/usuarios", icon: UserCog, perm: "crearUsuarios" },
-    { name: "Productos", href: "/productos", icon: Package, perm: PERMISOS_PRODUCTOS },
-    { name: "Clientes", href: "/clientes", icon: ContactRound, perm: "verPedidos" },
-    { name: "Pedidos", href: "/pedidos", icon: ShoppingCart, perm: "verPedidos" },
-    { name: "Configuración", href: "/configuracion", icon: Settings, general: true },
-];
+import { veSeccionesGenerales } from "@/lib/permissions";
+import { navigation } from "./navegacion";
 
 export function Sidebar({ onClose }: { onClose?: () => void }) {
     const pathname = usePathname();
