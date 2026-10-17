@@ -4,7 +4,7 @@ import {
     Package,
     ShoppingCart,
     Users,
-    Settings,
+    Clock,
     UserCog,
     ContactRound,
     type LucideIcon,
@@ -20,7 +20,7 @@ export interface ItemNavegacion {
 }
 
 // Menú lateral. Lo usan el Sidebar y la vista previa de permisos del mantenedor de usuarios.
-// general: Dashboard y Configuración se ocultan a quien solo tiene acceso a secciones
+// general: el Dashboard se oculta a quien solo tiene acceso a secciones
 // puntuales (p. ej. solo "Ver Productos"); ver veSeccionesGenerales en lib/permissions.
 export const navigation: ItemNavegacion[] = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard, general: true },
@@ -30,6 +30,6 @@ export const navigation: ItemNavegacion[] = [
     { name: "Productos", href: "/productos", icon: Package, perm: PERMISOS_PRODUCTOS },
     { name: "Clientes", href: "/clientes", icon: ContactRound, perm: "verPedidos" },
     { name: "Pedidos", href: "/pedidos", icon: ShoppingCart, perm: "verPedidos" },
-    // Configuración solo tiene el horario de ingreso (el tema está en el Header)
-    { name: "Configuración", href: "/configuracion", icon: Settings, general: true, perm: "horasIngreso" },
+    // Antes "Configuración": solo tenía el horario de ingreso (el tema está en el Header)
+    { name: "Horarios", href: "/horarios", icon: Clock, perm: "horasIngreso" },
 ];

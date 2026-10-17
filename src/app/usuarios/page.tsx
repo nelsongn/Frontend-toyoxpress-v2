@@ -16,24 +16,21 @@ export default function UsuariosPage() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">Usuarios</h1>
                     <p className="text-muted-foreground mt-2">
-                        Gestiona el personal y configura de forma granular sus accesos al sistema.
+                        Quién entra al sistema y qué secciones puede usar.
                     </p>
                 </div>
 
                 <div className="flex items-center gap-4">
                     <RequirePermission perm="crearUsuarios">
-                        <Button
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                            onClick={() => setIsModalOpen(true)}
-                        >
-                            <Plus className="h-5 w-5 mr-2" />
-                            Nuevo Usuario
+                        <Button onClick={() => setIsModalOpen(true)}>
+                            <Plus className="h-4 w-4" />
+                            Nuevo usuario
                         </Button>
                     </RequirePermission>
                 </div>
             </div>
 
-            <div className="bg-card border border-border rounded-lg shadow-sm">
+            <div className="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
                 <UsersTable />
             </div>
 

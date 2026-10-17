@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Clock, Settings, Save, AlertCircle, CalendarRange, Copy } from "lucide-react";
+import { Clock, Save, AlertCircle, CalendarRange, Copy } from "lucide-react";
 import Swal from "sweetalert2";
 import RequirePermission from "@/components/auth/RequirePermission";
 
@@ -17,7 +17,7 @@ interface DiaHorario {
     cierre: string;
 }
 
-export default function ConfiguracionPage() {
+export default function HorariosPage() {
     const token = useAuthStore((state) => state.token);
 
     const [horario, setHorario] = useState<DiaHorario[]>([]);
@@ -92,7 +92,7 @@ export default function ConfiguracionPage() {
             Swal.fire({
                 icon: 'success',
                 title: 'Guardado',
-                text: 'Configuración actualizada correctamente',
+                text: 'Horario actualizado correctamente',
                 timer: 2000,
                 showConfirmButton: false
             });
@@ -104,20 +104,23 @@ export default function ConfiguracionPage() {
     };
 
     if (loading) {
-        return <div className="p-8 text-center text-muted-foreground">Cargando configuración...</div>;
+        return <div className="p-8 text-center text-muted-foreground">Cargando horarios...</div>;
     }
 
     return (
         <div className="flex flex-col gap-6 p-6 max-w-4xl mx-auto">
             <div className="flex items-center gap-3">
-                <Settings className="h-8 w-8 text-primary" />
-                <h1 className="text-3xl font-bold tracking-tight">Configuración General</h1>
+                <Clock className="h-8 w-8 text-primary" />
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Horarios</h1>
+                    <p className="text-muted-foreground mt-1">Define en qué horario pueden ingresar los usuarios al sistema.</p>
+                </div>
             </div>
 
             {/* Horarios */}
             <RequirePermission
                 perm="horasIngreso"
-                fallback={<p className="text-sm text-muted-foreground">No tienes opciones de configuración disponibles.</p>}
+                fallback={<p className="text-sm text-muted-foreground">No tienes permiso para configurar los horarios.</p>}
             >
                 <div className="bg-card border rounded-lg p-6 shadow-sm">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4 mb-4 gap-4">

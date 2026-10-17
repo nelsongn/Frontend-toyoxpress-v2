@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
     Dialog,
     DialogContent,
@@ -48,6 +48,10 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
     const desbloquear = (campo: CampoTexto) => setDesbloqueados((d) => (d[campo] ? d : { ...d, [campo]: true }));
     // Solo una interacción real desbloquea un campo: clic/toque o llegar con Tab. El foco por sí
     // solo no, porque los gestores de contraseñas enfocan los campos por código antes de rellenarlos.
+    const refNombre = useRef<HTMLInputElement>(null);
+    const refCorreo = useRef<HTMLInputElement>(null);
+    const refClave = useRef<HTMLInputElement>(null);
+    const refVendedor = useRef<HTMLInputElement>(null);
     const interaccion = (campo: CampoTexto) => ({
         onPointerDown: () => desbloquear(campo),
         onKeyUp: (e: React.KeyboardEvent) => { if (e.key === "Tab") desbloquear(campo); },
@@ -85,6 +89,26 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
             }
         }
     }, [isOpen, userToEdit]);
+
+    // Algunas extensiones cambian el texto de los campos sin disparar eventos: el estado queda
+    // bien (es lo que se guarda), pero en pantalla se ve el login ajeno. Mientras un campo está
+    // bloqueado, se vuelve a mostrar su valor real.
+    useEffect(() => {
+        if (!isOpen) return;
+        const campos: [CampoTexto, React.RefObject<HTMLInputElement | null>, string][] = [
+            ["nombre", refNombre, formData.username],
+            ["correo", refCorreo, formData.email],
+            ["clave", refClave, formData.password],
+            ["vendedor", refVendedor, formData.vendedor ? String(formData.vendedor) : ""],
+        ];
+        const id = setInterval(() => {
+            for (const [campo, ref, esperado] of campos) {
+                const el = ref.current;
+                if (el && !desbloqueados[campo] && el.value !== esperado) el.value = esperado;
+            }
+        }, 250);
+        return () => clearInterval(id);
+    }, [isOpen, formData.username, formData.email, formData.password, formData.vendedor, desbloqueados]);
 
     const handlePermissionChange = (perm: string, checked: boolean) => {
         setFormData(prev => ({
@@ -217,6 +241,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                                         id="campo-nombre"
                                         readOnly={!desbloqueados.nombre}
                                         {...interaccion("nombre")}
+                                        ref={refNombre}
                                         name="campo-nombre"
                                         autoComplete="off"
                                         required
@@ -232,6 +257,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                                         id="campo-correo"
                                         readOnly={!desbloqueados.correo}
                                         {...interaccion("correo")}
+                                        ref={refCorreo}
                                         name="campo-correo"
                                         autoComplete="off"
                                         required
@@ -262,6 +288,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                                             autoComplete="new-password"
                                             readOnly={!desbloqueados.clave}
                                             {...interaccion("clave")}
+                                            ref={refClave}
                                             autoFocus={!!userToEdit}
                                             required={!userToEdit} // Required only on creation
                                             type="password"
@@ -279,6 +306,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, userToEdit }: Us
                                         id="campo-vendedor"
                                         readOnly={!desbloqueados.vendedor}
                                         {...interaccion("vendedor")}
+                                        ref={refVendedor}
                                         name="campo-vendedor"
                                         autoComplete="off"
                                         type="number"

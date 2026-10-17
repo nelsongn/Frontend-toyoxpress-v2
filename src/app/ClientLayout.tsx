@@ -10,14 +10,14 @@ import { api } from "@/lib/api";
 import { inicioPara, veSeccionesGenerales } from "@/lib/permissions";
 
 // Páginas que solo ve quien entra por el Dashboard (ver veSeccionesGenerales).
-const PAGINAS_GENERALES = ["/", "/configuracion"];
+const PAGINAS_GENERALES = ["/"];
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
     const { token, permissions, _hasHydrated } = useAuthStore();
     const isAuthPage = pathname === "/login";
-    // Usuario sin acceso al Dashboard (p. ej. solo "Ver Productos") en "/" o en Configuración
+    // Usuario sin acceso al Dashboard (p. ej. solo "Ver Productos") que llega a "/"
     const fueraDeSusSecciones = !!token && PAGINAS_GENERALES.includes(pathname) && !veSeccionesGenerales(permissions);
 
     useEffect(() => {
@@ -142,7 +142,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         return null;
     }
 
-    // Mientras se redirige a la sección del usuario, no mostrar el Dashboard/Configuración
+    // Mientras se redirige a la sección del usuario, no mostrar el Dashboard
     if (fueraDeSusSecciones) {
         return null;
     }

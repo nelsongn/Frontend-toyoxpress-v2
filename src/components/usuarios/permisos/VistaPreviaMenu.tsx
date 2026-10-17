@@ -19,7 +19,7 @@ export function VistaPreviaMenu({ permisos, username }: Props) {
     const generales = veSeccionesGenerales(permisos);
     const inicio = inicioPara(permisos);
     // Mismas reglas que el Sidebar: los ítems "general" dependen de veSeccionesGenerales
-    // y, si además tienen permiso (Configuración), también de ese permiso.
+    // y, si además tienen permiso, también de ese permiso.
     const visibles = navigation.filter((item) =>
         (!item.general || generales) && (!item.perm || tienePermiso(permisos, item.perm))
     );
