@@ -4,14 +4,13 @@ import { useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { estadoHorario, horaCaracas, type DiaHorario } from "@/lib/horario";
+import { DisplayLed } from "./DisplayLed";
 
 interface Props {
     horario: DiaHorario[];
     /** Diferencia hora del servidor − hora de este equipo, en ms (de GET /configuracion) */
     desfaseServidorMs: number | null;
 }
-
-const dos = (n: number) => String(n).padStart(2, "0");
 
 // Más de 2 minutos de diferencia con el servidor: vale la pena avisar
 const DESFASE_AVISO_MS = 2 * 60 * 1000;
@@ -52,14 +51,10 @@ export function RelojCaracas({ horario, desfaseServidorMs }: Props) {
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                         Hora de Caracas · UTC−4
                     </p>
-                    <p className="mt-1 font-mono text-5xl font-semibold tabular-nums tracking-tight text-foreground" aria-live="off">
-                        {dos(hora.horas)}
-                        <span className="text-muted-foreground">:</span>
-                        {dos(hora.minutos)}
-                        <span className="text-muted-foreground">:</span>
-                        <span className="text-muted-foreground">{dos(hora.segundos)}</span>
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <div className="mt-2">
+                        <DisplayLed horas={hora.horas} minutos={hora.minutos} segundos={hora.segundos} />
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">
                         {hora.dia}, {hora.fecha}
                     </p>
                 </div>
