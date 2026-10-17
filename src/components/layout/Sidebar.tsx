@@ -22,16 +22,19 @@ import { useRouter } from "next/navigation";
 import RequirePermission from "@/components/auth/RequirePermission";
 import { MapModal } from "./MapModal";
 import { BASE_URL } from "@/lib/api";
+import { PERMISOS_PRODUCTOS, veSeccionesGenerales } from "@/lib/permissions";
 
-const navigation = [
-    { name: "Dashboard", href: "/", icon: LayoutDashboard },
+// general: Dashboard y Configuración se ocultan a quien solo tiene acceso a secciones
+// puntuales (p. ej. solo "Ver Productos"); ver veSeccionesGenerales en lib/permissions.
+const navigation: { name: string; href: string; icon: typeof LayoutDashboard; perm?: string | string[]; general?: boolean }[] = [
+    { name: "Dashboard", href: "/", icon: LayoutDashboard, general: true },
     { name: "Movimientos", href: "/movimientos", icon: ArrowLeftRight, perm: "verMovimientos" },
     { name: "Cuentas", href: "/cuentas", icon: Users, perm: "configurarCuentas" },
     { name: "Usuarios", href: "/usuarios", icon: UserCog, perm: "crearUsuarios" },
-    { name: "Productos", href: "/productos", icon: Package, perm: "cargarProductos" },
+    { name: "Productos", href: "/productos", icon: Package, perm: PERMISOS_PRODUCTOS },
     { name: "Clientes", href: "/clientes", icon: ContactRound, perm: "verPedidos" },
     { name: "Pedidos", href: "/pedidos", icon: ShoppingCart, perm: "verPedidos" },
-    { name: "Configuración", href: "/configuracion", icon: Settings },
+    { name: "Configuración", href: "/configuracion", icon: Settings, general: true },
 ];
 
 export function Sidebar({ onClose }: { onClose?: () => void }) {
@@ -39,6 +42,8 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
     const logout = useAuthStore((state: any) => state.logout);
     const router = useRouter();
     const [mapOpen, setMapOpen] = useState(false);
+    const permissions = useAuthStore((state) => state.permissions);
+    const verGenerales = veSeccionesGenerales(permissions);
 
     const handleLogout = () => {
         logout();
@@ -65,7 +70,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
             </div>
             <div className="flex flex-1 flex-col overflow-y-auto">
                 <nav className="flex-1 space-y-1 px-3 py-4">
-                    {navigation.map((item) => {
+                    {navigation.filter((item) => verGenerales || !item.general).map((item) => {
                         const isActive = pathname === item.href;
 
                         const linkContent = (
@@ -104,13 +109,15 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                 </nav>
             </div>
             <div className="p-4 border-t border-border">
-                <button
-                    onClick={() => setMapOpen(true)}
-                    className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors mb-2"
-                >
-                    <Map className="mr-3 h-5 w-5 flex-shrink-0" aria-hidden="true" />
-                    Mapa
-                </button>
+                {verGenerales && (
+                    <button
+                        onClick={() => setMapOpen(true)}
+                        className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors mb-2"
+                    >
+                        <Map className="mr-3 h-5 w-5 flex-shrink-0" aria-hidden="true" />
+                        Mapa
+                    </button>
+                )}
                 <button
                     onClick={handleLogout}
                     className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-destructive hover:bg-red-500/10 transition-colors"

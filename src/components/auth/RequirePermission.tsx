@@ -2,9 +2,11 @@
 
 import React from 'react';
 import { useAuthStore } from '@/lib/store/useAuthStore';
+import { tienePermiso } from '@/lib/permissions';
 
 interface RequirePermissionProps {
-    perm: string;
+    /** Un permiso, o una lista: basta con tener uno de ellos. */
+    perm: string | string[];
     children: React.ReactNode;
     fallback?: React.ReactNode;
 }
@@ -12,9 +14,9 @@ interface RequirePermissionProps {
 export default function RequirePermission({ perm, children, fallback = null }: RequirePermissionProps) {
     const permissions = useAuthStore((state) => state.permissions);
 
-    // If permissions object exists and the specific permission is true, render children
+    // If the user has the permission (or any of them), render children
     // Otherwise, render nothing (or the fallback)
-    if (permissions && permissions[perm] === true) {
+    if (tienePermiso(permissions, perm)) {
         return <>{children}</>;
     }
 

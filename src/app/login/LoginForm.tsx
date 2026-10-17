@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { api } from "@/lib/api";
+import { inicioPara } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +31,7 @@ export default function LoginForm() {
             const res = await api.post("/auth/login", formData);
 
             setLogin(res.data.token, res.data.user);
-            router.push("/");
+            router.push(inicioPara(res.data.user?.permissions));
         } catch (err: any) {
             setError(err.response?.data?.message || "Error al conectar con el servidor.");
         } finally {
