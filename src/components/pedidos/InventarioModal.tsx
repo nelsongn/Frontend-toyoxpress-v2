@@ -6,6 +6,7 @@ import { pdf } from "@react-pdf/renderer";
 import { X, Search, Filter, Download, FileSpreadsheet, Loader2, Package, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { InventarioDocument } from "./InventarioDocument";
+import { RefBadge } from "@/components/productos/RefBadge";
 import RequirePermission from "@/components/auth/RequirePermission";
 import { api, BASE_URL } from "@/lib/api";
 
@@ -316,6 +317,7 @@ export function InventarioModal({ open, onClose }: Props) {
                             <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
                                 <tr>
                                     <th className="text-left px-4 py-2.5 font-semibold text-foreground/70 w-[130px]">Código</th>
+                                    <th className="text-left px-4 py-2.5 font-semibold text-foreground/70 w-[120px]">REF</th>
                                     <th className="text-left px-4 py-2.5 font-semibold text-foreground/70">Descripción</th>
                                     <th className="text-right px-4 py-2.5 font-semibold text-foreground/70 w-[100px]">Modelo</th>
                                     <th className="text-right px-4 py-2.5 font-semibold text-foreground/70 w-[80px]">Stock</th>
@@ -327,6 +329,9 @@ export function InventarioModal({ open, onClose }: Props) {
                                 {productos.map((p, i) => (
                                     <tr key={i} className={`border-b border-border/50 hover:bg-muted/40 transition-colors ${p.stock === 0 ? "opacity-60" : ""} ${i % 2 !== 0 ? "bg-muted/20" : ""}`}>
                                         <td className="px-4 py-2 text-foreground/80 font-mono whitespace-nowrap">{p.codigo}</td>
+                                        <td className="px-4 py-2">
+                                            {p.referencia ? <RefBadge value={p.referencia} /> : <span className="text-muted-foreground">—</span>}
+                                        </td>
                                         <td className="px-4 py-2 font-medium text-foreground py-3">{p.nombre}</td>
                                         <td className="px-4 py-2 text-right text-foreground/70 whitespace-nowrap">{p.modelo || "—"}</td>
                                         <td className={`px-4 py-2 text-right font-bold ${p.stock > 0 ? "text-emerald-500" : "text-red-400"}`}>{p.stock}</td>
