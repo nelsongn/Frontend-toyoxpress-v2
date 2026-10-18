@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { LogOut, MapPin, X, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useRouter } from "next/navigation";
 import { MapModal } from "./MapModal";
-import { BASE_URL } from "@/lib/api";
+import { api, BASE_URL } from "@/lib/api";
 import { tienePermiso, veSeccionesGenerales } from "@/lib/permissions";
 import { navigation, type ItemNavegacion } from "./navegacion";
 
@@ -22,6 +22,10 @@ function leerContraido() {
         return false;
     }
 }
+
+// Contadores de la barra (GET /dashboard/contadores), consultados cada minuto
+const INTERVALO_CONTADORES_MS = 60_000;
+interface Contadores { movimientosPendientes: number; pedidosConError: number }
 
 // Ítem del menú. Activo: fondo suave + barra roja a la izquierda (el rojo sólido queda para las acciones).
 const claseItem = (activo: boolean, contraido: boolean) =>
@@ -52,6 +56,32 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
         });
     };
 
+    // Contadores: al cargar, cada minuto y al cambiar de sección. Si el backend aún no tiene
+    // el endpoint o falla, simplemente no se muestran.
+    const [contadores, setContadores] = useState<Contadores | null>(null);
+    useEffect(() => {
+        let vigente = true;
+        const cargar = () =>
+            api.get("/dashboard/contadores")
+                .then((r) => { if (vigente && r.data?.ok) setContadores({ movimientosPendientes: r.data.movimientosPendientes || 0, pedidosConError: r.data.pedidosConError || 0 }); })
+                .catch(() => { /* sin contadores */ });
+        cargar();
+        const id = setInterval(cargar, INTERVALO_CONTADORES_MS);
+        return () => { vigente = false; clearInterval(id); };
+    }, [pathname]);
+
+    // Contador de cada sección: [cantidad, estilo del número, texto para lectores de pantalla, color del punto]
+    const contadorDe = (href: string): [number, string, string, string] | null => {
+        if (!contadores) return null;
+        if (href === "/movimientos" && contadores.movimientosPendientes > 0) {
+            return [contadores.movimientosPendientes, "bg-amber-500 text-neutral-950", "pendientes por aprobar", "bg-amber-500"];
+        }
+        if (href === "/pedidos" && contadores.pedidosConError > 0) {
+            return [contadores.pedidosConError, "border border-red-500 text-red-600 dark:text-red-400", "pedidos con error en 24 horas", "bg-red-500"];
+        }
+        return null;
+    };
+
     const handleLogout = () => {
         logout();
         router.push("/login");
@@ -71,6 +101,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
 
     const enlace = (item: ItemNavegacion) => {
         const activo = esActivo(item.href);
+        const contador = contadorDe(item.href);
         return (
             <Link
                 key={item.href}
@@ -78,7 +109,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                 prefetch={false}
                 onClick={() => onClose && onClose()}
                 aria-current={activo ? "page" : undefined}
-                title={contraido ? item.name : undefined}
+                title={contraido ? (contador ? `${item.name}: ${contador[0]} ${contador[2]}` : item.name) : undefined}
                 className={claseItem(activo, contraido)}
             >
                 <item.icon
@@ -89,6 +120,30 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                     aria-hidden="true"
                 />
                 <span className={cn(contraido && "md:sr-only")}>{item.name}</span>
+                {contador && (
+                    <>
+                        {/* Expandido: número; contraído (md+): solo un punto sobre el ícono */}
+                        <span
+                            className={cn(
+                                "ml-auto min-w-[20px] rounded-full px-1.5 text-center text-[11px] font-semibold leading-5 tabular-nums",
+                                contador[1],
+                                contraido && "md:hidden"
+                            )}
+                        >
+                            {contador[0]}
+                            <span className="sr-only"> {contador[2]}</span>
+                        </span>
+                        {contraido && (
+                            <span
+                                aria-hidden="true"
+                                className={cn(
+                                    "absolute right-2.5 top-1.5 hidden h-2 w-2 rounded-full md:block",
+                                    contador[3]
+                                )}
+                            />
+                        )}
+                    </>
+                )}
             </Link>
         );
     };
