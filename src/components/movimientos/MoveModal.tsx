@@ -335,7 +335,7 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                             <h3 className="text-2xl font-medium tracking-tight text-foreground border-none">Forma de Pago/Cobro</h3>
 
                             {/* Top row payments */}
-                            <div className="grid grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
                                 <div className="space-y-1">
                                     <Label className="text-muted-foreground font-normal text-xs">Efectivo:</Label>
                                     <div className="relative">
@@ -380,7 +380,7 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
                             {/* Bolivares row */}
                             <div className="space-y-1 pt-2">
                                 <Label className="text-muted-foreground font-normal text-xs">Bolivares:</Label>
-                                <div className="grid grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
                                     <div className="space-y-1">
                                         <Label className="text-foreground font-normal text-xs">Valor en dolares:</Label>
                                         <div className="relative">
@@ -426,7 +426,7 @@ export default function MoveModal({ isOpen, onClose, onSuccess, move }: MoveModa
 
                             {/* Total Row */}
                             <div className="pt-4 pb-2">
-                                <div className="grid grid-cols-3 gap-6 items-end">
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6 items-end">
                                     <div className="space-y-1">
                                         <Label className="text-muted-foreground font-normal text-xs">Total:</Label>
                                         <div className="relative">

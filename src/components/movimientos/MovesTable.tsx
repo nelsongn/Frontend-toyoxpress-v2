@@ -438,7 +438,7 @@ export default function MovesTable() {
 
                 {/* Bottom Filter options: Dates and status */}
                 <div className="flex flex-wrap items-center justify-between border-t border-gray-100 pt-4">
-                    <div className="flex gap-4">
+                    <div className="flex flex-wrap gap-4">
                         <div className="space-y-1">
                             <span className="text-sm font-medium block">Fecha de inicio:</span>
                             <input
@@ -489,7 +489,7 @@ export default function MovesTable() {
             </div>
 
             {/* Pagination Controls */}
-            <div className="flex items-center justify-between bg-card border rounded-lg p-2 mb-4 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2 bg-card border rounded-lg p-2 mb-4 shadow-sm">
                 <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-foreground">Mostrar:</span>
                     <Select
@@ -510,7 +510,7 @@ export default function MovesTable() {
                     </Select>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                     <Button
                         variant="outline"
                         size="sm"

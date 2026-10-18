@@ -15,7 +15,8 @@ import { horaCaracas } from "@/lib/horario";
 
 // Columna de tarjetas: el grid estira las columnas de una fila a la misma altura y la última
 // tarjeta de cada una crece para llenarla, así los bordes inferiores quedan al mismo nivel.
-const COLUMNA = "flex flex-col gap-4 [&>*:last-child]:flex-1";
+// min-w-0: en celular la columna no se estira con textos largos (se cortan con "…")
+const COLUMNA = "flex min-w-0 flex-col gap-4 [&>*:last-child]:flex-1";
 
 function saludo(hora: number) {
   if (hora < 12) return "Buenos días";

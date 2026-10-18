@@ -1,6 +1,6 @@
 import {
     ArrowLeftRight,
-    Users,
+    Landmark,
     UserCog,
     Package,
     ShoppingCart,
@@ -29,9 +29,20 @@ export interface ModuloPermisos {
     subpermisosIndependientes?: boolean;
 }
 
-// Módulos en el mismo orden que el menú lateral. Las claves (key) son las que guarda
+// Módulos en el mismo orden que el menú lateral (layout/navegacion.ts). Las claves (key) son las que guarda
 // el backend en user.permissions: no cambiarlas sin migrar los datos.
 export const MODULOS_PERMISOS: ModuloPermisos[] = [
+    {
+        id: "pedidos",
+        titulo: "Pedidos y clientes",
+        descripcion: "Ventas, historial de pedidos y cartera de clientes.",
+        icon: ShoppingCart,
+        acceso: { key: "verPedidos", label: "Acceso a Pedidos y Clientes" },
+        permisos: [
+            { key: "verClientes", label: "Ver todos los clientes", ayuda: "Sin esto, solo ve los de su código de vendedor" },
+            { key: "verExcel", label: "Exportar inventario a Excel" },
+        ],
+    },
     {
         id: "movimientos",
         titulo: "Movimientos",
@@ -52,20 +63,9 @@ export const MODULOS_PERMISOS: ModuloPermisos[] = [
         id: "cuentas",
         titulo: "Cuentas",
         descripcion: "Bancos y cuentas de pago.",
-        icon: Users,
+        icon: Landmark,
         acceso: { key: "configurarCuentas", label: "Acceso a Cuentas" },
         permisos: [],
-    },
-    {
-        id: "usuarios",
-        titulo: "Usuarios",
-        descripcion: "Con acceso puede ver la sección y crear usuarios.",
-        icon: UserCog,
-        acceso: { key: "crearUsuarios", label: "Acceso a Usuarios y crear usuarios" },
-        permisos: [
-            { key: "modificarUsuarios", label: "Editar usuarios y permisos" },
-            { key: "eliminarUsuarios", label: "Eliminar usuarios" },
-        ],
     },
     {
         id: "productos",
@@ -81,14 +81,14 @@ export const MODULOS_PERMISOS: ModuloPermisos[] = [
         subpermisosIndependientes: true,
     },
     {
-        id: "pedidos",
-        titulo: "Pedidos y clientes",
-        descripcion: "Ventas, historial de pedidos y cartera de clientes.",
-        icon: ShoppingCart,
-        acceso: { key: "verPedidos", label: "Acceso a Pedidos y Clientes" },
+        id: "usuarios",
+        titulo: "Usuarios",
+        descripcion: "Con acceso puede ver la sección y crear usuarios.",
+        icon: UserCog,
+        acceso: { key: "crearUsuarios", label: "Acceso a Usuarios y crear usuarios" },
         permisos: [
-            { key: "verClientes", label: "Ver todos los clientes", ayuda: "Sin esto, solo ve los de su código de vendedor" },
-            { key: "verExcel", label: "Exportar inventario a Excel" },
+            { key: "modificarUsuarios", label: "Editar usuarios y permisos" },
+            { key: "eliminarUsuarios", label: "Eliminar usuarios" },
         ],
     },
     {

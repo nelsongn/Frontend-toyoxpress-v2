@@ -25,7 +25,8 @@ export default function ProductosPage() {
                     <UploadProductsBtn />
                 </div>
 
-                <div className="grid gap-6">
+                {/* min-w-0: las tarjetas no se estiran con la tabla; la tabla se desplaza dentro */}
+                <div className="grid gap-6 [&>*]:min-w-0">
                     <Card className="shadow-md border-border/40">
                         <CardHeader>
                             <CardTitle className="text-xl">Datos Locales</CardTitle>
