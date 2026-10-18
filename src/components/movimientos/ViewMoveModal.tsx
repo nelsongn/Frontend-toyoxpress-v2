@@ -20,9 +20,11 @@ interface ViewMoveModalProps {
     move: any | null;
     onClose: () => void;
     onSuccess: () => void;
+    /** Abrir con el campo "Nro de aprobacion" activo (botón "Aprobar" de la lista) */
+    enfocarAprobacion?: boolean;
 }
 
-export default function ViewMoveModal({ move, onClose, onSuccess }: ViewMoveModalProps) {
+export default function ViewMoveModal({ move, onClose, onSuccess, enfocarAprobacion = false }: ViewMoveModalProps) {
     const [loading, setLoading] = useState(false);
     const [vale, setVale] = useState("");
 
@@ -243,6 +245,8 @@ export default function ViewMoveModal({ move, onClose, onSuccess }: ViewMoveModa
                                     placeholder={currentVale || ""}
                                     value={vale}
                                     onChange={(e) => setVale(e.target.value)}
+                                    onKeyDown={(e) => { if (e.key === "Enter" && currentStatus !== 'Aprobado') handleApprove(); }}
+                                    autoFocus={enfocarAprobacion}
                                     className="flex-1"
                                     disabled={isCajaChica || currentStatus === 'Aprobado'}
                                 />

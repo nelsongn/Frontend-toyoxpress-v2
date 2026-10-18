@@ -32,9 +32,7 @@ export default function MovimientosPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">Movimientos</h1>
-                    <p className="text-muted-foreground mt-2">
-                        Gestiona los ingresos y egresos financieros del sistema.
-                    </p>
+                    <p className="text-muted-foreground mt-2">Ingresos y egresos de caja.</p>
                 </div>
 
                 <div className="flex items-center gap-4">
@@ -48,9 +46,7 @@ export default function MovimientosPage() {
                 </div>
             </div>
 
-            <div className="bg-card border border-border rounded-lg shadow-sm">
-                <MovesTable />
-            </div>
+            <MovesTable />
 
             <MoveModal
                 isOpen={isModalOpen}
