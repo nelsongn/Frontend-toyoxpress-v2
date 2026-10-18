@@ -503,7 +503,7 @@ export function VentaForm({ onSuccess }: Props) {
                 {/* ── Notas + emails ────────────────────────────────────────── */}
                 {selectedCliente && carrito.length > 0 && (
                     <div className="bg-card rounded-xl border border-border p-4 space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Nota del Pedido</label>
                                 <textarea
