@@ -12,7 +12,7 @@ export function MapModal({ open, onOpenChange }: MapModalProps) {
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-[90vw] w-[90vw] h-[90vh] flex flex-col items-center">
                 <DialogHeader className="w-full flex-shrink-0">
-                    <DialogTitle className="text-xl">Mapa de Cobertura y Rutas</DialogTitle>
+                    <DialogTitle className="text-xl">Mapa de clientes</DialogTitle>
                 </DialogHeader>
                 <div className="w-full flex-grow rounded-md overflow-hidden bg-muted/30">
                     <iframe
