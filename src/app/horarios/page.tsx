@@ -4,18 +4,19 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Clock, Save, AlertCircle, CalendarRange, Copy } from "lucide-react";
+import { Clock, Save } from "lucide-react";
 import Swal from "sweetalert2";
 import RequirePermission from "@/components/auth/RequirePermission";
 import { RelojCaracas } from "@/components/horarios/RelojCaracas";
+import { EditorHorario, formatoHoras, minutosAbierto } from "@/components/horarios/EditorHorario";
 import type { DiaHorario } from "@/lib/horario";
 
 export default function HorariosPage() {
     const token = useAuthStore((state) => state.token);
 
     const [horario, setHorario] = useState<DiaHorario[]>([]);
+    // Último horario guardado (o cargado): para saber si hay cambios sin guardar y poder descartarlos
+    const [guardado, setGuardado] = useState<DiaHorario[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     // Hora del servidor − hora de este equipo: el reloj muestra la del servidor
@@ -32,7 +33,10 @@ export default function HorariosPage() {
         try {
             const res = await api.get('/configuracion');
             const data = res.data.data;
-            if (data.horario) setHorario(data.horario);
+            if (data.horario) {
+                setHorario(data.horario);
+                setGuardado(data.horario);
+            }
             if (typeof res.data.serverTimeMs === "number") setDesfaseServidorMs(res.data.serverTimeMs - Date.now());
             // temaLocal is now managed by next-themes, no need to set it from backend here
             // if (data.temaLocal) setTemaLocal(data.temaLocal);
@@ -44,38 +48,37 @@ export default function HorariosPage() {
         }
     };
 
-    const handleHorarioChange = (index: number, field: keyof DiaHorario, value: any) => {
+    const hayCambios = JSON.stringify(horario) !== JSON.stringify(guardado);
+    const minutosSemana = horario.reduce((total, d) => total + minutosAbierto(d), 0);
+
+    // Avisar antes de salir de la página con cambios sin guardar
+    useEffect(() => {
+        if (!hayCambios) return;
+        const avisar = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+        window.addEventListener("beforeunload", avisar);
+        return () => window.removeEventListener("beforeunload", avisar);
+    }, [hayCambios]);
+
+    const handleHorarioChange = (index: number, field: keyof DiaHorario, value: string | boolean) => {
         const newHorario = [...horario];
         newHorario[index] = { ...newHorario[index], [field]: value };
         setHorario(newHorario);
     };
 
+    // Copia el horario del lunes a los demás días ABIERTOS (no abre días cerrados)
     const handleCopyMonday = () => {
-        if (horario.length === 0) return;
-
-        // Asumiendo que Lunes es el index 0
-        const monday = horario[0];
-
-        const newHorario = horario.map((dia, idx) => {
-            // No copiamos al propio Lunes (0) ni al Domingo (usualmente cerrado)
-            // Edit: La petición dice "todos los horarios", aunque por prudencia suele no copiarse a Domingo,
-            // pero si él lo pide, copiamos del Martes(1) al Domingo(6)
-            if (idx === 0) return dia;
-            return {
-                ...dia,
-                cerrado: monday.cerrado,
-                apertura: monday.apertura,
-                cierre: monday.cierre
-            };
-        });
-
-        setHorario(newHorario);
+        const lunes = horario.find((d) => d.dia === "Lunes");
+        if (!lunes) return;
+        const nuevo = horario.map((d) =>
+            d.dia === "Lunes" || d.cerrado ? d : { ...d, apertura: lunes.apertura, cierre: lunes.cierre }
+        );
+        setHorario(nuevo);
 
         Swal.fire({
             icon: 'success',
-            title: 'Horario Copiado',
-            text: 'El horario del Lunes se ha aplicado a toda la semana.',
-            timer: 2000,
+            title: 'Horario copiado',
+            text: `Se aplicó ${lunes.apertura} – ${lunes.cierre} a los días abiertos. Recuerda guardar.`,
+            timer: 2500,
             showConfirmButton: false,
             toast: true,
             position: 'top-end'
@@ -87,6 +90,7 @@ export default function HorariosPage() {
         setSaving(true);
         try {
             await api.put('/configuracion', { horario });
+            setGuardado(horario);
             Swal.fire({
                 icon: 'success',
                 title: 'Guardado',
@@ -106,7 +110,7 @@ export default function HorariosPage() {
     }
 
     return (
-        <div className="flex flex-col gap-6 p-6 max-w-4xl mx-auto">
+        <div className="flex flex-col gap-6 max-w-4xl mx-auto pb-6">
             <div className="flex items-center gap-3">
                 <Clock className="h-8 w-8 text-primary" />
                 <div>
@@ -119,84 +123,35 @@ export default function HorariosPage() {
                 <RelojCaracas horario={horario} desfaseServidorMs={desfaseServidorMs} />
             </RequirePermission>
 
-            {/* Horarios */}
+            {/* Horario de ingreso */}
             <RequirePermission
                 perm="horasIngreso"
                 fallback={<p className="text-sm text-muted-foreground">No tienes permiso para configurar los horarios.</p>}
             >
-                <div className="bg-card border rounded-lg p-6 shadow-sm">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4 mb-4 gap-4">
-                        <div className="flex items-center gap-2">
-                            <Clock className="h-5 w-5 text-blue-500" />
-                            <h2 className="text-xl font-semibold">Horario de Operaciones</h2>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={handleCopyMonday} className="gap-2">
-                            <Copy className="h-4 w-4" />
-                            Repetir Lunes a toda la semana
-                        </Button>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-6">
-                        Define las horas en las que los vendedores podrán usar la plataforma.
-                        Fuera de estas horas, el acceso estará bloqueado.
+                <EditorHorario
+                    horario={horario}
+                    onCambio={handleHorarioChange}
+                    onCopiarLunes={handleCopyMonday}
+                    desfaseServidorMs={desfaseServidorMs}
+                />
+
+                {/* Barra de guardado: queda fija abajo mientras se edita */}
+                <div className="sticky bottom-0 z-10 -mx-1 flex flex-col gap-3 rounded-lg border border-border bg-card px-5 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm text-muted-foreground">
+                        <span className="font-mono font-semibold tabular-nums text-foreground">{formatoHoras(minutosSemana)}</span> por semana
+                        {hayCambios && <span className="text-amber-600 dark:text-amber-400"> · Cambios sin guardar</span>}
                     </p>
-
-                    <div className="grid grid-cols-1 gap-4">
-                        {/* Headers (Desktop only) */}
-                        <div className="hidden md:grid grid-cols-12 gap-4 px-4 text-sm font-semibold text-muted-foreground">
-                            <div className="col-span-3">Día</div>
-                            <div className="col-span-2 text-center">Estatus</div>
-                            <div className="col-span-3 text-center">Apertura</div>
-                            <div className="col-span-3 text-center">Cierre</div>
-                        </div>
-
-                        {horario.map((diaInfo, idx) => (
-                            <div key={idx} className={`grid grid-cols-1 md:grid-cols-12 gap-4 items-center p-4 rounded-lg border ${diaInfo.cerrado ? 'bg-muted/50 border-dashed' : 'bg-background'}`}>
-                                <div className="col-span-3 font-medium flex items-center gap-2">
-                                    <span className={`w-2 h-2 rounded-full ${diaInfo.cerrado ? 'bg-destructive' : 'bg-emerald-500'}`}></span>
-                                    {diaInfo.dia}
-                                </div>
-
-                                <div className="col-span-2 flex justify-center items-center gap-2">
-                                    <span className="text-xs text-muted-foreground uppercase">{diaInfo.cerrado ? 'Cerrado' : 'Abierto'}</span>
-                                    <Switch
-                                        checked={!diaInfo.cerrado}
-                                        onCheckedChange={(val: boolean) => handleHorarioChange(idx, 'cerrado', !val)}
-                                    />
-                                </div>
-
-                                <div className="col-span-3 flex items-center justify-center gap-2">
-                                    <span className="md:hidden text-xs text-muted-foreground w-16">Apertura:</span>
-                                    <Input
-                                        type="time"
-                                        value={diaInfo.apertura}
-                                        onChange={(e) => handleHorarioChange(idx, 'apertura', e.target.value)}
-                                        disabled={diaInfo.cerrado}
-                                        className="w-full md:w-32"
-                                    />
-                                </div>
-
-                                <div className="col-span-3 flex items-center justify-center gap-2">
-                                    <span className="md:hidden text-xs text-muted-foreground w-16">Cierre:</span>
-                                    <Input
-                                        type="time"
-                                        value={diaInfo.cierre}
-                                        onChange={(e) => handleHorarioChange(idx, 'cierre', e.target.value)}
-                                        disabled={diaInfo.cerrado}
-                                        className="w-full md:w-32"
-                                    />
-                                </div>
-                            </div>
-                        ))}
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => setHorario(guardado)} disabled={!hayCambios || saving}>
+                            Descartar
+                        </Button>
+                        <Button onClick={handleSave} disabled={!hayCambios || saving} className="gap-2">
+                            <Save className="h-4 w-4" aria-hidden="true" />
+                            {saving ? "Guardando..." : "Guardar horario"}
+                        </Button>
                     </div>
                 </div>
             </RequirePermission>
-
-            <div className="flex justify-end mt-4 pb-12">
-                <Button onClick={handleSave} disabled={saving} size="lg" className="w-full md:w-auto gap-2">
-                    <Save className="h-4 w-4" />
-                    {saving ? 'Guardando...' : 'Guardar Cambios'}
-                </Button>
-            </div>
         </div>
     );
 }
