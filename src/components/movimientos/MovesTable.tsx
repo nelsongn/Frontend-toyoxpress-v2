@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { tienePermiso } from "@/lib/permissions";
 import {
-    type Movimiento, type AtajoFecha, ETIQUETA_ATAJO, esAprobado, fechaDe, formatoMonto,
+    type Movimiento, type AtajoFecha, ETIQUETA_ATAJO, esAprobado, esEgreso, fechaDe, formatoMonto,
     identificadorDe, montoConSigno, rangoAtajo,
 } from "./reglas";
 
@@ -70,6 +70,15 @@ function Monto({ m, className }: { m: Movimiento; className?: string }) {
     return (
         <span className={cn("font-mono font-semibold tabular-nums", valor < 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400", className)}>
             {formatoMonto(valor, true)}
+        </span>
+    );
+}
+
+// Identificador en verde (ingreso) o rojo (egreso), como en la versión anterior
+function Identificador({ m }: { m: Movimiento }) {
+    return (
+        <span className={cn("font-mono text-xs font-semibold", esEgreso(m) ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400")}>
+            {identificadorDe(m)}
         </span>
     );
 }
@@ -551,7 +560,7 @@ export default function MovesTable() {
                                             onClick={() => setDetalle({ move: m, aprobar: false })}
                                             className="cursor-pointer transition-colors hover:bg-secondary"
                                         >
-                                            <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-muted-foreground">{identificadorDe(m)}</td>
+                                            <td className="whitespace-nowrap px-4 py-2.5"><Identificador m={m} /></td>
                                             <td className="whitespace-nowrap px-4 py-2.5">{m.usuario || m.name}</td>
                                             <td className="whitespace-nowrap px-4 py-2.5 text-muted-foreground">{m.cuenta}</td>
                                             <td className="max-w-[340px] px-4 py-2.5">
@@ -579,7 +588,7 @@ export default function MovesTable() {
                             {movimientos.map((m) => (
                                 <li key={m._id} onClick={() => setDetalle({ move: m, aprobar: false })} className="cursor-pointer px-4 py-3 active:bg-secondary">
                                     <div className="flex items-center justify-between gap-2">
-                                        <span className="font-mono text-xs text-muted-foreground">{identificadorDe(m)}</span>
+                                        <Identificador m={m} />
                                         <EstadoPill aprobado={esAprobado(m)} />
                                     </div>
                                     <p className="mt-1 truncate text-sm font-medium">{(m.concepto || "").toUpperCase()}</p>
