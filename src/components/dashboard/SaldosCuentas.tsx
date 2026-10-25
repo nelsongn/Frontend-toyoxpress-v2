@@ -7,9 +7,11 @@ interface Props {
     total: number | null;
 }
 
-/** Saldo por cuenta con barra proporcional sobre la suma de los saldos positivos. */
+/** Saldo por cuenta con barra proporcional sobre la suma de los saldos positivos, de menor a mayor saldo. */
 export function SaldosCuentas({ cuentas, total }: Props) {
     const sumaPositivos = cuentas.reduce((s, c) => s + Math.max(c.balance, 0), 0);
+    // La de menos dinero arriba y la de más abajo
+    const ordenadas = [...cuentas].sort((a, b) => a.balance - b.balance);
 
     return (
         <section aria-labelledby="saldos-cuentas" className="rounded-lg border border-border bg-card shadow-sm">
@@ -32,7 +34,7 @@ export function SaldosCuentas({ cuentas, total }: Props) {
                     <p className="my-6 text-center text-sm text-muted-foreground">No hay cuentas configuradas.</p>
                 ) : (
                     <ul className="space-y-4">
-                        {cuentas.map((c) => {
+                        {ordenadas.map((c) => {
                             const color = c.color || "#94a3b8";
                             const porcentaje = sumaPositivos > 0 && c.balance > 0 ? (c.balance / sumaPositivos) * 100 : 0;
                             return (
