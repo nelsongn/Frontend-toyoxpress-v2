@@ -6,12 +6,12 @@ import { BarrasMes } from "./BarrasMes";
 import { BarraCelda, EstadoCarga, FilaKpis, FranjaDetalle, Kpi, Panel, Tabla, td, tdCodigo, tdNum, th, thNum, useAnalitica } from "./Bloques";
 import { diasDelMes, fecha, mesLargo, num, pct, usd, variacion } from "./formato";
 
-interface Resumen { venta: number; margen: number; facturas: number; clientes: number; productos: number }
+interface Resumen { venta: number; margen: number; descuento: number; facturas: number; clientes: number; productos: number }
 interface Datos {
     periodo: { desde: string; hasta: string; desdeAnterior: string; hastaAnterior: string; fechaDatos: string };
     resumen: Resumen;
     resumenAnterior: Resumen;
-    mensual: { mes: string; venta: number; margen: number; facturas: number }[];
+    mensual: { mes: string; venta: number; margen: number; descuento: number; facturas: number }[];
     clientes: { nombre: string; rif: string; venta: number; margen: number; facturas: number; ultima_compra: string }[];
     vendedores: { nombre: string; venta: number; margen: number; clientes: number; facturas: number }[];
     familias: { nombre: string; venta: number; margen: number; productos: number }[];
@@ -94,7 +94,7 @@ export function VistaVentas() {
                 <p className="text-xs text-muted-foreground">{fecha(per.desde)} al {fecha(per.hasta)} · {comparacion}</p>
             </div>
 
-            <FilaKpis>
+            <FilaKpis columnas={5}>
                 <Kpi titulo="Venta neta" valor={usd(r.venta)} cambio={variacion(r.venta, a.venta)} detalle={`${num(r.facturas)} facturas`} />
                 <Kpi
                     titulo="Margen bruto"
@@ -108,6 +108,13 @@ export function VistaVentas() {
                     cambio={variacion(r.facturas ? r.venta / r.facturas : 0, a.facturas ? a.venta / a.facturas : 0)}
                     detalle={`${num(r.productos)} repuestos distintos`}
                 />
+                <Kpi
+                    titulo="Descuentos otorgados"
+                    valor={usd(r.descuento)}
+                    cambio={variacion(r.descuento, a.descuento)}
+                    menosEsMejor
+                    detalle={`${pct(r.venta + r.descuento ? r.descuento / (r.venta + r.descuento) : 0, 1)} de la venta antes del descuento`}
+                />
             </FilaKpis>
 
             <Panel titulo="Venta por mes" detalle="Haz clic en una barra para ver ese mes en las tablas de abajo. Otro clic en la misma barra vuelve a todo el período.">
@@ -118,7 +125,11 @@ export function VistaVentas() {
                     puntos={datos.mensual.map((m) => ({
                         mes: m.mes,
                         valor: m.venta,
-                        detalle: [`Margen ${usd(m.margen)} (${pct(m.venta ? m.margen / m.venta : 0)})`, `${num(m.facturas)} facturas`],
+                        detalle: [
+                            `Margen ${usd(m.margen)} (${pct(m.venta ? m.margen / m.venta : 0)})`,
+                            `Descuentos ${usd(m.descuento)}`,
+                            `${num(m.facturas)} facturas`,
+                        ],
                     }))}
                 />
             </Panel>
@@ -142,7 +153,7 @@ function Detalle({
         <FranjaDetalle
             titulo={titulo}
             resumen={onQuitarMes && datos
-                ? `venta ${usd(datos.resumen.venta)} · margen ${pct(datos.resumen.venta ? datos.resumen.margen / datos.resumen.venta : 0)} · ${num(datos.resumen.facturas)} facturas`
+                ? `venta ${usd(datos.resumen.venta)} · margen ${pct(datos.resumen.venta ? datos.resumen.margen / datos.resumen.venta : 0)} · descuentos ${usd(datos.resumen.descuento)} · ${num(datos.resumen.facturas)} facturas`
                 : undefined}
             onQuitar={onQuitarMes}
         />
