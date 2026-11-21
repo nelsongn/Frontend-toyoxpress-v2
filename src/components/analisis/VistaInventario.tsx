@@ -9,16 +9,21 @@ import { BarraCelda, EstadoCarga, FilaKpis, Kpi, Panel, Tabla, td, tdCodigo, tdN
 import { decimal, fecha, num, pct, usd } from "./formato";
 
 interface Bloque { productos: number; venta: number; valorStock: number }
+interface UltimaCompra {
+    recepcion: string | null; emision: string | null; numero: string; proveedor: string | null; cantidad: number | null; costo: number | null;
+}
 interface Sku {
     codigo: string; nombre: string; familia: string | null; ref: string | null; stock: number; venta: number;
     margen: number; clientes: number; meses: number; valorStock: number; cobertura: number | null; ultimaVenta: string | null;
+    ultimaCompra: UltimaCompra | null;
 }
 interface Sugerido {
     codigo: string; nombre: string; familia: string | null; proveedor: string | null; stock: number;
     ventaMes: number; unidades: number; inversion: number; margenEsperado: number; motor: boolean;
+    transito: number; dias: number; costoUnitario: number; ultimaCompra: UltimaCompra | null;
 }
 interface Datos {
-    periodo: { desde: string; hasta: string; coberturaDias: number };
+    periodo: { desde: string; hasta: string; colchon: number; transitoDefecto: number };
     resumen: {
         valorStock: number; productosConStock: number; productosVendidos: number; venta: number; margen: number;
         margenPorDolar: number | null; rotacion: number | null; motorSinStock: number; motorTotal: number;
@@ -29,7 +34,7 @@ interface Datos {
     capitalDormido: Sku[];
     compraSugerida: { productos: number; inversion: number; margenEsperado: number; lista: Sugerido[] };
     familias: { nombre: string; venta: number; margen: number; valorStock: number; margenPorDolar: number | null; rotacion: number | null }[];
-    compras: { mensual: { mes: string; total: number; facturas: number }[]; proveedores: { nombre: string; total: number; facturas: number; ultima: string }[] };
+    compras: { mensual: { mes: string; total: number; facturas: number }[]; proveedores: { nombre: string; total: number; facturas: number; ultima: string; ultima_recepcion: string | null; transito: number | null; comprasTransito: number }[] };
     abcDetalle: Record<GrupoAbc, Sku[]>;
 }
 type GrupoAbc = "A" | "B" | "C" | "sinVenta";
@@ -41,8 +46,25 @@ const GRUPOS_ABC: { clave: GrupoAbc; nombre: string; ayuda: string }[] = [
     { clave: "sinVenta", nombre: "Sin venta", ayuda: "nada en 12 meses" },
 ];
 
+const COLCHONES = [15, 30, 45, 60];
+
+/** Fecha de recepción (la "Fecha Ult. Compra" de Valery), proveedor, factura y emisión de la última compra. */
+function CeldaUltimaCompra({ uc }: { uc: UltimaCompra | null }) {
+    if (!uc) return <span className="text-xs text-muted-foreground">Sin compras registradas</span>;
+    return (
+        <span className="block whitespace-nowrap text-xs">
+            <span className="font-medium text-foreground">Recibida {fecha(uc.recepcion)}</span>
+            <span className="block text-muted-foreground">{uc.proveedor ?? "—"}</span>
+            <span className="block text-muted-foreground">Fact. {uc.numero} · emitida {fecha(uc.emision)}</span>
+            {uc.cantidad != null && <span className="block text-muted-foreground">{num(uc.cantidad)} u. a {usd(uc.costo)}</span>}
+        </span>
+    );
+}
+
 export function VistaInventario() {
-    const { datos, error, cargando } = useAnalitica<Datos>("inventario");
+    // Días de colchón de la compra sugerida (además del tránsito de cada proveedor)
+    const [colchon, setColchon] = useState(30);
+    const { datos, error, cargando } = useAnalitica<Datos>(`inventario?colchon=${colchon}`);
     // Grupo ABC abierto: muestra la lista de sus repuestos
     const [grupo, setGrupo] = useState<GrupoAbc | null>(null);
     if (!datos || cargando || error) return <EstadoCarga cargando={cargando} error={error} />;
@@ -120,11 +142,24 @@ export function VistaInventario() {
             </Panel>
 
             <Panel
-                titulo={`Compra sugerida para ${datos.periodo.coberturaDias} días`}
-                detalle={`${num(cs.productos)} repuestos que se venden con regularidad · inversión ${usd(cs.inversion)} al último costo · margen esperado ${usd(cs.margenEsperado)}. Ajustar al mínimo de pedido y al tiempo de entrega de cada proveedor.`}
+                titulo="Compra sugerida"
+                detalle={`Para cubrir el tiempo de tránsito del proveedor más ${num(datos.periodo.colchon)} días de colchón. ${num(cs.productos)} repuestos que se venden con regularidad · inversión ${usd(cs.inversion)} al costo de la última compra · margen esperado ${usd(cs.margenEsperado)}. Ajustar al mínimo de pedido de cada proveedor.`}
+                accion={
+                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                        Colchón
+                        <select
+                            id="colchon-compra"
+                            value={colchon}
+                            onChange={(e) => setColchon(Number(e.target.value))}
+                            className="rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground"
+                        >
+                            {COLCHONES.map((c) => <option key={c} value={c}>{c} días</option>)}
+                        </select>
+                    </label>
+                }
             >
                 <Tabla>
-                    <thead><tr><th className={th}>Código</th><th className={th}>Repuesto</th><th className={thNum}>Stock</th><th className={thNum}>Vende / mes</th><th className={thNum}>Comprar</th><th className={thNum}>Inversión</th><th className={thNum}>Margen esp.</th><th className={th}>Proveedor</th></tr></thead>
+                    <thead><tr><th className={th}>Código</th><th className={th}>Repuesto</th><th className={thNum}>Stock</th><th className={thNum}>Vende / mes</th><th className={thNum}>Días a cubrir</th><th className={thNum}>Comprar</th><th className={thNum}>Inversión</th><th className={thNum}>Margen esp.</th><th className={th}>Última compra</th></tr></thead>
                     <tbody>
                         {cs.lista.map((s) => (
                             <tr key={s.codigo}>
@@ -135,10 +170,14 @@ export function VistaInventario() {
                                 </td>
                                 <td className={cn(tdNum, s.stock <= 0 && "text-red-600 dark:text-red-400")}>{num(s.stock)}</td>
                                 <td className={tdNum}>{decimal(s.ventaMes)}</td>
+                                <td className={cn(tdNum, "whitespace-nowrap")} title={`${s.transito} días de tránsito del proveedor + ${datos.periodo.colchon} de colchón`}>
+                                    {num(s.dias)}
+                                    <span className="block text-[11px] text-muted-foreground">{num(s.transito)} tránsito + {num(datos.periodo.colchon)}</span>
+                                </td>
                                 <td className={cn(tdNum, "font-semibold")}>{num(s.unidades)}</td>
-                                <td className={tdNum}>{usd(s.inversion)}</td>
+                                <td className={tdNum}>{usd(s.inversion)}<span className="block text-[11px] text-muted-foreground">{usd(s.costoUnitario)} c/u</span></td>
                                 <td className={tdNum}>{usd(s.margenEsperado)}</td>
-                                <td className={cn(td, "text-xs text-muted-foreground")}>{s.proveedor ?? "—"}</td>
+                                <td className={td}><CeldaUltimaCompra uc={s.ultimaCompra} /></td>
                             </tr>
                         ))}
                     </tbody>
@@ -148,7 +187,7 @@ export function VistaInventario() {
             <div className="grid gap-4 xl:grid-cols-2">
                 <Panel titulo="Repuestos clave" detalle="Del 80 % de la venta y vendidos en 6 meses o más. Primero los que están en cero.">
                     <Tabla>
-                        <thead><tr><th className={th}>Código</th><th className={th}>Repuesto</th><th className={thNum}>Venta 12 m</th><th className={thNum}>Clientes</th><th className={thNum}>Stock</th></tr></thead>
+                        <thead><tr><th className={th}>Código</th><th className={th}>Repuesto</th><th className={thNum}>Venta 12 m</th><th className={thNum}>Clientes</th><th className={thNum}>Stock</th><th className={th}>Última compra</th></tr></thead>
                         <tbody>
                             {datos.motor.map((s) => (
                                 <tr key={s.codigo}>
@@ -157,6 +196,7 @@ export function VistaInventario() {
                                     <td className={tdNum}>{usd(s.venta)}</td>
                                     <td className={tdNum}>{num(s.clientes)}</td>
                                     <td className={cn(tdNum, "font-semibold", s.stock <= 0 && "text-red-600 dark:text-red-400")}>{s.stock <= 0 ? "Sin stock" : num(s.stock)}</td>
+                                    <td className={td}><CeldaUltimaCompra uc={s.ultimaCompra} /></td>
                                 </tr>
                             ))}
                         </tbody>
@@ -168,7 +208,7 @@ export function VistaInventario() {
                     detalle={`Sin ventas en 12 meses: ${usd(dormido.valorStock)} en ${num(dormido.productos)} repuestos. Stock para más de 15 meses: ${usd(dormido.sobreStock.valorStock)} en ${num(dormido.sobreStock.productos)}.`}
                 >
                     <Tabla>
-                        <thead><tr><th className={th}>Código</th><th className={th}>Repuesto</th><th className={thNum}>Stock</th><th className={thNum}>A costo</th><th className={thNum}>Alcanza para</th></tr></thead>
+                        <thead><tr><th className={th}>Código</th><th className={th}>Repuesto</th><th className={thNum}>Stock</th><th className={thNum}>A costo</th><th className={thNum}>Alcanza para</th><th className={th}>Última compra</th></tr></thead>
                         <tbody>
                             {datos.capitalDormido.map((s) => (
                                 <tr key={s.codigo}>
@@ -177,6 +217,7 @@ export function VistaInventario() {
                                     <td className={tdNum}>{num(s.stock)}</td>
                                     <td className={tdNum}>{usd(s.valorStock)}</td>
                                     <td className={cn(tdNum, "whitespace-nowrap")}>{s.cobertura == null ? "sin ventas" : `${decimal(s.cobertura / 365)} años`}</td>
+                                    <td className={td}><CeldaUltimaCompra uc={s.ultimaCompra} /></td>
                                 </tr>
                             ))}
                         </tbody>
@@ -209,16 +250,20 @@ export function VistaInventario() {
                         puntos={datos.compras.mensual.map((m) => ({ mes: m.mes, valor: m.total, detalle: [`${num(m.facturas)} facturas de compra`] }))}
                     />
                 </Panel>
-                <Panel titulo="Compras por proveedor" detalle="Últimos 12 meses.">
+                <Panel titulo="Compras por proveedor" detalle={`Últimos 12 meses. Tránsito: días típicos entre la emisión y la recepción de sus facturas (últimos 2 años). Con menos de 3 compras se usa el general: ${datos.periodo.transitoDefecto} días.`}>
                     <Tabla>
-                        <thead><tr><th className={th}>Proveedor</th><th className={thNum}>Comprado</th><th className={thNum}>Facturas</th><th className={thNum}>Última</th></tr></thead>
+                        <thead><tr><th className={th}>Proveedor</th><th className={thNum}>Comprado</th><th className={thNum}>Facturas</th><th className={thNum}>Tránsito</th><th className={thNum}>Última recepción</th></tr></thead>
                         <tbody>
                             {datos.compras.proveedores.map((p) => (
                                 <tr key={p.nombre}>
                                     <td className={td}>{p.nombre}</td>
                                     <td className={tdNum}><BarraCelda valor={p.total} maximo={maxProveedor} texto={usd(p.total)} /></td>
                                     <td className={tdNum}>{num(p.facturas)}</td>
-                                    <td className={cn(tdNum, "whitespace-nowrap text-xs")}>{fecha(p.ultima)}</td>
+                                    <td className={cn(tdNum, "whitespace-nowrap")}>
+                                        {p.transito != null ? `${num(p.transito)} días` : "—"}
+                                        <span className="block text-[11px] text-muted-foreground">{num(p.comprasTransito)} compras</span>
+                                    </td>
+                                    <td className={cn(tdNum, "whitespace-nowrap text-xs")}>{fecha(p.ultima_recepcion ?? p.ultima)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -269,7 +314,7 @@ function ListaGrupo({ nombre, sinVenta, lista, onCerrar }: { nombre: string; sin
                         <tr>
                             <th className={th}>Código</th><th className={th}>Repuesto</th><th className={th}>Familia</th>
                             <th className={thNum}>Venta 12 m</th><th className={thNum}>Margen</th><th className={thNum}>Clientes</th>
-                            <th className={thNum}>Stock</th><th className={thNum}>A costo</th><th className={thNum}>Alcanza para</th>
+                            <th className={thNum}>Stock</th><th className={thNum}>A costo</th><th className={thNum}>Alcanza para</th><th className={th}>Última compra</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -291,6 +336,7 @@ function ListaGrupo({ nombre, sinVenta, lista, onCerrar }: { nombre: string; sin
                                         ? (s.stock > 0 ? "sin ventas" : "—")
                                         : s.cobertura < 60 ? `${num(s.cobertura)} días` : `${decimal(s.cobertura / 30)} meses`}
                                 </td>
+                                <td className={td}><CeldaUltimaCompra uc={s.ultimaCompra} /></td>
                             </tr>
                         ))}
                     </tbody>
