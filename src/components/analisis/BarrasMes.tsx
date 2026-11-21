@@ -11,9 +11,19 @@ export interface PuntoMes {
 
 /**
  * Barras por mes, una sola serie, con su recuadro de detalle al pasar el mouse o tocar.
+ * Con onSeleccionar, un clic elige el mes (y otro clic sobre el mismo lo suelta); el elegido
+ * queda en color y los demás en gris.
  * SVG propio: no suma librerías y funciona en el Chrome 109 de la bodega.
  */
-export function BarrasMes({ puntos, etiqueta, formato = usdCorto }: { puntos: PuntoMes[]; etiqueta: string; formato?: (n: number) => string }) {
+export function BarrasMes({
+    puntos, etiqueta, formato = usdCorto, seleccionado = null, onSeleccionar,
+}: {
+    puntos: PuntoMes[];
+    etiqueta: string;
+    formato?: (n: number) => string;
+    seleccionado?: string | null;
+    onSeleccionar?: (mes: string | null) => void;
+}) {
     const [activo, setActivo] = useState<number | null>(null);
     if (!puntos.length) return <p className="text-sm text-muted-foreground">Sin datos en el período.</p>;
 
@@ -42,22 +52,36 @@ export function BarrasMes({ puntos, etiqueta, formato = usdCorto }: { puntos: Pu
                     const x = izq + i * ancho + (ancho - w) / 2;
                     const top = y(pt.valor);
                     const h = Math.max(y(0) - top, pt.valor > 0 ? 2 : 0);
+                    const color = activo === i
+                        ? "fill-foreground"
+                        : seleccionado && seleccionado !== pt.mes ? "fill-muted-foreground" : "fill-primary";
+                    const elegir = () => onSeleccionar?.(seleccionado === pt.mes ? null : pt.mes);
                     return (
                         <g key={pt.mes}>
-                            <path
-                                d={barra(x, y(0), w, h)}
-                                className={activo === i ? "fill-foreground" : "fill-primary"}
-                            />
+                            <path d={barra(x, y(0), w, h)} className={color} />
                             {/* Zona de toque más ancha que la barra */}
                             <rect
                                 x={izq + i * ancho} y={arriba} width={ancho} height={alto + abajo}
                                 fill="transparent"
+                                className={onSeleccionar ? "cursor-pointer focus:outline-none" : undefined}
                                 onMouseEnter={() => setActivo(i)}
                                 onMouseLeave={() => setActivo(null)}
-                                onClick={() => setActivo(activo === i ? null : i)}
+                                onClick={() => (onSeleccionar ? elegir() : setActivo(activo === i ? null : i))}
+                                {...(onSeleccionar && {
+                                    role: "button",
+                                    tabIndex: 0,
+                                    "aria-label": `Ver ${mesCorto(pt.mes)}`,
+                                    "aria-pressed": seleccionado === pt.mes,
+                                    onKeyDown: (e: React.KeyboardEvent) => {
+                                        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); elegir(); }
+                                    },
+                                })}
                             />
                             {(puntos.length <= 13 || i % 2 === 0) && (
-                                <text x={izq + i * ancho + ancho / 2} y={H - 8} textAnchor="middle" className="pointer-events-none fill-muted-foreground" fontSize={11}>
+                                <text
+                                    x={izq + i * ancho + ancho / 2} y={H - 8} textAnchor="middle" fontSize={11}
+                                    className={seleccionado === pt.mes ? "pointer-events-none fill-foreground font-semibold" : "pointer-events-none fill-muted-foreground"}
+                                >
                                     {mesCorto(pt.mes)}
                                 </text>
                             )}
