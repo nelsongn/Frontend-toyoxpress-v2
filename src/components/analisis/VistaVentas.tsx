@@ -20,12 +20,15 @@ interface Datos {
 
 type Rango = { desde: string; hasta: string };
 
+// Primera factura de Valery: 14-ene-2019
+const FECHA_MINIMA = "2019-01-01";
+
 const boton = (activo: boolean) =>
     cn(
         "rounded-md border px-3 py-1.5 text-xs font-medium transition-colors",
         activo ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:text-foreground"
     );
-const campoFecha = "rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground [color-scheme:light] dark:[color-scheme:dark]";
+const campoFecha = "rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground [color-scheme:light] dark:[color-scheme:dark] invalid:border-red-500 invalid:text-red-600 dark:invalid:text-red-400";
 
 export function VistaVentas() {
     // null = últimos 12 meses hasta la última factura cargada
@@ -40,7 +43,12 @@ export function VistaVentas() {
 
     const desdeInput = borrador.desde || datos?.periodo.desde || "";
     const hastaInput = borrador.hasta || datos?.periodo.hasta || "";
-    const rangoValido = !!desdeInput && !!hastaInput && desdeInput <= hastaInput;
+    // Límites del calendario: desde el inicio de los datos de Valery hasta la última factura cargada.
+    // Además evitan que el navegador acepte años de 5 o 6 cifras al escribir a mano.
+    const fechaMin = FECHA_MINIMA;
+    const fechaMax = datos?.periodo.fechaDatos ?? new Date().toISOString().slice(0, 10);
+    const enRango = (f: string) => /^\d{4}-\d{2}-\d{2}$/.test(f) && f >= fechaMin && f <= fechaMax;
+    const rangoValido = enRango(desdeInput) && enRango(hastaInput) && desdeInput <= hastaInput;
 
     const aplicarRango = () => {
         if (!rangoValido) return;
@@ -65,12 +73,12 @@ export function VistaVentas() {
             >
                 <label htmlFor="ventas-desde" className="text-xs text-muted-foreground">Desde</label>
                 <input
-                    id="ventas-desde" type="date" className={campoFecha} value={desdeInput}
+                    id="ventas-desde" type="date" className={campoFecha} value={desdeInput} min={fechaMin} max={fechaMax}
                     onChange={(e) => setBorrador({ desde: e.target.value, hasta: hastaInput })}
                 />
                 <label htmlFor="ventas-hasta" className="text-xs text-muted-foreground">hasta</label>
                 <input
-                    id="ventas-hasta" type="date" className={campoFecha} value={hastaInput}
+                    id="ventas-hasta" type="date" className={campoFecha} value={hastaInput} min={fechaMin} max={fechaMax}
                     onChange={(e) => setBorrador({ desde: desdeInput, hasta: e.target.value })}
                 />
                 <button type="submit" disabled={!rangoValido} className={cn(boton(!!rango), "disabled:cursor-not-allowed disabled:opacity-50")}>
