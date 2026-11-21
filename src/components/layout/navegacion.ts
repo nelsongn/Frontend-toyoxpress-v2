@@ -7,11 +7,12 @@ import {
     Clock,
     UserCog,
     ContactRound,
+    ChartColumn,
     type LucideIcon,
 } from "lucide-react";
 import { PERMISOS_PRODUCTOS } from "@/lib/permissions";
 
-export type GrupoNavegacion = "Ventas" | "Finanzas" | "Inventario" | "Administración";
+export type GrupoNavegacion = "Análisis" | "Ventas" | "Finanzas" | "Inventario" | "Administración";
 
 export interface ItemNavegacion {
     name: string;
@@ -29,6 +30,8 @@ export interface ItemNavegacion {
 // El orden de los ítems define el orden de los grupos.
 export const navigation: ItemNavegacion[] = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard, general: true },
+    // Datos de Valery en Postgres; solo para usuarios con el permiso activado
+    { name: "Análisis", href: "/analisis", icon: ChartColumn, perm: "verAnalitica", grupo: "Análisis" },
     { name: "Pedidos", href: "/pedidos", icon: ShoppingCart, perm: "verPedidos", grupo: "Ventas" },
     { name: "Clientes", href: "/clientes", icon: ContactRound, perm: "verPedidos", grupo: "Ventas" },
     { name: "Movimientos", href: "/movimientos", icon: ArrowLeftRight, perm: "verMovimientos", grupo: "Finanzas" },

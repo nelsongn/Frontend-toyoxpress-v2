@@ -5,6 +5,7 @@ import {
     Package,
     ShoppingCart,
     Clock,
+    ChartColumn,
     type LucideIcon,
 } from "lucide-react";
 
@@ -32,6 +33,14 @@ export interface ModuloPermisos {
 // Módulos en el mismo orden que el menú lateral (layout/navegacion.ts). Las claves (key) son las que guarda
 // el backend en user.permissions: no cambiarlas sin migrar los datos.
 export const MODULOS_PERMISOS: ModuloPermisos[] = [
+    {
+        id: "analisis",
+        titulo: "Análisis",
+        descripcion: "Dashboards de ventas, inventario y compras, cobranza, y caja y bancos con los datos de Valery.",
+        icon: ChartColumn,
+        acceso: { key: "verAnalitica", label: "Acceso a Análisis" },
+        permisos: [],
+    },
     {
         id: "pedidos",
         titulo: "Pedidos y clientes",
