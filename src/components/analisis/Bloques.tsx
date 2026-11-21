@@ -75,10 +75,11 @@ export function Panel({
 /**
  * Cifra clave con su comparación contra el período anterior (si la hay).
  * menosEsMejor: para cifras como los descuentos, donde subir es una mala noticia (se pinta en rojo).
+ * extra: líneas adicionales bajo el detalle (p. ej. el costo de lo vendido).
  */
 export function Kpi({
-    titulo, valor, detalle, cambio, alerta, menosEsMejor = false,
-}: { titulo: string; valor: string; detalle?: string; cambio?: number | null; alerta?: boolean; menosEsMejor?: boolean }) {
+    titulo, valor, detalle, cambio, alerta, menosEsMejor = false, extra,
+}: { titulo: string; valor: string; detalle?: string; cambio?: number | null; alerta?: boolean; menosEsMejor?: boolean; extra?: string[] }) {
     const bueno = cambio != null && (menosEsMejor ? cambio <= 0 : cambio >= 0);
     return (
         <div className={cn("min-w-0 rounded-lg border bg-card p-4 shadow-sm", alerta ? "border-red-500" : "border-border")}>
@@ -95,6 +96,7 @@ export function Kpi({
                 )}
                 {detalle && <span>{detalle}</span>}
             </div>
+            {extra?.map((linea) => <p key={linea} className="mt-0.5 text-xs text-muted-foreground">{linea}</p>)}
         </div>
     );
 }
