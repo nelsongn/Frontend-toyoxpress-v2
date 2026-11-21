@@ -15,6 +15,7 @@ const PERMISOS_DASHBOARD = ["verMovimientos", "verOtrosMovimientos", "configurar
 
 // Secciones del menú con permiso, en el mismo orden que el Sidebar.
 const SECCIONES: { href: string; perm: string | string[] }[] = [
+    { href: "/analisis", perm: "verAnalitica" },
     { href: "/pedidos", perm: "verPedidos" },
     { href: "/clientes", perm: "verPedidos" },
     { href: "/movimientos", perm: "verMovimientos" },
