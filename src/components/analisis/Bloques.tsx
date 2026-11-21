@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Activity, AlertCircle, TrendingDown, TrendingUp } from "lucide-react";
+import { Activity, AlertCircle, TrendingDown, TrendingUp, X } from "lucide-react";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { pct } from "./formato";
@@ -97,6 +97,27 @@ export function Kpi({
 
 export function FilaKpis({ children }: { children: React.ReactNode }) {
     return <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{children}</div>;
+}
+
+/**
+ * Franja que dice qué se está mostrando debajo de un gráfico por mes: todo el período o el mes elegido.
+ * Con un mes elegido, se resalta y ofrece volver al período completo.
+ */
+export function FranjaDetalle({ titulo, resumen, onQuitar }: { titulo: string; resumen?: string; onQuitar?: () => void }) {
+    return (
+        <div className={cn("flex flex-wrap items-center justify-between gap-2 rounded-lg border px-4 py-2.5", onQuitar ? "border-primary" : "border-border")}>
+            <p className="text-sm">
+                <span className="text-muted-foreground">Mostrando: </span>
+                <span className="inline-block font-semibold first-letter:uppercase">{titulo}</span>
+                {resumen && <span className="text-muted-foreground"> · {resumen}</span>}
+            </p>
+            {onQuitar && (
+                <button type="button" onClick={onQuitar} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">
+                    <X className="h-3.5 w-3.5" /> Ver todo el período
+                </button>
+            )}
+        </div>
+    );
 }
 
 /** Barra horizontal dentro de una celda: proporción del valor contra el máximo de la columna. */

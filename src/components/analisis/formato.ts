@@ -1,15 +1,13 @@
 // Formatos de la sección Análisis. Todos los montos de Valery están en USD.
 
-const usd0 = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
-const usd2 = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+const usd2 = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const entero = new Intl.NumberFormat("es-VE", { maximumFractionDigits: 0 });
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
-/** $12,345 (sin centavos): para totales y tablas. */
-export const usd = (n: number | null | undefined) => usd0.format(n ?? 0);
-/** $12,345.67: para costos unitarios. */
-export const usdExacto = (n: number | null | undefined) => usd2.format(n ?? 0);
-/** $12.3k: para ejes y etiquetas cortas. */
+/** $12,345.67: todos los montos de Análisis llevan 2 decimales. */
+export const usd = (n: number | null | undefined) => usd2.format(n ?? 0);
+export const usdExacto = usd;
+/** $12.3k: solo para las guías del eje de los gráficos. */
 export function usdCorto(n: number): string {
     const a = Math.abs(n);
     if (a >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;

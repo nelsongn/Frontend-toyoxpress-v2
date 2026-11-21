@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { ChevronRight, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RefBadge } from "@/components/productos/RefBadge";
 import { BarrasMes } from "./BarrasMes";
@@ -28,9 +30,11 @@ interface Datos {
     compraSugerida: { productos: number; inversion: number; margenEsperado: number; lista: Sugerido[] };
     familias: { nombre: string; venta: number; margen: number; valorStock: number; margenPorDolar: number | null; rotacion: number | null }[];
     compras: { mensual: { mes: string; total: number; facturas: number }[]; proveedores: { nombre: string; total: number; facturas: number; ultima: string }[] };
+    abcDetalle: Record<GrupoAbc, Sku[]>;
 }
+type GrupoAbc = "A" | "B" | "C" | "sinVenta";
 
-const GRUPOS_ABC: { clave: keyof Datos["abc"]; nombre: string; ayuda: string }[] = [
+const GRUPOS_ABC: { clave: GrupoAbc; nombre: string; ayuda: string }[] = [
     { clave: "A", nombre: "A", ayuda: "80 % de la venta" },
     { clave: "B", nombre: "B", ayuda: "siguiente 15 %" },
     { clave: "C", nombre: "C", ayuda: "último 5 %" },
@@ -39,6 +43,8 @@ const GRUPOS_ABC: { clave: keyof Datos["abc"]; nombre: string; ayuda: string }[]
 
 export function VistaInventario() {
     const { datos, error, cargando } = useAnalitica<Datos>("inventario");
+    // Grupo ABC abierto: muestra la lista de sus repuestos
+    const [grupo, setGrupo] = useState<GrupoAbc | null>(null);
     if (!datos || cargando || error) return <EstadoCarga cargando={cargando} error={error} />;
 
     const { resumen: r, abc, dormido, compraSugerida: cs } = datos;
@@ -73,13 +79,27 @@ export function VistaInventario() {
                 />
             </FilaKpis>
 
-            <Panel titulo="Dónde está la venta y dónde está el inventario" detalle="Clasificación ABC por venta de los últimos 12 meses.">
+            <Panel titulo="Dónde está la venta y dónde está el inventario" detalle="Clasificación ABC por venta de los últimos 12 meses. Haz clic en un grupo para ver sus repuestos.">
                 <Tabla>
                     <thead><tr><th className={th}>Grupo</th><th className={thNum}>Repuestos</th><th className={thNum}>% de la venta</th><th className={thNum}>% del inventario</th><th className={thNum}>Inventario</th></tr></thead>
                     <tbody>
                         {GRUPOS_ABC.map((g) => (
-                            <tr key={g.clave}>
-                                <td className={td}><span className="font-semibold">{g.nombre}</span> <span className="text-xs text-muted-foreground">{g.ayuda}</span></td>
+                            <tr
+                                key={g.clave}
+                                onClick={() => setGrupo(grupo === g.clave ? null : g.clave)}
+                                className={cn("cursor-pointer hover:bg-muted", grupo === g.clave && "bg-muted")}
+                            >
+                                <td className={td}>
+                                    <button
+                                        type="button"
+                                        aria-expanded={grupo === g.clave}
+                                        onClick={(e) => { e.stopPropagation(); setGrupo(grupo === g.clave ? null : g.clave); }}
+                                        className="inline-flex items-center gap-1.5 text-left"
+                                    >
+                                        <ChevronRight className={cn("h-4 w-4 text-muted-foreground transition-transform", grupo === g.clave && "rotate-90")} />
+                                        <span className="font-semibold">{g.nombre}</span> <span className="text-xs text-muted-foreground">{g.ayuda}</span>
+                                    </button>
+                                </td>
                                 <td className={tdNum}>{num(abc[g.clave].productos)}</td>
                                 <td className={tdNum}><BarraCelda valor={abc[g.clave].venta} maximo={totalVenta} texto={pct(abc[g.clave].venta / totalVenta)} /></td>
                                 <td className={tdNum}><BarraCelda valor={abc[g.clave].valorStock} maximo={totalStock} texto={pct(abc[g.clave].valorStock / totalStock)} tono={g.clave === "sinVenta" ? "rojo" : "primary"} /></td>
@@ -88,6 +108,15 @@ export function VistaInventario() {
                         ))}
                     </tbody>
                 </Tabla>
+                {grupo && (
+                    <ListaGrupo
+                        key={grupo}
+                        nombre={GRUPOS_ABC.find((g) => g.clave === grupo)!.nombre}
+                        sinVenta={grupo === "sinVenta"}
+                        lista={datos.abcDetalle[grupo]}
+                        onCerrar={() => setGrupo(null)}
+                    />
+                )}
             </Panel>
 
             <Panel
@@ -195,6 +224,77 @@ export function VistaInventario() {
                         </tbody>
                     </Tabla>
                 </Panel>
+            </div>
+        </div>
+    );
+}
+
+/** Lista de repuestos de un grupo ABC, con búsqueda por código, nombre, familia o REF. */
+function ListaGrupo({ nombre, sinVenta, lista, onCerrar }: { nombre: string; sinVenta: boolean; lista: Sku[]; onCerrar: () => void }) {
+    const [busqueda, setBusqueda] = useState("");
+    const q = busqueda.trim().toLowerCase();
+    const filtrada = q
+        ? lista.filter((s) => `${s.codigo} ${s.nombre} ${s.familia ?? ""} ${s.ref ?? ""}`.toLowerCase().includes(q))
+        : lista;
+    const titulo = sinVenta ? "Sin venta en 12 meses y con stock" : `Grupo ${nombre}`;
+    const orden = sinVenta ? "del que más dinero tiene parado al que menos" : "del que más vende al que menos";
+
+    return (
+        <div className="mt-5 border-t border-border pt-4">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-semibold">
+                    {titulo} <span className="font-normal text-muted-foreground">· {num(filtrada.length)} de {num(lista.length)} repuestos, {orden}</span>
+                </p>
+                <div className="flex items-center gap-2">
+                    <label className="relative">
+                        <span className="sr-only">Buscar repuesto</span>
+                        <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                        <input
+                            id="buscar-abc"
+                            type="search"
+                            value={busqueda}
+                            onChange={(e) => setBusqueda(e.target.value)}
+                            placeholder="Código, nombre, familia o REF"
+                            className="w-56 rounded-md border border-border bg-card py-1 pl-7 pr-2 text-xs text-foreground"
+                        />
+                    </label>
+                    <button type="button" onClick={onCerrar} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">
+                        <X className="h-3.5 w-3.5" /> Cerrar
+                    </button>
+                </div>
+            </div>
+            <div className="max-h-[480px] overflow-y-auto">
+                <Tabla>
+                    <thead className="sticky top-0 z-[1] bg-card">
+                        <tr>
+                            <th className={th}>Código</th><th className={th}>Repuesto</th><th className={th}>Familia</th>
+                            <th className={thNum}>Venta 12 m</th><th className={thNum}>Margen</th><th className={thNum}>Clientes</th>
+                            <th className={thNum}>Stock</th><th className={thNum}>A costo</th><th className={thNum}>Alcanza para</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filtrada.map((s) => (
+                            <tr key={s.codigo}>
+                                <td className={tdCodigo}>{s.codigo}{s.ref && <span className="mt-1 block"><RefBadge value={s.ref} /></span>}</td>
+                                <td className={cn(td, "min-w-[220px]")}>
+                                    {s.nombre}
+                                    {sinVenta && <span className="block text-xs text-muted-foreground">Última venta: {fecha(s.ultimaVenta)}</span>}
+                                </td>
+                                <td className={cn(td, "text-xs text-muted-foreground")}>{s.familia ?? "—"}</td>
+                                <td className={tdNum}>{s.venta ? usd(s.venta) : "—"}</td>
+                                <td className={tdNum}>{s.venta ? pct(s.margen / s.venta) : "—"}</td>
+                                <td className={tdNum}>{num(s.clientes)}</td>
+                                <td className={cn(tdNum, s.stock <= 0 && !sinVenta && "text-red-600 dark:text-red-400")}>{num(s.stock)}</td>
+                                <td className={tdNum}>{usd(s.valorStock)}</td>
+                                <td className={cn(tdNum, "whitespace-nowrap")}>
+                                    {s.cobertura == null
+                                        ? (s.stock > 0 ? "sin ventas" : "—")
+                                        : s.cobertura < 60 ? `${num(s.cobertura)} días` : `${decimal(s.cobertura / 30)} meses`}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </Tabla>
             </div>
         </div>
     );
