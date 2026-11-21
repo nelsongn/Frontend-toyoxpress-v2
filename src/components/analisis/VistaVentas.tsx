@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BarrasMes } from "./BarrasMes";
 import { BarraCelda, EstadoCarga, FilaKpis, Kpi, Panel, Tabla, td, tdCodigo, tdNum, th, thNum, useAnalitica } from "./Bloques";
-import { fecha, num, pct, usd, variacion } from "./formato";
+import { diasDelMes, fecha, mesLargo, num, pct, usd, variacion } from "./formato";
 
 interface Resumen { venta: number; margen: number; facturas: number; clientes: number; productos: number }
 interface Datos {
@@ -18,55 +19,79 @@ interface Datos {
     productos: { codigo: string; nombre: string; unidades: number; venta: number; margen: number; clientes: number }[];
 }
 
-const PERIODOS = [
-    { id: "12m", nombre: "Últimos 12 meses" },
-    { id: "2026", nombre: "2026" },
-    { id: "2025", nombre: "2025" },
-    { id: "2024", nombre: "2024" },
-] as const;
+type Rango = { desde: string; hasta: string };
 
-function rutaPara(periodo: string): string {
-    if (periodo === "12m") return "ventas";
-    return `ventas?desde=${periodo}-01-01&hasta=${periodo}-12-31`;
-}
+const boton = (activo: boolean) =>
+    cn(
+        "rounded-md border px-3 py-1.5 text-xs font-medium transition-colors",
+        activo ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:text-foreground"
+    );
+const campoFecha = "rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground [color-scheme:light] dark:[color-scheme:dark]";
 
 export function VistaVentas() {
-    const [periodo, setPeriodo] = useState<string>("12m");
-    const { datos, error, cargando } = useAnalitica<Datos>(rutaPara(periodo));
+    // null = últimos 12 meses hasta la última factura cargada
+    const [rango, setRango] = useState<Rango | null>(null);
+    const [borrador, setBorrador] = useState<Rango>({ desde: "", hasta: "" });
+    // Mes elegido en el gráfico: cambia todo lo que está debajo
+    const [mes, setMes] = useState<string | null>(null);
 
-    const selector = (
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Período">
-            {PERIODOS.map((p) => (
-                <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => setPeriodo(p.id)}
-                    aria-pressed={periodo === p.id}
-                    className={cn(
-                        "rounded-md border px-3 py-1.5 text-xs font-medium transition-colors",
-                        periodo === p.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:text-foreground"
-                    )}
-                >
-                    {p.nombre}
+    const { datos, error, cargando } = useAnalitica<Datos>(rango ? `ventas?desde=${rango.desde}&hasta=${rango.hasta}` : "ventas");
+    const rangoMes = mes && datos ? diasDelMes(mes, datos.periodo.desde, datos.periodo.hasta) : null;
+    const detalleMes = useAnalitica<Datos>(rangoMes ? `ventas?desde=${rangoMes.desde}&hasta=${rangoMes.hasta}` : null);
+
+    const desdeInput = borrador.desde || datos?.periodo.desde || "";
+    const hastaInput = borrador.hasta || datos?.periodo.hasta || "";
+    const rangoValido = !!desdeInput && !!hastaInput && desdeInput <= hastaInput;
+
+    const aplicarRango = () => {
+        if (!rangoValido) return;
+        setRango({ desde: desdeInput, hasta: hastaInput });
+        setMes(null);
+    };
+    const ultimos12 = () => {
+        setRango(null);
+        setBorrador({ desde: "", hasta: "" });
+        setMes(null);
+    };
+
+    const filtros = (
+        <div className="flex flex-wrap items-center gap-2">
+            <button type="button" onClick={ultimos12} aria-pressed={!rango} className={boton(!rango)}>
+                Últimos 12 meses
+            </button>
+            <form
+                className="flex flex-wrap items-center gap-1.5"
+                onSubmit={(e) => { e.preventDefault(); aplicarRango(); }}
+                aria-label="Rango de fechas"
+            >
+                <label htmlFor="ventas-desde" className="text-xs text-muted-foreground">Desde</label>
+                <input
+                    id="ventas-desde" type="date" className={campoFecha} value={desdeInput}
+                    onChange={(e) => setBorrador({ desde: e.target.value, hasta: hastaInput })}
+                />
+                <label htmlFor="ventas-hasta" className="text-xs text-muted-foreground">hasta</label>
+                <input
+                    id="ventas-hasta" type="date" className={campoFecha} value={hastaInput}
+                    onChange={(e) => setBorrador({ desde: desdeInput, hasta: e.target.value })}
+                />
+                <button type="submit" disabled={!rangoValido} className={cn(boton(!!rango), "disabled:cursor-not-allowed disabled:opacity-50")}>
+                    Aplicar
                 </button>
-            ))}
+            </form>
         </div>
     );
 
-    if (!datos || cargando || error) return <div className="space-y-4">{selector}<EstadoCarga cargando={cargando} error={error} /></div>;
+    if (!datos || cargando || error) return <div className="space-y-4">{filtros}<EstadoCarga cargando={cargando} error={error} /></div>;
 
     const { resumen: r, resumenAnterior: a, periodo: per } = datos;
     const margenPct = r.venta ? r.margen / r.venta : 0;
     const margenPctAnt = a.venta ? a.margen / a.venta : 0;
-    const maxCliente = Math.max(...datos.clientes.map((c) => c.venta), 0);
-    const maxVendedor = Math.max(...datos.vendedores.map((c) => c.venta), 0);
-    const maxFamilia = Math.max(...datos.familias.map((c) => c.venta), 0);
     const comparacion = `vs ${fecha(per.desdeAnterior)} – ${fecha(per.hastaAnterior)}`;
 
     return (
         <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-                {selector}
+                {filtros}
                 <p className="text-xs text-muted-foreground">{fecha(per.desde)} al {fecha(per.hasta)} · {comparacion}</p>
             </div>
 
@@ -86,9 +111,11 @@ export function VistaVentas() {
                 />
             </FilaKpis>
 
-            <Panel titulo="Venta por mes" detalle="Pasa el mouse o toca una barra para ver el margen y las facturas.">
+            <Panel titulo="Venta por mes" detalle="Haz clic en una barra para ver ese mes en las tablas de abajo. Otro clic en la misma barra vuelve a todo el período.">
                 <BarrasMes
                     etiqueta="Venta"
+                    seleccionado={mes}
+                    onSeleccionar={setMes}
                     puntos={datos.mensual.map((m) => ({
                         mes: m.mes,
                         valor: m.venta,
@@ -97,8 +124,50 @@ export function VistaVentas() {
                 />
             </Panel>
 
+            <Detalle
+                datos={mes ? detalleMes.datos : datos}
+                cargando={!!mes && detalleMes.cargando}
+                error={mes ? detalleMes.error : null}
+                titulo={mes && rangoMes ? `${mesLargo(mes)} · ${fecha(rangoMes.desde)} al ${fecha(rangoMes.hasta)}` : `Todo el período · ${fecha(per.desde)} al ${fecha(per.hasta)}`}
+                onQuitarMes={mes ? () => setMes(null) : undefined}
+            />
+        </div>
+    );
+}
+
+/** Todo lo que está debajo del gráfico: cambia al período completo o al mes elegido. */
+function Detalle({
+    datos, cargando, error, titulo, onQuitarMes,
+}: { datos: Datos | null; cargando: boolean; error: string | null; titulo: string; onQuitarMes?: () => void }) {
+    const encabezado = (
+        <div className={cn("flex flex-wrap items-center justify-between gap-2 rounded-lg border px-4 py-2.5", onQuitarMes ? "border-primary" : "border-border")}>
+            <p className="text-sm">
+                <span className="text-muted-foreground">Mostrando: </span>
+                <span className="inline-block font-semibold first-letter:uppercase">{titulo}</span>
+                {onQuitarMes && datos && (
+                    <span className="text-muted-foreground"> · venta {usd(datos.resumen.venta)} · margen {pct(datos.resumen.venta ? datos.resumen.margen / datos.resumen.venta : 0)} · {num(datos.resumen.facturas)} facturas</span>
+                )}
+            </p>
+            {onQuitarMes && (
+                <button type="button" onClick={onQuitarMes} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">
+                    <X className="h-3.5 w-3.5" /> Ver todo el período
+                </button>
+            )}
+        </div>
+    );
+
+    if (!datos || cargando || error) return <div className="space-y-4">{encabezado}<EstadoCarga cargando={cargando} error={error} /></div>;
+
+    const maxCliente = Math.max(...datos.clientes.map((c) => c.venta), 0);
+    const maxVendedor = Math.max(...datos.vendedores.map((c) => c.venta), 0);
+    const maxFamilia = Math.max(...datos.familias.map((c) => c.venta), 0);
+
+    return (
+        <div className="space-y-4">
+            {encabezado}
+
             <div className="grid gap-4 xl:grid-cols-2">
-                <Panel titulo="Mejores clientes" detalle="Los 15 que más compraron en el período.">
+                <Panel titulo="Mejores clientes" detalle="Los 15 que más compraron.">
                     <Tabla>
                         <thead><tr><th className={th}>Cliente</th><th className={thNum}>Venta</th><th className={thNum}>Margen</th><th className={thNum}>Facturas</th><th className={thNum}>Última</th></tr></thead>
                         <tbody>
@@ -150,7 +219,7 @@ export function VistaVentas() {
                     </Tabla>
                 </Panel>
 
-                <Panel titulo="Repuestos más vendidos" detalle="Los 20 que más venta dejaron en el período.">
+                <Panel titulo="Repuestos más vendidos" detalle="Los 20 que más venta dejaron.">
                     <Tabla>
                         <thead><tr><th className={th}>Código</th><th className={th}>Repuesto</th><th className={thNum}>Unidades</th><th className={thNum}>Venta</th><th className={thNum}>Margen</th></tr></thead>
                         <tbody>

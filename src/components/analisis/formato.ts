@@ -28,6 +28,23 @@ export function mesCorto(mes: string): string {
     const [a, m] = mes.split("-");
     return `${MESES[Number(m) - 1]} ${a.slice(2)}`;
 }
+const MESES_LARGOS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+
+/** '2026-03' → 'marzo 2026' */
+export function mesLargo(mes: string): string {
+    const [a, m] = mes.split("-");
+    return `${MESES_LARGOS[Number(m) - 1]} ${a}`;
+}
+
+/** Primer y último día de un mes 'AAAA-MM', recortados al rango [desde, hasta]. */
+export function diasDelMes(mes: string, desde: string, hasta: string): { desde: string; hasta: string } {
+    const [a, m] = mes.split("-").map(Number);
+    const ultimo = new Date(Date.UTC(a, m, 0)).getUTCDate();
+    const ini = `${mes}-01`;
+    const fin = `${mes}-${String(ultimo).padStart(2, "0")}`;
+    return { desde: ini < desde ? desde : ini, hasta: fin > hasta ? hasta : fin };
+}
+
 /** '2026-03-05' → '5 mar 2026' */
 export function fecha(f: string | null | undefined): string {
     if (!f) return "—";

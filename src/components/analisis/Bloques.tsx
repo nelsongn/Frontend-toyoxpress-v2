@@ -10,12 +10,16 @@ import { pct } from "./formato";
 // tarjetas con borde, títulos en versalitas pequeñas y cifras en monoespaciada.
 // Sin modificadores de opacidad (bg-x/10): en Chrome 109 de la bodega se ven a color pleno.
 
-/** Carga un endpoint de /analitica y devuelve datos, carga y error. Se recarga al cambiar la URL. */
-export function useAnalitica<T>(ruta: string) {
+/**
+ * Carga un endpoint de /analitica y devuelve datos, carga y error. Se recarga al cambiar la URL.
+ * Con ruta null no consulta nada (p. ej. el detalle de un mes cuando no hay mes elegido).
+ */
+export function useAnalitica<T>(ruta: string | null) {
     // Se guarda junto con la ruta que lo produjo: si la ruta cambió, lo guardado es de otra consulta
     const [estado, setEstado] = useState<{ ruta: string; datos: T | null; error: string | null } | null>(null);
 
     useEffect(() => {
+        if (!ruta) return;
         let vigente = true;
         api.get(`/analitica/${ruta}`)
             .then((r) => vigente && setEstado({ ruta, datos: r.data, error: null }))
@@ -28,6 +32,7 @@ export function useAnalitica<T>(ruta: string) {
         };
     }, [ruta]);
 
+    if (!ruta) return { datos: null, error: null, cargando: false };
     const listo = estado?.ruta === ruta;
     return { datos: listo ? estado.datos : null, error: listo ? estado.error : null, cargando: !listo };
 }
