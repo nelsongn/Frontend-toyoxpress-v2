@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BarrasMes } from "./BarrasMes";
-import { BarraCelda, EstadoCarga, FilaKpis, Kpi, Panel, Tabla, td, tdCodigo, tdNum, th, thNum, useAnalitica } from "./Bloques";
+import { BarraCelda, EstadoCarga, FilaKpis, FranjaDetalle, Kpi, Panel, Tabla, td, tdCodigo, tdNum, th, thNum, useAnalitica } from "./Bloques";
 import { diasDelMes, fecha, mesLargo, num, pct, usd, variacion } from "./formato";
 
 interface Resumen { venta: number; margen: number; facturas: number; clientes: number; productos: number }
@@ -140,20 +139,13 @@ function Detalle({
     datos, cargando, error, titulo, onQuitarMes,
 }: { datos: Datos | null; cargando: boolean; error: string | null; titulo: string; onQuitarMes?: () => void }) {
     const encabezado = (
-        <div className={cn("flex flex-wrap items-center justify-between gap-2 rounded-lg border px-4 py-2.5", onQuitarMes ? "border-primary" : "border-border")}>
-            <p className="text-sm">
-                <span className="text-muted-foreground">Mostrando: </span>
-                <span className="inline-block font-semibold first-letter:uppercase">{titulo}</span>
-                {onQuitarMes && datos && (
-                    <span className="text-muted-foreground"> · venta {usd(datos.resumen.venta)} · margen {pct(datos.resumen.venta ? datos.resumen.margen / datos.resumen.venta : 0)} · {num(datos.resumen.facturas)} facturas</span>
-                )}
-            </p>
-            {onQuitarMes && (
-                <button type="button" onClick={onQuitarMes} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">
-                    <X className="h-3.5 w-3.5" /> Ver todo el período
-                </button>
-            )}
-        </div>
+        <FranjaDetalle
+            titulo={titulo}
+            resumen={onQuitarMes && datos
+                ? `venta ${usd(datos.resumen.venta)} · margen ${pct(datos.resumen.venta ? datos.resumen.margen / datos.resumen.venta : 0)} · ${num(datos.resumen.facturas)} facturas`
+                : undefined}
+            onQuitar={onQuitarMes}
+        />
     );
 
     if (!datos || cargando || error) return <div className="space-y-4">{encabezado}<EstadoCarga cargando={cargando} error={error} /></div>;

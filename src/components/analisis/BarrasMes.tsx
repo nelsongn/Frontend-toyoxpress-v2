@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { mesCorto, usdCorto } from "./formato";
+import { mesCorto, usd, usdCorto } from "./formato";
 
 export interface PuntoMes {
     mes: string;            // 'AAAA-MM'
@@ -16,11 +16,14 @@ export interface PuntoMes {
  * SVG propio: no suma librerías y funciona en el Chrome 109 de la bodega.
  */
 export function BarrasMes({
-    puntos, etiqueta, formato = usdCorto, seleccionado = null, onSeleccionar,
+    puntos, etiqueta, formato = usdCorto, formatoValor = usd, seleccionado = null, onSeleccionar,
 }: {
     puntos: PuntoMes[];
     etiqueta: string;
+    /** Guías del eje (abreviado: $10k) */
     formato?: (n: number) => string;
+    /** Valor en el recuadro al pasar el mouse (completo, con 2 decimales) */
+    formatoValor?: (n: number) => string;
     seleccionado?: string | null;
     onSeleccionar?: (mes: string | null) => void;
 }) {
@@ -95,7 +98,7 @@ export function BarrasMes({
                     style={{ left: `${Math.min(((activo! + 0.5) / puntos.length) * 100, 78)}%` }}
                 >
                     <p className="font-semibold">{mesCorto(p.mes)}</p>
-                    <p className="font-mono tabular-nums">{etiqueta}: {formato(p.valor)}</p>
+                    <p className="font-mono tabular-nums">{etiqueta}: {formatoValor(p.valor)}</p>
                     {p.detalle?.map((d) => <p key={d} className="text-muted-foreground">{d}</p>)}
                 </div>
             )}
