@@ -83,7 +83,7 @@ export function Kpi({
     return (
         <div className={cn("min-w-0 rounded-lg border bg-card p-4 shadow-sm", alerta ? "border-red-500" : "border-border")}>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{titulo}</p>
-            <p className={cn("mt-1 truncate font-mono text-2xl font-semibold tabular-nums", alerta ? "text-red-600 dark:text-red-400" : "text-foreground")}>
+            <p className={cn("kpi-valor mt-1 truncate font-mono text-lg font-semibold tabular-nums sm:text-2xl", alerta ? "text-red-600 dark:text-red-400" : "text-foreground")}>
                 {valor}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
@@ -100,7 +100,19 @@ export function Kpi({
 }
 
 export function FilaKpis({ children, columnas = 4 }: { children: React.ReactNode; columnas?: 4 | 5 }) {
-    return <div className={cn("grid grid-cols-2 gap-3", columnas === 5 ? "lg:grid-cols-3 xl:grid-cols-5" : "lg:grid-cols-4")}>{children}</div>;
+    if (columnas === 5) {
+        // Según el espacio real (no el de la ventana, porque el menú lateral ocupa parte):
+        // con 56rem o más, las 5 en una fila con la cifra un poco más chica; con menos, de a dos
+        // y la quinta a todo el ancho, para que no quede un hueco.
+        return (
+            <div className="@container">
+                <div className="grid grid-cols-2 gap-3 [&>*:last-child]:col-span-2 @4xl:grid-cols-5 @4xl:[&>*:last-child]:col-span-1 @4xl:[&_.kpi-valor]:text-xl">
+                    {children}
+                </div>
+            </div>
+        );
+    }
+    return <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{children}</div>;
 }
 
 /**
