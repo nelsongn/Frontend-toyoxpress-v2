@@ -72,10 +72,14 @@ export function Panel({
     );
 }
 
-/** Cifra clave con su comparación contra el período anterior (si la hay). */
+/**
+ * Cifra clave con su comparación contra el período anterior (si la hay).
+ * menosEsMejor: para cifras como los descuentos, donde subir es una mala noticia (se pinta en rojo).
+ */
 export function Kpi({
-    titulo, valor, detalle, cambio, alerta,
-}: { titulo: string; valor: string; detalle?: string; cambio?: number | null; alerta?: boolean }) {
+    titulo, valor, detalle, cambio, alerta, menosEsMejor = false,
+}: { titulo: string; valor: string; detalle?: string; cambio?: number | null; alerta?: boolean; menosEsMejor?: boolean }) {
+    const bueno = cambio != null && (menosEsMejor ? cambio <= 0 : cambio >= 0);
     return (
         <div className={cn("min-w-0 rounded-lg border bg-card p-4 shadow-sm", alerta ? "border-red-500" : "border-border")}>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{titulo}</p>
@@ -84,7 +88,7 @@ export function Kpi({
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
                 {cambio != null && (
-                    <span className={cn("inline-flex items-center gap-0.5 font-medium", cambio >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400")}>
+                    <span className={cn("inline-flex items-center gap-0.5 font-medium", bueno ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400")}>
                         {cambio >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
                         {cambio >= 0 ? "+" : "−"}{pct(Math.abs(cambio))}
                     </span>
@@ -95,8 +99,8 @@ export function Kpi({
     );
 }
 
-export function FilaKpis({ children }: { children: React.ReactNode }) {
-    return <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{children}</div>;
+export function FilaKpis({ children, columnas = 4 }: { children: React.ReactNode; columnas?: 4 | 5 }) {
+    return <div className={cn("grid grid-cols-2 gap-3", columnas === 5 ? "lg:grid-cols-3 xl:grid-cols-5" : "lg:grid-cols-4")}>{children}</div>;
 }
 
 /**
