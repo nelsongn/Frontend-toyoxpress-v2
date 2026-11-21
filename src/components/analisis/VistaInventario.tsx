@@ -56,7 +56,7 @@ export function VistaInventario() {
 
     return (
         <div className="space-y-4">
-            <p className="text-xs text-muted-foreground">Venta de {fecha(datos.periodo.desde)} al {fecha(datos.periodo.hasta)} · stock de hoy a costo promedio</p>
+            <p className="text-xs text-muted-foreground">Venta de {fecha(datos.periodo.desde)} al {fecha(datos.periodo.hasta)} · stock de hoy a costo calculado</p>
 
             <FilaKpis>
                 <Kpi titulo="Inventario a costo" valor={usd(r.valorStock)} detalle={`${num(r.productosConStock)} repuestos con stock`} />
