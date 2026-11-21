@@ -101,7 +101,7 @@ export function VistaVentas() {
                     valor={pct(margenPct, 1)}
                     detalle={`${usd(r.margen)} · antes ${pct(margenPctAnt, 1)}`}
                 />
-                <Kpi titulo="Clientes que compraron" valor={num(r.clientes)} cambio={variacion(r.clientes, a.clientes)} />
+                <Kpi titulo="Clientes" valor={num(r.clientes)} cambio={variacion(r.clientes, a.clientes)} detalle="compraron en el período" />
                 <Kpi
                     titulo="Ticket promedio"
                     valor={usd(r.facturas ? r.venta / r.facturas : 0)}
@@ -109,11 +109,11 @@ export function VistaVentas() {
                     detalle={`${num(r.productos)} repuestos distintos`}
                 />
                 <Kpi
-                    titulo="Descuentos otorgados"
+                    titulo="Descuentos"
                     valor={usd(r.descuento)}
                     cambio={variacion(r.descuento, a.descuento)}
                     menosEsMejor
-                    detalle={`${pct(r.venta + r.descuento ? r.descuento / (r.venta + r.descuento) : 0, 1)} de la venta antes del descuento`}
+                    detalle={`otorgados · ${pct(r.venta + r.descuento ? r.descuento / (r.venta + r.descuento) : 0, 1)} de la venta bruta`}
                 />
             </FilaKpis>
 
