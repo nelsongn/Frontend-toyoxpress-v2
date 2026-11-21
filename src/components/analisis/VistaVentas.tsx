@@ -95,11 +95,18 @@ export function VistaVentas() {
             </div>
 
             <FilaKpis columnas={5}>
-                <Kpi titulo="Venta neta" valor={usd(r.venta)} cambio={variacion(r.venta, a.venta)} detalle={`${num(r.facturas)} facturas`} />
+                <Kpi
+                    titulo="Venta neta"
+                    valor={usd(r.venta)}
+                    cambio={variacion(r.venta, a.venta)}
+                    detalle={`${num(r.facturas)} facturas`}
+                    extra={[`Costo ${usd(r.venta - r.margen)}`]}
+                />
                 <Kpi
                     titulo="Margen bruto"
                     valor={pct(margenPct, 1)}
-                    detalle={`${usd(r.margen)} · antes ${pct(margenPctAnt, 1)}`}
+                    detalle={`Ganancia ${usd(r.margen)}`}
+                    extra={[`Período anterior: ${pct(margenPctAnt, 1)}`]}
                 />
                 <Kpi titulo="Clientes" valor={num(r.clientes)} cambio={variacion(r.clientes, a.clientes)} detalle="compraron en el período" />
                 <Kpi
