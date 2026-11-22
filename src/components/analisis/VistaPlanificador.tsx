@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, CheckCircle2, Download, Save } from "lucide-react";
+import { AlertCircle, CheckCircle2, Download, FileSpreadsheet, Save, Search } from "lucide-react";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { PedidosEnCamino } from "./PedidosEnCamino";
+import { BuscarEquivalencia, ListaProveedor } from "./ListaProveedor";
+import { ArticuloProveedor, excelParaProveedor } from "./exportarPedido";
 import { BarraCelda, EstadoCarga, mensajeError, FilaKpis, Kpi, Panel, Tabla, td, tdCodigo, tdNum, th, thNum, useAnalitica } from "./Bloques";
 import { decimal, fecha, num, pct, usd } from "./formato";
 
@@ -13,13 +15,16 @@ type Prioridad = "clave_cero" | "clave" | "normal";
 interface Linea {
     productoId: number; codigo: string; nombre: string; familia: string | null; ref: string | null; prioridad: Prioridad;
     stock: number; enCamino: number; ventaMes: number; clientes: number; necesidad: number; comprar: number; parcial: boolean;
-    costo: number; costoFecha: string; precio: number; inversion: number; margen: number; acumulado: number;
+    costo: number; costoFecha: string; costoAnterior: number | null; fuenteCosto: "lista" | "compra";
+    precio: number; inversion: number; margen: number; acumulado: number;
     masBarato: { proveedor: string; costo: number } | null;
+    articulo: ArticuloProveedor & { revisar: boolean };
 }
 interface ResumenProveedor {
     proveedorId: number; proveedor: string; transito: number; dias: number; repuestos: number;
     clavesCero: number; clavesCeroPosibles: number; inversion: number; margen: number; necesidad: number;
     fuera: { repuestos: number; inversion: number; clavesCero: number };
+    lista: { id: number; fecha: string } | null;
 }
 interface Datos {
     periodo: { desde: string; hasta: string };
@@ -29,6 +34,7 @@ interface Datos {
     enCamino: { pedidos: number; monto: number };
     resumen: { claves: number; clavesCero: number; clavesSinProveedor: number; puntuales: number };
     proveedores: ResumenProveedor[];
+    todosProveedores: { id: number; nombre: string }[];
     pedido: (ResumenProveedor & { lineas: Linea[]; tramos: { desde: number; hasta: number; margen: number }[] }) | null;
 }
 
@@ -40,12 +46,13 @@ const TONO: Record<Prioridad, string> = {
 };
 const control = "rounded-md border border-border bg-card px-2 py-1.5 text-sm text-foreground";
 
-/** Descarga el pedido en Excel, una fila por repuesto. */
+/** Excel interno del pedido (con nuestros códigos, prioridad y margen), una fila por repuesto. */
 async function exportarExcel(pedido: NonNullable<Datos["pedido"]>, hasta: string) {
     const XLSX = await import("xlsx");
     const filas = pedido.lineas.map((l) => ({
         Prioridad: ETIQUETA[l.prioridad],
         Código: l.codigo,
+        "Número de pieza del proveedor": l.articulo?.numeroPieza ?? "",
         Ref: l.ref ?? "",
         Repuesto: l.nombre,
         Familia: l.familia ?? "",
@@ -65,7 +72,7 @@ async function exportarExcel(pedido: NonNullable<Datos["pedido"]>, hasta: string
     const libro = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(libro, hoja, "Pedido");
     const nombre = pedido.proveedor.replace(/[^\w]+/g, "_").replace(/_+$/, "");
-    XLSX.writeFile(libro, `Pedido_${nombre}_${hasta}.xlsx`);
+    XLSX.writeFile(libro, `Pedido_interno_${nombre}_${hasta}.xlsx`);
 }
 
 export function VistaPlanificador() {
@@ -78,9 +85,11 @@ export function VistaPlanificador() {
     const [recarga, setRecarga] = useState(0);
     const [guardar, setGuardar] = useState<"nada" | "confirmar" | "enviando">("nada");
     const [aviso, setAviso] = useState<{ ok: boolean; texto: string } | null>(null);
+    // Repuesto sin equivalencia al que se le está buscando su artículo en la lista del proveedor
+    const [buscando, setBuscando] = useState<number | null>(null);
 
     const ruta = `planificador?cobertura=${cobertura}${monto != null ? `&monto=${monto}` : ""}${proveedor ? `&proveedor=${proveedor}` : ""}&r=${recarga}`;
-    const { datos, error, cargando } = useAnalitica<Datos>(ruta);
+    const { datos, error, cargando } = useAnalitica<Datos>(ruta, { conservar: true });
 
     /** Guarda el pedido como "en camino": desde ese momento el planificador lo descuenta. */
     const guardarPedido = async (pedido: NonNullable<Datos["pedido"]>) => {
@@ -88,7 +97,7 @@ export function VistaPlanificador() {
         try {
             const r = await api.post("/analitica/pedidos", {
                 proveedorId: pedido.proveedorId,
-                lineas: pedido.lineas.map((l) => ({ codigo: l.codigo, cantidad: l.comprar, costo: l.costo })),
+                lineas: pedido.lineas.map((l) => ({ codigo: l.codigo, cantidad: l.comprar, costo: l.costo, articulo: l.articulo })),
             });
             setAviso({ ok: true, texto: `Pedido ${r.data.numero} a ${r.data.proveedor} guardado (${num(r.data.repuestos)} repuestos, ${usd(r.data.total)}). Ya cuenta como en camino.` });
             setRecarga((n) => n + 1);
@@ -136,7 +145,7 @@ export function VistaPlanificador() {
             <label className="flex flex-col gap-1 text-xs text-muted-foreground">
                 Cubrir después de que llegue
                 <select id="cobertura-planificador" value={cobertura} onChange={(e) => setCobertura(Number(e.target.value))} className={control}>
-                    {(datos?.coberturas ?? [15, 30, 45, 60]).map((c) => <option key={c} value={c}>{c} días de venta</option>)}
+                    {(datos?.coberturas ?? [15, 30, 45, 60, 90]).map((c) => <option key={c} value={c}>{c} días de venta</option>)}
                 </select>
             </label>
         </div>
@@ -157,7 +166,7 @@ export function VistaPlanificador() {
     return (
         <div className="space-y-5">
             <Panel
-                titulo="Planificador de compras"
+                titulo={cargando ? "Planificador de compras · recalculando…" : "Planificador de compras"}
                 detalle={`Arma un pedido a un solo proveedor con el monto disponible: primero los repuestos clave que están en cero, después los que dejan más margen por dólar. Demanda de los últimos 24 meses (el último año pesa el doble), corregida por los días en cero; las ventas puntuales no cuentan.`}
             >
                 {controles}
@@ -243,7 +252,7 @@ export function VistaPlanificador() {
             {p && (
                 <Panel
                     titulo={`Pedido a ${p.proveedor}`}
-                    detalle={`Compra para ${num(p.transito)} días de tránsito más ${num(datos.cobertura)} de venta: ${num(p.dias)} días, menos el stock y lo que ya viene en camino. Costo de la última compra a este proveedor.${p.fuera.repuestos ? ` Quedan fuera ${num(p.fuera.repuestos)} repuestos por ${usd(p.fuera.inversion)} que no alcanzaron.` : " El monto alcanza para todo lo que necesita."}`}
+                    detalle={`Compra para ${num(p.transito)} días de tránsito más ${num(datos.cobertura)} de venta: ${num(p.dias)} días, menos el stock y lo que ya viene en camino. ${p.lista ? `Precios de su lista del ${fecha(p.lista.fecha)} (o de la última compra si no está en la lista).` : "Costo de la última compra a este proveedor (sube su lista para usar sus precios y números de pieza)."}${p.lineas.some((l) => l.articulo.revisar) ? ` ${num(p.lineas.filter((l) => l.articulo.revisar).length)} repuestos sin equivalencia salen con el número Toyota: búscalos en su lista.` : ""}${p.fuera.repuestos ? ` Quedan fuera ${num(p.fuera.repuestos)} repuestos por ${usd(p.fuera.inversion)} que no alcanzaron.` : " El monto alcanza para todo lo que necesita."}`}
                     accion={
                         <div className="flex flex-wrap items-center justify-end gap-2">
                             {guardar === "confirmar" ? (
@@ -264,10 +273,17 @@ export function VistaPlanificador() {
                             )}
                             <button
                                 type="button"
+                                onClick={() => excelParaProveedor(p.lineas.map((l) => ({ codigo: l.codigo, nombre: l.nombre, cantidad: l.comprar, costo: l.costo, articulo: l.articulo })), p.proveedor, datos.periodo.hasta)}
+                                className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
+                            >
+                                <FileSpreadsheet className="h-3.5 w-3.5" /> Excel para el proveedor
+                            </button>
+                            <button
+                                type="button"
                                 onClick={() => exportarExcel(p, datos.periodo.hasta)}
                                 className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
                             >
-                                <Download className="h-3.5 w-3.5" /> Excel
+                                <Download className="h-3.5 w-3.5" /> Excel interno
                             </button>
                         </div>
                     }
@@ -282,7 +298,28 @@ export function VistaPlanificador() {
                                     <td className={td}>
                                         <span className="line-clamp-2">{l.nombre}</span>
                                         <span className="block text-xs text-muted-foreground">{num(l.clientes)} clientes en 24 meses</span>
+                                        {l.articulo.revisar ? (
+                                            <span className="block text-xs text-amber-700 dark:text-amber-300">
+                                                Sin equivalencia: saldría como {l.articulo.numeroPieza}
+                                                {p.lista && (
+                                                    <button type="button" onClick={() => setBuscando(buscando === l.productoId ? null : l.productoId)} className="ml-1 inline-flex items-center gap-0.5 underline">
+                                                        <Search className="h-3 w-3" /> buscar en su lista
+                                                    </button>
+                                                )}
+                                            </span>
+                                        ) : (
+                                            <span className="block text-xs text-muted-foreground">
+                                                Se pide como <span className="font-mono">{l.articulo.numeroPieza}</span>{l.articulo.marca ? ` · ${l.articulo.marca}` : ""}{l.articulo.pais ? ` (${l.articulo.pais})` : ""}
+                                            </span>
+                                        )}
                                         {l.masBarato && <span className="block text-xs text-amber-700 dark:text-amber-300">Más barato en {l.masBarato.proveedor}: {usd(l.masBarato.costo)}</span>}
+                                        {buscando === l.productoId && (
+                                            <BuscarEquivalencia
+                                                proveedorId={p.proveedorId}
+                                                producto={{ productoId: l.productoId, codigo: l.codigo, nombre: l.nombre }}
+                                                onListo={() => { setBuscando(null); setRecarga((n) => n + 1); }}
+                                            />
+                                        )}
                                     </td>
                                     <td className={cn(tdNum, l.stock <= 0 && "text-red-600 dark:text-red-400")}>
                                         {num(l.stock)}
@@ -293,7 +330,15 @@ export function VistaPlanificador() {
                                         {num(l.comprar)}
                                         {l.parcial && <span className="block text-[11px] font-normal text-muted-foreground">de {num(l.necesidad)}</span>}
                                     </td>
-                                    <td className={cn(tdNum, "whitespace-nowrap")}>{usd(l.costo)}<span className="block text-[11px] text-muted-foreground">{fecha(l.costoFecha)}</span></td>
+                                    <td className={cn(tdNum, "whitespace-nowrap")}>
+                                        {usd(l.costo)}
+                                        <span className="block text-[11px] text-muted-foreground">{l.fuenteCosto === "lista" ? "su lista" : `compra ${fecha(l.costoFecha)}`}</span>
+                                        {l.fuenteCosto === "lista" && l.costoAnterior != null && Math.abs(l.costo / l.costoAnterior - 1) > 0.01 && (
+                                            <span className={cn("block text-[11px]", l.costo > l.costoAnterior ? "text-red-600 dark:text-red-400" : "text-emerald-700 dark:text-emerald-300")}>
+                                                antes {usd(l.costoAnterior)}
+                                            </span>
+                                        )}
+                                    </td>
                                     <td className={tdNum}>{usd(l.inversion)}</td>
                                     <td className={tdNum}>{usd(l.margen)}</td>
                                     <td className={cn(tdNum, "text-muted-foreground")}>{usd(l.acumulado)}</td>
@@ -303,6 +348,13 @@ export function VistaPlanificador() {
                     </Tabla>
                 </Panel>
             )}
+
+            <ListaProveedor
+                key={p?.proveedorId ?? "ninguno"}
+                proveedores={datos.todosProveedores}
+                proveedorInicial={p?.proveedorId ?? null}
+                onCambio={() => setRecarga((n) => n + 1)}
+            />
 
             {p && p.tramos.length > 1 && (
                 <Panel titulo="Margen por cada $1.000" detalle="Cuánto margen agrega cada tramo del pedido. Cuando baja mucho, invertir más ya rinde menos.">

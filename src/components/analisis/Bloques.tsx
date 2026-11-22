@@ -13,8 +13,10 @@ import { pct } from "./formato";
 /**
  * Carga un endpoint de /analitica y devuelve datos, carga y error. Se recarga al cambiar la URL.
  * Con ruta null no consulta nada (p. ej. el detalle de un mes cuando no hay mes elegido).
+ * conservar: mientras carga la ruta nueva, devuelve los datos anteriores (la pantalla no se vacía
+ * ni pierde lo que el usuario estaba haciendo al recalcular).
  */
-export function useAnalitica<T>(ruta: string | null) {
+export function useAnalitica<T>(ruta: string | null, opciones: { conservar?: boolean } = {}) {
     // Se guarda junto con la ruta que lo produjo: si la ruta cambió, lo guardado es de otra consulta
     const [estado, setEstado] = useState<{ ruta: string; datos: T | null; error: string | null } | null>(null);
 
@@ -34,7 +36,8 @@ export function useAnalitica<T>(ruta: string | null) {
 
     if (!ruta) return { datos: null, error: null, cargando: false };
     const listo = estado?.ruta === ruta;
-    return { datos: listo ? estado.datos : null, error: listo ? estado.error : null, cargando: !listo };
+    const anteriores = opciones.conservar ? estado?.datos ?? null : null;
+    return { datos: listo ? estado.datos : anteriores, error: listo ? estado.error : null, cargando: !listo };
 }
 
 /** Mensaje de error que manda el backend, o uno por defecto. */
