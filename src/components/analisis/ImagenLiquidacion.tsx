@@ -22,13 +22,24 @@ const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD",
 /** Número que el cliente reconoce: sin la G ni el sufijo de origen (-J, -T) de nuestros códigos. */
 const numeroPublico = (codigo: string) => codigo.replace(/^G(?=\d)/, "").replace(/-(J|T)$/, "");
 
-function cargarLogo(): Promise<HTMLImageElement | null> {
+function cargarImagen(src: string): Promise<HTMLImageElement | null> {
     return new Promise((ok) => {
         const img = new Image();
         img.onload = () => ok(img);
         img.onerror = () => ok(null);
-        img.src = "/toyoxpress-logo.png";
+        img.src = src;
     });
+}
+
+/** Rectángulo con esquinas redondeadas (roundRect no existe en Chrome 109 de la bodega). */
+function redondeado(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
 }
 
 /** Corta un texto en líneas que caben en el ancho; la última con "…" si no cabe todo. */
@@ -54,45 +65,67 @@ function lineas(ctx: CanvasRenderingContext2D, texto: string, ancho: number, max
 
 function dibujar(
     ctx: CanvasRenderingContext2D, items: ItemImagen[], pagina: number, paginas: number,
-    opciones: { titulo: string; subtitulo: string; contacto: string; nota: string; tachado: boolean }, logo: HTMLImageElement | null,
+    opciones: { titulo: string; subtitulo: string; contacto: string; nota: string; tachado: boolean },
+    logo: HTMLImageElement | null, fondo: HTMLImageElement | null,
 ) {
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, ANCHO, ALTO);
     ctx.textBaseline = "alphabetic";
+    // Con fondo de marca: texto claro arriba y la lista en una tarjeta blanca; sin fondo, todo sobre blanco
+    const conFondo = !!fondo;
+    if (fondo) ctx.drawImage(fondo, 0, 0, ANCHO, ALTO);
+    else { ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, ANCHO, ALTO); }
 
-    // Encabezado: logo, título y subtítulo
+    // Encabezado: logo (sobre una placa blanca si hay fondo), título y subtítulo
     if (logo) {
-        const w = 460;
-        ctx.drawImage(logo, 60, 56, w, (w * logo.height) / logo.width);
+        const w = 440;
+        const h = (w * logo.height) / logo.width;
+        if (conFondo) {
+            ctx.fillStyle = "#ffffff";
+            redondeado(ctx, 40, 36, w + 44, h + 36, 18);
+            ctx.fill();
+            ctx.drawImage(logo, 62, 54, w, h);
+        } else {
+            ctx.drawImage(logo, 60, 56, w, h);
+        }
     } else {
-        ctx.fillStyle = OSCURO;
+        ctx.fillStyle = conFondo ? "#ffffff" : OSCURO;
         ctx.font = "bold 64px Arial, sans-serif";
         ctx.fillText("ToyoXpress", 60, 120);
     }
     if (paginas > 1) {
-        ctx.fillStyle = GRIS;
+        ctx.fillStyle = conFondo ? "#ffffff" : GRIS;
         ctx.font = "bold 30px Arial, sans-serif";
         ctx.textAlign = "right";
         ctx.fillText(`${pagina}/${paginas}`, ANCHO - 60, 110);
         ctx.textAlign = "left";
     }
-    ctx.fillStyle = CARMESI;
+    if (conFondo) { ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 14; ctx.shadowOffsetY = 3; }
+    ctx.fillStyle = conFondo ? "#ffffff" : CARMESI;
     ctx.font = "bold 104px Arial, sans-serif";
     ctx.fillText(opciones.titulo, 56, 268);
-    ctx.fillStyle = OSCURO;
+    ctx.fillStyle = conFondo ? "#f1f1f1" : OSCURO;
     ctx.font = "34px Arial, sans-serif";
     ctx.fillText(opciones.subtitulo, 60, 322);
+    ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
-    // Lista de repuestos
-    const arriba = 360;
-    const abajo = 1190;
+    // Lista de repuestos (en una tarjeta blanca si hay fondo)
+    const arriba = conFondo ? 372 : 360;
+    const abajo = conFondo ? 1172 : 1190;
+    const izq = conFondo ? 72 : 60;
+    const der = ANCHO - izq;
+    if (conFondo) {
+        ctx.fillStyle = "rgba(255,255,255,0.96)";
+        redondeado(ctx, 40, 350, ANCHO - 80, 840, 26);
+        ctx.fill();
+    }
     const alto = (abajo - arriba) / Math.max(items.length, 1);
-    const anchoTexto = 640;
+    const anchoTexto = 620;
     items.forEach((it, i) => {
         const y = arriba + i * alto;
-        ctx.strokeStyle = "#e5e5e5";
-        ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(60, y); ctx.lineTo(ANCHO - 60, y); ctx.stroke();
+        if (i > 0 || !conFondo) {
+            ctx.strokeStyle = "#e5e5e5";
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(izq, y); ctx.lineTo(der, y); ctx.stroke();
+        }
 
         const centro = y + alto / 2;
         ctx.fillStyle = OSCURO;
@@ -100,10 +133,10 @@ function dibujar(
         const ls = lineas(ctx, it.nombre, anchoTexto, alto >= 96 ? 2 : 1);
         const bloque = ls.length * 31 + 30;
         let yy = centro - bloque / 2 + 25;
-        for (const l of ls) { ctx.fillText(l, 60, yy); yy += 31; }
+        for (const l of ls) { ctx.fillText(l, izq, yy); yy += 31; }
         ctx.fillStyle = GRIS;
         ctx.font = "24px Arial, sans-serif";
-        ctx.fillText([`Nº ${numeroPublico(it.codigo)}`, it.marca, `${num(it.disponible)} disp.`].filter(Boolean).join("  ·  "), 60, yy + 2);
+        ctx.fillText([`Nº ${numeroPublico(it.codigo)}`, it.marca, `${num(it.disponible)} disp.`].filter(Boolean).join("  ·  "), izq, yy + 2);
 
         // Precios a la derecha
         ctx.textAlign = "right";
@@ -112,16 +145,17 @@ function dibujar(
             ctx.font = "26px Arial, sans-serif";
             const antes = usd.format(it.precioNormal);
             const wAntes = ctx.measureText(antes).width;
-            ctx.fillText(antes, ANCHO - 60, centro - 14);
+            ctx.fillText(antes, der, centro - 14);
             ctx.strokeStyle = GRIS;
-            ctx.beginPath(); ctx.moveTo(ANCHO - 60 - wAntes, centro - 23); ctx.lineTo(ANCHO - 60, centro - 23); ctx.stroke();
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(der - wAntes, centro - 23); ctx.lineTo(der, centro - 23); ctx.stroke();
             ctx.fillStyle = CARMESI;
             ctx.font = "bold 46px Arial, sans-serif";
-            ctx.fillText(usd.format(it.precio), ANCHO - 60, centro + 34);
+            ctx.fillText(usd.format(it.precio), der, centro + 34);
         } else {
             ctx.fillStyle = CARMESI;
             ctx.font = "bold 46px Arial, sans-serif";
-            ctx.fillText(usd.format(it.precio), ANCHO - 60, centro + 16);
+            ctx.fillText(usd.format(it.precio), der, centro + 16);
         }
         ctx.textAlign = "left";
     });
@@ -142,17 +176,22 @@ export function ImagenLiquidacion({ items, descuento, tipoPrecio, datosAl }: {
     const [porImagen, setPorImagen] = useState(8);
     const [cuantos, setCuantos] = useState(24);
     const [tachado, setTachado] = useState(true);
+    // Fondo de marca (generado con IA: ladrillo oscuro, luz carmesí y repuestos) o blanco liso
+    const [conFondo, setConFondo] = useState(true);
     const [contacto, setContacto] = useState("Pedidos por WhatsApp · pregunta por el lote completo");
     const [imagenes, setImagenes] = useState<{ clave: string; urls: string[] } | null>(null);
 
     const elegidos = cuantos > 0 ? items.slice(0, cuantos) : items;
     const subtitulo = tipoPrecio === "contado" ? `Repuestos con ${descuento} % de descuento · pago de contado` : `Precios llevando el lote completo · ${descuento} % de descuento`;
-    const clave = JSON.stringify([elegidos.map((i) => `${i.codigo}:${i.precio}`), porImagen, tachado, contacto, subtitulo]);
+    const clave = JSON.stringify([elegidos.map((i) => `${i.codigo}:${i.precio}`), porImagen, tachado, contacto, subtitulo, conFondo]);
 
     useEffect(() => {
         let vigente = true;
         (async () => {
-            const logo = await cargarLogo();
+            const [logo, fondo] = await Promise.all([
+                cargarImagen("/toyoxpress-logo.png"),
+                conFondo ? cargarImagen("/redes/fondo-liquidacion.jpg") : Promise.resolve(null),
+            ]);
             const urls: string[] = [];
             const paginas = Math.max(1, Math.ceil(elegidos.length / porImagen));
             for (let p = 0; p < paginas; p++) {
@@ -164,7 +203,7 @@ export function ImagenLiquidacion({ items, descuento, tipoPrecio, datosAl }: {
                 dibujar(ctx, elegidos.slice(p * porImagen, (p + 1) * porImagen), p + 1, paginas, {
                     titulo: "LIQUIDACIÓN", subtitulo, contacto,
                     nota: `Precios en USD · hasta agotar existencia · ${datosAl.split("-").reverse().join("/")}`, tachado,
-                }, logo);
+                }, logo, fondo);
                 urls.push(canvas.toDataURL("image/png"));
             }
             if (vigente) setImagenes({ clave, urls });
@@ -206,6 +245,13 @@ export function ImagenLiquidacion({ items, descuento, tipoPrecio, datosAl }: {
                 <label className="flex items-center gap-2 pb-2 text-xs text-muted-foreground">
                     <input type="checkbox" checked={tachado} onChange={(e) => setTachado(e.target.checked)} />
                     Precio normal tachado
+                </label>
+                <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                    Fondo
+                    <select value={conFondo ? "marca" : "blanco"} onChange={(e) => setConFondo(e.target.value === "marca")} className={control}>
+                        <option value="marca">De marca (ladrillo y repuestos)</option>
+                        <option value="blanco">Blanco</option>
+                    </select>
                 </label>
                 {listas && (
                     <button type="button" onClick={() => listas.forEach((u, i) => descargar(u, i))} className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground">
