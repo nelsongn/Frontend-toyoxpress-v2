@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Search, Package, ChevronLeft, ChevronRight } from "lucide-react";
 import { RefBadge } from "./RefBadge";
+import { MovimientosProductoModal } from "./MovimientosProductoModal";
 import {
     Select,
     SelectContent,
@@ -62,8 +63,10 @@ export function ProductsTable() {
         localStorage.setItem("products_table_limit", value);
     };
 
-    const token = useAuthStore((state: any) => state.token);
+    const token = useAuthStore((state) => state.token);
     const verPrecios = useAuthStore((state) => state.permissions?.consultarPrecios === true);
+    // Producto cuyo movimiento de inventario se está viendo (clic en la fila)
+    const [verMovimiento, setVerMovimiento] = useState<Producto | null>(null);
     const columnas = verPrecios ? 7 : 5;
 
     const fetchProductos = async (currentPage: number, searchTerm: string, currentLimit: number) => {
@@ -172,7 +175,14 @@ export function ProductsTable() {
                             </TableRow>
                         ) : (
                             productos.map((producto) => (
-                                <TableRow key={producto._id} className="hover:bg-muted/50 transition-colors">
+                                <TableRow
+                                    key={producto._id}
+                                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                                    title="Ver el movimiento de inventario"
+                                    tabIndex={0}
+                                    onClick={() => setVerMovimiento(producto)}
+                                    onKeyDown={(e) => { if (e.key === "Enter") setVerMovimiento(producto); }}
+                                >
                                     <TableCell className="font-mono text-[11px] whitespace-nowrap">{producto.Código}</TableCell>
                                     <TableCell>
                                         {producto.Ref ? <RefBadge value={producto.Ref} /> : <span className="text-muted-foreground">—</span>}
@@ -232,6 +242,12 @@ export function ProductsTable() {
                     </Button>
                 </div>
             </div>
+
+            <MovimientosProductoModal
+                codigo={verMovimiento?.Código ?? null}
+                nombre={verMovimiento?.Nombre}
+                onClose={() => setVerMovimiento(null)}
+            />
         </div>
     );
 }
