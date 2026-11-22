@@ -65,7 +65,8 @@ export function ProductsTable() {
 
     const token = useAuthStore((state) => state.token);
     const verPrecios = useAuthStore((state) => state.permissions?.consultarPrecios === true);
-    // Producto cuyo movimiento de inventario se está viendo (clic en la fila)
+    // Producto cuyo movimiento de inventario se está viendo (clic en la fila); solo con su permiso
+    const puedeVerMovimiento = useAuthStore((state) => state.permissions?.verMovimientoInventario === true);
     const [verMovimiento, setVerMovimiento] = useState<Producto | null>(null);
     const columnas = verPrecios ? 7 : 5;
 
@@ -177,11 +178,13 @@ export function ProductsTable() {
                             productos.map((producto) => (
                                 <TableRow
                                     key={producto._id}
-                                    className="cursor-pointer hover:bg-muted/50 transition-colors"
-                                    title="Ver el movimiento de inventario"
-                                    tabIndex={0}
-                                    onClick={() => setVerMovimiento(producto)}
-                                    onKeyDown={(e) => { if (e.key === "Enter") setVerMovimiento(producto); }}
+                                    {...(puedeVerMovimiento ? {
+                                        className: "cursor-pointer hover:bg-muted transition-colors",
+                                        title: "Ver el movimiento de inventario",
+                                        tabIndex: 0,
+                                        onClick: () => setVerMovimiento(producto),
+                                        onKeyDown: (e: React.KeyboardEvent) => { if (e.key === "Enter") setVerMovimiento(producto); },
+                                    } : {})}
                                 >
                                     <TableCell className="font-mono text-[11px] whitespace-nowrap">{producto.Código}</TableCell>
                                     <TableCell>
@@ -243,11 +246,13 @@ export function ProductsTable() {
                 </div>
             </div>
 
-            <MovimientosProductoModal
-                codigo={verMovimiento?.Código ?? null}
-                nombre={verMovimiento?.Nombre}
-                onClose={() => setVerMovimiento(null)}
-            />
+            {puedeVerMovimiento && (
+                <MovimientosProductoModal
+                    codigo={verMovimiento?.Código ?? null}
+                    nombre={verMovimiento?.Nombre}
+                    onClose={() => setVerMovimiento(null)}
+                />
+            )}
         </div>
     );
 }
