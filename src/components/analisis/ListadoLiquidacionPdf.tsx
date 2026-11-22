@@ -13,11 +13,22 @@ import { bytesDeDataUrl, pdfDeImagenes } from "./pdfImagenes";
  */
 
 export interface ItemListado {
-    codigo: string; nombre: string; marca: string | null; origen: string | null;
+    codigo: string; nombre: string; marca: string | null; origen: string | null; familia: string | null;
     disponible: number; precioNormal: number | null; contado: number; lote: number;
 }
 type Precio = "contado" | "lote" | "ambos";
-type Orden = "tabla" | "numero" | "nombre";
+/** Formas de ordenar; las de familia y marca además agrupan con un título por grupo. */
+const ORDENES = [
+    { id: "tabla", nombre: "Como la tabla (más dinero parado primero)" },
+    { id: "numero", nombre: "Por número de parte" },
+    { id: "nombre", nombre: "Por repuesto (A-Z)" },
+    { id: "familia", nombre: "Por familia (agrupado)" },
+    { id: "marca", nombre: "Por marca (agrupado)" },
+    { id: "precio_mayor", nombre: "Por precio, de mayor a menor" },
+    { id: "precio_menor", nombre: "Por precio, de menor a mayor" },
+    { id: "disponible", nombre: "Por cantidad disponible" },
+] as const;
+type Orden = (typeof ORDENES)[number]["id"];
 type Numero = "toyota" | "nuestro";
 /** Qué se muestra en el listado (se elige en el panel). */
 interface Mostrar { numero: Numero; marca: boolean; disponible: boolean; tachado: boolean; totalLinea: boolean; totalLote: boolean }
@@ -44,10 +55,12 @@ const GRIS = "#6b6b6b";
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fechaCorta = (iso: string) => iso.split("-").reverse().join("/");
 
-/** Fila de la tabla: un repuesto (con su nombre ya cortado en líneas y su alto) o la línea de total al final. */
-type Fila = { item: ItemListado; nombre: string[]; alto: number } | { total: number; cantidad: number };
+/** Fila de la tabla: un repuesto (con su nombre ya cortado en líneas y su alto), el título de un grupo
+ *  (familia o marca) o la línea de total al final. */
+type Fila = { item: ItemListado; nombre: string[]; alto: number } | { grupo: string; sigue?: boolean } | { total: number; cantidad: number };
 const ALTO_TOTAL = 28;
-const altoFila = (f: Fila) => ("item" in f ? f.alto : ALTO_TOTAL);
+const ALTO_GRUPO = 20;
+const altoFila = (f: Fila) => ("item" in f ? f.alto : "grupo" in f ? ALTO_GRUPO : ALTO_TOTAL);
 /** Alto de una fila según sus líneas de texto (nombre + marca): 22 pt con una, 28 con dos, 38 con tres. */
 const altoPorLineas = (n: number) => Math.max(22, 8 + 10 * n);
 
@@ -64,20 +77,50 @@ function disposicion(o: Opciones) {
 const numeroDe = (it: ItemListado, o: Mostrar) => (o.numero === "toyota" ? numeroPublico(it.codigo) : it.codigo);
 const marcaDe = (it: ItemListado) => (it.marca ? `${it.marca}${it.origen ? ` · ${it.origen}` : ""}` : "");
 
-/** Reparte las filas en hojas según su alto (la primera hoja tiene menos espacio por el encabezado). */
+/** Reparte las filas en hojas según su alto (la primera hoja tiene menos espacio por el encabezado).
+ *  Un título de grupo no queda solo al pie de una hoja, y si un grupo sigue en la hoja siguiente se
+ *  repite su título con "(continúa)". */
 function paginar(filas: Fila[]): Fila[][] {
     const hojas: Fila[][] = [[]];
     let y = TABLA_1;
-    for (const f of filas) {
-        const alto = altoFila(f);
+    let grupo: string | null = null;
+    filas.forEach((f, i) => {
+        const siguiente = filas[i + 1];
+        const alto = altoFila(f) + ("grupo" in f && siguiente ? altoFila(siguiente) : 0);
         if (y + alto > FIN_TABLA && hojas[hojas.length - 1].length > 0) {
             hojas.push([]);
             y = TABLA_N;
+            if ("item" in f && grupo) {
+                hojas[hojas.length - 1].push({ grupo, sigue: true });
+                y += ALTO_GRUPO;
+            }
         }
+        if ("grupo" in f) grupo = f.grupo;
         hojas[hojas.length - 1].push(f);
-        y += alto;
-    }
+        y += altoFila(f);
+    });
     return hojas;
+}
+
+/** Ordena los repuestos; en las órdenes agrupadas devuelve también el título de grupo de cada uno. */
+function ordenar(items: ItemListado[], orden: Orden, o: Mostrar): { item: ItemListado; grupo?: string }[] {
+    const precio = (it: ItemListado) => it.contado; // precio de liquidación (el de lote va en la misma proporción)
+    const porNombre = (a: ItemListado, b: ItemListado) => a.nombre.localeCompare(b.nombre, "es");
+    const grupoDe = orden === "familia" ? (it: ItemListado) => it.familia?.trim() || "Sin familia"
+        : orden === "marca" ? (it: ItemListado) => it.marca?.trim() || "Sin marca" : null;
+    const r = [...items];
+    if (grupoDe) {
+        // Los "Sin …" al final; dentro de cada grupo, por nombre
+        const clave = (it: ItemListado) => { const g = grupoDe(it); return g.startsWith("Sin ") ? `￿${g}` : g; };
+        r.sort((a, b) => clave(a).localeCompare(clave(b), "es") || porNombre(a, b));
+        return r.map((item) => ({ item, grupo: grupoDe(item) }));
+    }
+    if (orden === "numero") r.sort((a, b) => numeroDe(a, o).localeCompare(numeroDe(b, o)));
+    else if (orden === "nombre") r.sort(porNombre);
+    else if (orden === "precio_mayor") r.sort((a, b) => precio(b) - precio(a));
+    else if (orden === "precio_menor") r.sort((a, b) => precio(a) - precio(b));
+    else if (orden === "disponible") r.sort((a, b) => b.disponible - a.disponible || porNombre(a, b));
+    return r.map((item) => ({ item }));
 }
 
 /** Columnas de precio según lo elegido: título y cómo sacar el valor. */
@@ -141,7 +184,19 @@ function dibujarHoja(ctx: CanvasRenderingContext2D, filas: Fila[], hoja: number,
 
     // Filas
     let y = primera ? TABLA_1 : TABLA_N;
-    filas.forEach((f, i) => {
+    let par = 0; // para alternar el fondo de las filas; vuelve a empezar en cada grupo
+    filas.forEach((f) => {
+        if ("grupo" in f) {
+            ctx.fillStyle = "#f6e9ec";
+            ctx.fillRect(MARGEN - 4, y + 3, DER - MARGEN + 8, ALTO_GRUPO - 4);
+            ctx.textAlign = "left";
+            ctx.fillStyle = CARMESI;
+            ctx.font = "bold 9px Arial, sans-serif";
+            ctx.fillText(`${f.grupo.toUpperCase()}${f.sigue ? " (continúa)" : ""}`, MARGEN, y + 15.5);
+            y += ALTO_GRUPO;
+            par = 0;
+            return;
+        }
         if ("total" in f) {
             ctx.strokeStyle = OSCURO;
             ctx.lineWidth = 0.8;
@@ -158,7 +213,7 @@ function dibujarHoja(ctx: CanvasRenderingContext2D, filas: Fila[], hoja: number,
         const it = f.item;
         const alto = altoFila(f);
         const medio = y + alto / 2 + 3.5; // línea base para centrar un texto de 9 pt en la fila
-        if (i % 2 === 1) {
+        if (par++ % 2 === 1) {
             ctx.fillStyle = "#f5f5f5";
             ctx.fillRect(MARGEN - 4, y, DER - MARGEN + 8, alto);
         }
@@ -239,14 +294,9 @@ export function ListadoLiquidacionPdf({ items, descPieza, descLote, datosAl }: {
     const [vista, setVista] = useState<{ clave: string; url: string } | null>(null);
     const [armando, setArmando] = useState(false);
 
-    const elegidos = useMemo(() => {
-        const base = cuantos > 0 ? items.slice(0, cuantos) : items;
-        if (orden === "tabla") return base;
-        const r = [...base];
-        if (orden === "numero") r.sort((a, b) => numeroDe(a, mostrar).localeCompare(numeroDe(b, mostrar)));
-        else r.sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
-        return r;
-    }, [items, cuantos, orden, mostrar]);
+    // "Los N primeros" son los N de más dinero parado (el orden de la tabla); después se ordenan
+    const ordenados = useMemo(() => ordenar(cuantos > 0 ? items.slice(0, cuantos) : items, orden, mostrar), [items, cuantos, orden, mostrar]);
+    const elegidos = ordenados.map((o) => o.item);
 
     const opciones: Opciones = {
         ...mostrar, precio, contacto, descPieza, descLote, datosAl,
@@ -258,20 +308,22 @@ export function ListadoLiquidacionPdf({ items, descPieza, descLote, datosAl }: {
     // El nombre se corta en hasta dos líneas midiendo con la misma fuente con que se dibuja
     const medidor = useMemo(() => (typeof document === "undefined" ? null : document.createElement("canvas").getContext("2d")), []);
     const { anchoNombre } = disposicion(opciones);
-    const filas: Fila[] = elegidos.map((item) => {
+    const filas: Fila[] = [];
+    ordenados.forEach(({ item, grupo }, i) => {
+        if (grupo && grupo !== ordenados[i - 1]?.grupo) filas.push({ grupo });
         let nombre = [item.nombre];
         if (medidor) {
             medidor.font = FUENTE_NOMBRE;
             nombre = lineas(medidor, item.nombre, anchoNombre, 2);
         }
-        return { item, nombre, alto: altoPorLineas(nombre.length + (mostrar.marca && marcaDe(item) ? 1 : 0)) };
+        filas.push({ item, nombre, alto: altoPorLineas(nombre.length + (mostrar.marca && marcaDe(item) ? 1 : 0)) });
     });
     const conTotalLote = mostrar.totalLote && precio !== "contado";
     if (conTotalLote && elegidos.length > 0) {
         filas.push({ total: elegidos.reduce((s, it) => s + it.disponible * it.lote, 0), cantidad: elegidos.length });
     }
     const hojas = paginar(filas);
-    const clave = JSON.stringify([elegidos.map((i) => `${i.codigo}:${i.contado}:${i.lote}`), opciones]);
+    const clave = JSON.stringify([elegidos.map((i) => `${i.codigo}:${i.contado}:${i.lote}`), orden, opciones]);
 
     // Vista previa de la primera hoja
     useEffect(() => {
@@ -333,9 +385,7 @@ export function ListadoLiquidacionPdf({ items, descPieza, descLote, datosAl }: {
                 <label className="flex flex-col gap-1 text-xs text-muted-foreground">
                     Orden
                     <select value={orden} onChange={(e) => setOrden(e.target.value as Orden)} className={control}>
-                        <option value="tabla">Como la tabla</option>
-                        <option value="numero">Por número</option>
-                        <option value="nombre">Por repuesto (A-Z)</option>
+                        {ORDENES.map((o) => <option key={o.id} value={o.id}>{o.nombre}</option>)}
                     </select>
                 </label>
                 <label className="flex min-w-[260px] flex-1 flex-col gap-1 text-xs text-muted-foreground">
