@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { BarrasMes } from "./BarrasMes";
 import { BarraCelda, EstadoCarga, FilaKpis, FranjaDetalle, Kpi, Panel, Tabla, td, tdNum, th, thNum, useAnalitica } from "./Bloques";
 import { diasDelMes, fecha, mesLargo, num, pct, usd } from "./formato";
+import { BuscarCliente, EstadoCuenta } from "./EstadoCuentaCliente";
 
 interface Cobros {
     mensual: { mes: string; cobrado: number; pagos: number }[];
@@ -16,13 +17,14 @@ interface Datos {
     detalle: { desde: string; hasta: string };
     resumen: { por_cobrar: number; vencido: number; a_favor: number; clientes: number; documentos: number; cobrado_30d: number };
     antiguedad: { tramo: string; saldo: number; documentos: number }[];
-    clientes: { nombre: string; rif: string; vendedor: string; saldo: number; vencido: number | null; dias_max: number; documentos: number; limite_credito: number }[];
     cobros: Cobros;
 }
 
 export function VistaCobranza() {
     // Mes elegido en el gráfico de cobros: cambia los cobros por vendedor y por cliente
     const [mes, setMes] = useState<string | null>(null);
+    // Cliente elegido en el buscador: se muestra su estado de cuenta
+    const [clienteId, setClienteId] = useState<number | null>(null);
     const { datos, error, cargando } = useAnalitica<Datos>("cobranza");
     const rangoMes = mes && datos ? diasDelMes(mes, datos.periodo.desde, datos.periodo.hasta) : null;
     const detalleMes = useAnalitica<Datos>(rangoMes ? `cobranza?desde=${rangoMes.desde}&hasta=${rangoMes.hasta}` : null);
@@ -65,26 +67,13 @@ export function VistaCobranza() {
                     </Tabla>
                 </Panel>
 
-                <Panel titulo="Clientes con saldo pendiente" detalle="Los 25 con más saldo. En rojo, deudas con más de 30 días de vencidas.">
-                    <Tabla>
-                        <thead><tr><th className={th}>Cliente</th><th className={thNum}>Saldo</th><th className={thNum}>Vencido</th><th className={thNum}>Días máx.</th><th className={thNum}>Límite</th></tr></thead>
-                        <tbody>
-                            {datos.clientes.map((c) => (
-                                <tr key={c.rif}>
-                                    <td className={td}>
-                                        <span className="font-medium">{c.nombre}</span>
-                                        <span className="block text-xs text-muted-foreground"><span className="font-mono">{c.rif}</span> · {c.vendedor} · {num(c.documentos)} docs.</span>
-                                    </td>
-                                    <td className={tdNum}>{usd(c.saldo)}</td>
-                                    <td className={cn(tdNum, (c.vencido ?? 0) > 0 && "text-red-600 dark:text-red-400")}>{usd(c.vencido ?? 0)}</td>
-                                    <td className={cn(tdNum, c.dias_max > 30 && "font-semibold text-red-600 dark:text-red-400")}>{c.dias_max > 0 ? num(c.dias_max) : "al día"}</td>
-                                    <td className={tdNum}>{c.limite_credito ? usd(c.limite_credito) : "—"}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </Tabla>
+                <Panel titulo="Buscar cliente" detalle="Escribe el nombre, el RIF o el código para ver sus datos y su estado de cuenta.">
+                    <BuscarCliente onElegir={(c) => setClienteId(c.id)} />
+                    {!clienteId && <p className="mt-3 text-xs text-muted-foreground">Al elegir un cliente aparece abajo su saldo, lo que tiene vencido, sus documentos pendientes y sus movimientos.</p>}
                 </Panel>
             </div>
+
+            {clienteId && <EstadoCuenta key={clienteId} clienteId={clienteId} hasta={datos.periodo.hasta} onCerrar={() => setClienteId(null)} />}
 
             <Panel titulo="Cobros por mes" detalle="Pagos de clientes registrados en cuentas por cobrar. Haz clic en una barra para ver ese mes en las tablas de abajo.">
                 <BarrasMes
