@@ -63,7 +63,7 @@ function CeldaUltimaCompra({ uc }: { uc: UltimaCompra | null }) {
 
 export function VistaInventario() {
     // Días de colchón de la compra sugerida (además del tránsito de cada proveedor)
-    const [colchon, setColchon] = useState(10);
+    const [colchon, setColchon] = useState(0);
     const { datos, error, cargando } = useAnalitica<Datos>(`inventario?colchon=${colchon}`);
     // Grupo ABC abierto: muestra la lista de sus repuestos
     const [grupo, setGrupo] = useState<GrupoAbc | null>(null);
