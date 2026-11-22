@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, FileSpreadsheet, ImageIcon, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EstadoCarga, FilaKpis, Kpi, Panel, Tabla, td, tdCodigo, tdNum, th, thNum, useAnalitica } from "./Bloques";
@@ -48,6 +48,12 @@ export function VistaLiquidacion() {
     const [fuera, setFuera] = useState<Set<number>>(new Set());
     // Imagen para redes: si se muestra y con qué precio
     const [imagen, setImagen] = useState<"contado" | "lote" | null>(null);
+    // Al abrir la imagen, la página baja hasta ella (si no, parece que el botón no hace nada)
+    const panelImagen = useRef<HTMLDivElement>(null);
+    const imagenAbierta = imagen !== null;
+    useEffect(() => {
+        if (imagenAbierta) panelImagen.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, [imagenAbierta]);
 
     const visibles = useMemo(() => {
         const t = buscar.trim().toLowerCase();
@@ -152,6 +158,31 @@ export function VistaLiquidacion() {
                 <Kpi titulo="Recupera del costo" valor={pct(costo ? lote / costo : 0)} detalle="Vendiendo el lote completo" />
             </FilaKpis>
 
+            {imagen && (
+                <div ref={panelImagen} className="scroll-mt-4">
+                <Panel
+                    titulo="Imagen para redes"
+                    detalle="Formato Instagram (1080×1350). Si son muchos repuestos salen varias imágenes para un carrusel."
+                    accion={
+                        <select aria-label="Precio de la imagen" value={imagen} onChange={(e) => setImagen(e.target.value as "contado" | "lote")} className={control}>
+                            <option value="contado">Precio de contado (-{descPieza} %)</option>
+                            <option value="lote">Precio de lote (-{descLote} %)</option>
+                        </select>
+                    }
+                >
+                    <ImagenLiquidacion
+                        items={enLote.map((a) => ({
+                            codigo: a.codigo, nombre: a.nombre, marca: a.marca, precioNormal: a.precio, disponible: a.liquidar,
+                            precio: precioCon(a, imagen === "contado" ? descPieza : descLote, pisoCosto),
+                        }))}
+                        descuento={imagen === "contado" ? descPieza : descLote}
+                        tipoPrecio={imagen}
+                        datosAl={datos.datosAl}
+                    />
+                </Panel>
+                </div>
+            )}
+
             <Panel
                 titulo="Repuestos a liquidar"
                 detalle={`Del que más dinero tiene parado al que menos. Quita del lote los que no quieras ofrecer. Datos de Valery al ${fecha(datos.datosAl)}.`}
@@ -159,7 +190,7 @@ export function VistaLiquidacion() {
                     <div className="flex flex-wrap items-center gap-2">
                         <button type="button" onClick={excelClientes} className={boton}><FileSpreadsheet className="h-3.5 w-3.5" /> Excel para clientes</button>
                         <button type="button" onClick={excelInterno} className={boton}><Download className="h-3.5 w-3.5" /> Excel interno</button>
-                        <button type="button" onClick={() => setImagen(imagen ? null : "contado")} className={boton}><ImageIcon className="h-3.5 w-3.5" /> Imagen para redes</button>
+                        <button type="button" onClick={() => setImagen(imagen ? null : "contado")} className={boton}><ImageIcon className="h-3.5 w-3.5" /> {imagen ? "Ocultar imagen" : "Imagen para redes"}</button>
                     </div>
                 }
             >
@@ -218,29 +249,6 @@ export function VistaLiquidacion() {
                     </tbody>
                 </Tabla>
             </Panel>
-
-            {imagen && (
-                <Panel
-                    titulo="Imagen para redes"
-                    detalle="Formato Instagram (1080×1350). Si son muchos repuestos salen varias imágenes para un carrusel."
-                    accion={
-                        <select aria-label="Precio de la imagen" value={imagen} onChange={(e) => setImagen(e.target.value as "contado" | "lote")} className={control}>
-                            <option value="contado">Precio de contado (-{descPieza} %)</option>
-                            <option value="lote">Precio de lote (-{descLote} %)</option>
-                        </select>
-                    }
-                >
-                    <ImagenLiquidacion
-                        items={enLote.map((a) => ({
-                            codigo: a.codigo, nombre: a.nombre, marca: a.marca, precioNormal: a.precio, disponible: a.liquidar,
-                            precio: precioCon(a, imagen === "contado" ? descPieza : descLote, pisoCosto),
-                        }))}
-                        descuento={imagen === "contado" ? descPieza : descLote}
-                        tipoPrecio={imagen}
-                        datosAl={datos.datosAl}
-                    />
-                </Panel>
-            )}
         </div>
     );
 }
