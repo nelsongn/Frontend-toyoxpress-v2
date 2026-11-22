@@ -17,18 +17,27 @@ export interface ItemListado {
     disponible: number; precioNormal: number | null; contado: number; lote: number;
 }
 type Precio = "contado" | "lote" | "ambos";
-/** Formas de ordenar; las de familia y marca además agrupan con un título por grupo. */
-const ORDENES = [
-    { id: "tabla", nombre: "Como la tabla (más dinero parado primero)" },
-    { id: "numero", nombre: "Por número de parte" },
-    { id: "nombre", nombre: "Por repuesto (A-Z)" },
-    { id: "familia", nombre: "Por familia (agrupado)" },
-    { id: "marca", nombre: "Por marca (agrupado)" },
-    { id: "precio_mayor", nombre: "Por precio, de mayor a menor" },
-    { id: "precio_menor", nombre: "Por precio, de menor a mayor" },
-    { id: "disponible", nombre: "Por cantidad disponible" },
+/**
+ * Orden por niveles, como en Excel: "ordenar por" y hasta dos "luego por", cada uno con su sentido.
+ * Si el primer nivel es familia, marca u origen se puede poner un título por grupo.
+ */
+const CAMPOS = [
+    { id: "dinero", nombre: "Dinero parado", tipo: "numero" },
+    { id: "numero", nombre: "Número de parte", tipo: "texto" },
+    { id: "nombre", nombre: "Repuesto (nombre)", tipo: "texto" },
+    { id: "familia", nombre: "Familia", tipo: "texto" },
+    { id: "marca", nombre: "Marca", tipo: "texto" },
+    { id: "origen", nombre: "Origen", tipo: "texto" },
+    { id: "precio", nombre: "Precio", tipo: "numero" },
+    { id: "disponible", nombre: "Cantidad disponible", tipo: "numero" },
 ] as const;
-type Orden = (typeof ORDENES)[number]["id"];
+type Campo = (typeof CAMPOS)[number]["id"];
+interface Nivel { campo: Campo | ""; desc: boolean }
+const AGRUPABLES: Campo[] = ["familia", "marca", "origen"];
+const NIVELES_INICIALES: Nivel[] = [{ campo: "dinero", desc: true }, { campo: "", desc: false }, { campo: "", desc: false }];
+/** Nombre del sentido según el tipo de campo (A → Z en textos, menor a mayor en números). */
+const sentidos = (campo: Campo | "") => (CAMPOS.find((c) => c.id === campo)?.tipo === "numero"
+    ? ["De menor a mayor", "De mayor a menor"] : ["De la A a la Z", "De la Z a la A"]);
 type Numero = "toyota" | "nuestro";
 /** Qué se muestra en el listado (se elige en el panel). */
 interface Mostrar { numero: Numero; marca: boolean; disponible: boolean; tachado: boolean; totalLinea: boolean; totalLote: boolean }
@@ -102,25 +111,45 @@ function paginar(filas: Fila[]): Fila[][] {
     return hojas;
 }
 
-/** Ordena los repuestos; en las órdenes agrupadas devuelve también el título de grupo de cada uno. */
-function ordenar(items: ItemListado[], orden: Orden, o: Mostrar): { item: ItemListado; grupo?: string }[] {
-    const precio = (it: ItemListado) => it.contado; // precio de liquidación (el de lote va en la misma proporción)
-    const porNombre = (a: ItemListado, b: ItemListado) => a.nombre.localeCompare(b.nombre, "es");
-    const grupoDe = orden === "familia" ? (it: ItemListado) => it.familia?.trim() || "Sin familia"
-        : orden === "marca" ? (it: ItemListado) => it.marca?.trim() || "Sin marca" : null;
-    const r = [...items];
-    if (grupoDe) {
-        // Los "Sin …" al final; dentro de cada grupo, por nombre
-        const clave = (it: ItemListado) => { const g = grupoDe(it); return g.startsWith("Sin ") ? `￿${g}` : g; };
-        r.sort((a, b) => clave(a).localeCompare(clave(b), "es") || porNombre(a, b));
-        return r.map((item) => ({ item, grupo: grupoDe(item) }));
+/** Valor de un repuesto para un campo de orden. "dinero" es su posición en la tabla (que ya viene
+ *  del que más dinero tiene parado al que menos), así que se invierte para que mayor = más dinero. */
+function valorDe(it: ItemListado, campo: Campo, posicion: number, o: Mostrar): string | number | null {
+    switch (campo) {
+        case "dinero": return -posicion;
+        case "numero": return numeroDe(it, o);
+        case "nombre": return it.nombre;
+        case "familia": return it.familia?.trim() || null;
+        case "marca": return it.marca?.trim() || null;
+        case "origen": return it.origen?.trim() || null;
+        case "precio": return it.contado; // precio de liquidación (el de lote va en la misma proporción)
+        case "disponible": return it.disponible;
     }
-    if (orden === "numero") r.sort((a, b) => numeroDe(a, o).localeCompare(numeroDe(b, o)));
-    else if (orden === "nombre") r.sort(porNombre);
-    else if (orden === "precio_mayor") r.sort((a, b) => precio(b) - precio(a));
-    else if (orden === "precio_menor") r.sort((a, b) => precio(a) - precio(b));
-    else if (orden === "disponible") r.sort((a, b) => b.disponible - a.disponible || porNombre(a, b));
-    return r.map((item) => ({ item }));
+}
+const SIN: Record<string, string> = { familia: "Sin familia", marca: "Sin marca", origen: "Sin origen" };
+
+/** Ordena por los niveles elegidos; si se pide, devuelve el título de grupo (el valor del primer nivel). */
+function ordenar(items: ItemListado[], niveles: Nivel[], agrupar: boolean, o: Mostrar): { item: ItemListado; grupo?: string }[] {
+    const activos = niveles.filter((n): n is Nivel & { campo: Campo } => n.campo !== "");
+    const filas = items.map((item, posicion) => ({ item, posicion }));
+    filas.sort((a, b) => {
+        for (const n of activos) {
+            const va = valorDe(a.item, n.campo, a.posicion, o);
+            const vb = valorDe(b.item, n.campo, b.posicion, o);
+            if (va === vb) continue;
+            // Los vacíos ("Sin familia"…) siempre al final, sin importar el sentido
+            if (va == null) return 1;
+            if (vb == null) return -1;
+            const c = typeof va === "number" && typeof vb === "number" ? va - vb : String(va).localeCompare(String(vb), "es", { numeric: true });
+            if (c !== 0) return n.desc ? -c : c;
+        }
+        return a.posicion - b.posicion;
+    });
+    const primero = activos[0]?.campo;
+    const conGrupo = agrupar && primero && AGRUPABLES.includes(primero);
+    return filas.map(({ item, posicion }) => ({
+        item,
+        grupo: conGrupo ? String(valorDe(item, primero, posicion, o) ?? SIN[primero]) : undefined,
+    }));
 }
 
 /** Columnas de precio según lo elegido: título y cómo sacar el valor. */
@@ -287,7 +316,16 @@ export function ListadoLiquidacionPdf({ items, descPieza, descLote, datosAl }: {
 }) {
     const [cuantos, setCuantos] = useState(0);
     const [precio, setPrecio] = useState<Precio>("ambos");
-    const [orden, setOrden] = useState<Orden>("tabla");
+    const [niveles, setNiveles] = useState<Nivel[]>(NIVELES_INICIALES);
+    const [agrupar, setAgrupar] = useState(true);
+    const cambiarNivel = (i: number, cambio: Partial<Nivel>) => setNiveles((ns) => ns.map((n, k) => {
+        if (k !== i) return n;
+        const nuevo = { ...n, ...cambio };
+        // Al elegir un campo nuevo, el sentido natural: números de mayor a menor, textos de la A a la Z
+        if (cambio.campo !== undefined && cambio.campo !== n.campo) nuevo.desc = CAMPOS.find((c) => c.id === cambio.campo)?.tipo === "numero";
+        return nuevo;
+    }));
+    const agrupable = !!niveles[0].campo && AGRUPABLES.includes(niveles[0].campo);
     const [mostrar, setMostrar] = useState<Mostrar>(MOSTRAR_INICIAL);
     const cambiar = <K extends keyof Mostrar>(k: K, v: Mostrar[K]) => setMostrar((m) => ({ ...m, [k]: v }));
     const [contacto, setContacto] = useState("Pedidos por WhatsApp · pregunta por el lote completo");
@@ -295,7 +333,7 @@ export function ListadoLiquidacionPdf({ items, descPieza, descLote, datosAl }: {
     const [armando, setArmando] = useState(false);
 
     // "Los N primeros" son los N de más dinero parado (el orden de la tabla); después se ordenan
-    const ordenados = useMemo(() => ordenar(cuantos > 0 ? items.slice(0, cuantos) : items, orden, mostrar), [items, cuantos, orden, mostrar]);
+    const ordenados = useMemo(() => ordenar(cuantos > 0 ? items.slice(0, cuantos) : items, niveles, agrupar, mostrar), [items, cuantos, niveles, agrupar, mostrar]);
     const elegidos = ordenados.map((o) => o.item);
 
     const opciones: Opciones = {
@@ -323,7 +361,7 @@ export function ListadoLiquidacionPdf({ items, descPieza, descLote, datosAl }: {
         filas.push({ total: elegidos.reduce((s, it) => s + it.disponible * it.lote, 0), cantidad: elegidos.length });
     }
     const hojas = paginar(filas);
-    const clave = JSON.stringify([elegidos.map((i) => `${i.codigo}:${i.contado}:${i.lote}`), orden, opciones]);
+    const clave = JSON.stringify([elegidos.map((i) => `${i.codigo}:${i.contado}:${i.lote}`), niveles, agrupar, opciones]);
 
     // Vista previa de la primera hoja
     useEffect(() => {
@@ -382,12 +420,6 @@ export function ListadoLiquidacionPdf({ items, descPieza, descLote, datosAl }: {
                         <option value="lote">Solo lote (-{descLote} %)</option>
                     </select>
                 </label>
-                <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-                    Orden
-                    <select value={orden} onChange={(e) => setOrden(e.target.value as Orden)} className={control}>
-                        {ORDENES.map((o) => <option key={o.id} value={o.id}>{o.nombre}</option>)}
-                    </select>
-                </label>
                 <label className="flex min-w-[260px] flex-1 flex-col gap-1 text-xs text-muted-foreground">
                     Texto de contacto
                     <input value={contacto} onChange={(e) => setContacto(e.target.value)} maxLength={90} className={control} />
@@ -396,6 +428,32 @@ export function ListadoLiquidacionPdf({ items, descPieza, descLote, datosAl }: {
                     {armando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />} Descargar PDF
                 </button>
             </div>
+            <fieldset className="flex flex-wrap items-end gap-x-4 gap-y-2 rounded-md border border-border px-3 py-2 text-xs text-muted-foreground">
+                <legend className="px-1 font-medium text-foreground">Ordenar</legend>
+                {niveles.map((n, i) => (
+                    <div key={i} className="flex flex-col gap-1">
+                        {i === 0 ? "Ordenar por" : "Luego por"}
+                        <div className="flex gap-1">
+                            <select aria-label={`${i === 0 ? "Ordenar por" : "Luego por"} (nivel ${i + 1})`} value={n.campo} onChange={(e) => cambiarNivel(i, { campo: e.target.value as Campo | "" })} className={control}>
+                                <option value="">{i === 0 ? "Como la tabla" : "—"}</option>
+                                {CAMPOS.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                            </select>
+                            {n.campo && (
+                                <select aria-label={`Sentido del nivel ${i + 1}`} value={n.desc ? "desc" : "asc"} onChange={(e) => cambiarNivel(i, { desc: e.target.value === "desc" })} className={control}>
+                                    {sentidos(n.campo).map((s, k) => <option key={s} value={k ? "desc" : "asc"}>{s}</option>)}
+                                </select>
+                            )}
+                        </div>
+                    </div>
+                ))}
+                {agrupable && (
+                    <label className="flex items-center gap-2 pb-2">
+                        <input type="checkbox" checked={agrupar} onChange={(e) => setAgrupar(e.target.checked)} />
+                        Título por cada {CAMPOS.find((c) => c.id === niveles[0].campo)?.nombre.toLowerCase()}
+                    </label>
+                )}
+                <button type="button" onClick={() => setNiveles(NIVELES_INICIALES)} className="pb-2 text-xs underline hover:text-foreground">Volver al orden de la tabla</button>
+            </fieldset>
             <fieldset className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-md border border-border px-3 py-2 text-xs text-muted-foreground">
                 <legend className="px-1 font-medium text-foreground">Mostrar</legend>
                 <label className="flex items-center gap-2">
