@@ -74,10 +74,8 @@ export function BuscarCliente({ onElegir }: { onElegir: (c: ClienteEncontrado) =
 }
 
 interface Documento { tipo: string; etiqueta: string; numero: string; emision: string; vencimiento?: string | null; monto: number; saldo: number; dias_vencido?: number }
-interface Movimiento { tipo: string; etiqueta: string; numero: string; fecha: string; vencimiento: string | null; debito: number; credito: number; saldo: number; aplica_a: string | null }
 interface Estado {
     datosAl: string;
-    periodo: { desde: string; hasta: string };
     cliente: {
         id: number; nombre: string; rif: string; contacto: string | null; telefonos: string | null; correo: string | null;
         direccion: string | null; estado: string | null; vendedor: string; tipoPrecio: string | null; limiteCredito: number;
@@ -89,28 +87,12 @@ interface Estado {
     };
     pendientes: Documento[];
     aFavor: Documento[];
-    movimientos: Movimiento[];
 }
 
-const PERIODOS = [
-    { id: "90", nombre: "Últimos 3 meses", dias: 90 },
-    { id: "180", nombre: "Últimos 6 meses", dias: 180 },
-    { id: "365", nombre: "Último año", dias: 365 },
-    { id: "todo", nombre: "Todo", dias: null },
-] as const;
-
-function restar(f: string, dias: number): string {
-    const d = new Date(`${f}T12:00:00Z`);
-    d.setUTCDate(d.getUTCDate() - dias);
-    return d.toISOString().slice(0, 10);
-}
-
-/** Datos del cliente, saldo, documentos pendientes y movimientos del período. */
+/** Datos del cliente, saldo y documentos pendientes. */
 export function EstadoCuenta({ clienteId, hasta, onCerrar }: { clienteId: number; hasta: string; onCerrar: () => void }) {
-    const [periodo, setPeriodo] = useState<(typeof PERIODOS)[number]["id"]>("180");
-    const dias = PERIODOS.find((p) => p.id === periodo)?.dias ?? null;
-    const desde = dias ? restar(hasta, dias) : "2019-01-01";
-    const { datos, error, cargando } = useAnalitica<Estado>(`clientes/${clienteId}/estado-cuenta?desde=${desde}&hasta=${hasta}`, { conservar: true });
+    // Los movimientos no se muestran: se piden solo los de hoy para no traer datos de más
+    const { datos, error, cargando } = useAnalitica<Estado>(`clientes/${clienteId}/estado-cuenta?desde=${hasta}&hasta=${hasta}`, { conservar: true });
 
     if (!datos) return <EstadoCarga cargando={cargando} error={error} />;
     const c = datos.cliente;
@@ -125,10 +107,6 @@ export function EstadoCuenta({ clienteId, hasta, onCerrar }: { clienteId: number
         })));
         XLSX.utils.sheet_add_aoa(pend, [[], ["Saldo total", "", "", "", "", r.saldo], ["A favor", "", "", "", "", -r.aFavor], ["Neto", "", "", "", "", r.neto]], { origin: -1 });
         XLSX.utils.book_append_sheet(libro, pend, "Pendiente");
-        XLSX.utils.book_append_sheet(libro, XLSX.utils.json_to_sheet(datos.movimientos.map((m) => ({
-            Fecha: m.fecha, Documento: `${m.etiqueta} ${m.numero}`, "Aplica a": m.aplica_a ?? "", Vence: m.tipo === "FAC" ? m.vencimiento ?? "" : "",
-            Cargo: m.debito || "", Abono: m.credito || "", "Saldo del documento": m.saldo || "",
-        }))), "Movimientos");
         XLSX.writeFile(libro, `Estado_de_cuenta_${c.rif.replace(/[^\w-]+/g, "")}_${datos.datosAl}.xlsx`);
     };
 
@@ -205,38 +183,6 @@ export function EstadoCuenta({ clienteId, hasta, onCerrar }: { clienteId: number
                     <p className="mt-3 text-xs text-muted-foreground">
                         A favor del cliente: {datos.aFavor.map((a) => `${a.etiqueta} ${a.numero} (${usd(a.saldo)})`).join(" · ")}
                     </p>
-                )}
-            </Panel>
-
-            <Panel
-                titulo="Movimientos"
-                detalle="Facturas, pagos, notas y anticipos del período, del más nuevo al más viejo. En los pagos, a qué facturas se aplicaron."
-                accion={
-                    <select aria-label="Período de movimientos" value={periodo} onChange={(e) => setPeriodo(e.target.value as typeof periodo)} className="rounded-md border border-border bg-card px-2 py-1.5 text-sm">
-                        {PERIODOS.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-                    </select>
-                }
-            >
-                {!datos.movimientos.length ? (
-                    <p className="text-sm text-muted-foreground">Sin movimientos en este período.</p>
-                ) : (
-                    <Tabla>
-                        <thead><tr><th className={th}>Fecha</th><th className={th}>Documento</th><th className={th}>Detalle</th><th className={thNum}>Cargo</th><th className={thNum}>Abono</th><th className={thNum}>Saldo del doc.</th></tr></thead>
-                        <tbody>
-                            {datos.movimientos.map((m) => (
-                                <tr key={`${m.tipo}-${m.numero}`}>
-                                    <td className={cn(td, "whitespace-nowrap")}>{fecha(m.fecha)}</td>
-                                    <td className={cn(td, "whitespace-nowrap")}>{m.etiqueta} <span className="font-mono text-xs">{m.numero}</span></td>
-                                    <td className={cn(td, "text-xs text-muted-foreground")}>
-                                        {m.aplica_a ? `Aplicado a ${m.aplica_a}` : m.tipo === "FAC" && m.vencimiento ? `Vence ${fecha(m.vencimiento)}` : ""}
-                                    </td>
-                                    <td className={tdNum}>{m.debito ? usd(m.debito) : ""}</td>
-                                    <td className={cn(tdNum, "text-emerald-700 dark:text-emerald-300")}>{m.credito ? usd(m.credito) : ""}</td>
-                                    <td className={cn(tdNum, m.saldo > 0 && m.debito > 0 && "font-semibold")}>{m.saldo > 0.005 ? usd(m.saldo) : ""}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </Tabla>
                 )}
             </Panel>
         </div>
