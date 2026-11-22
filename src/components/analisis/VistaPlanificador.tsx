@@ -1,16 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, Download } from "lucide-react";
+import { AlertCircle, CheckCircle2, Download, Save } from "lucide-react";
+import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { BarraCelda, EstadoCarga, FilaKpis, Kpi, Panel, Tabla, td, tdCodigo, tdNum, th, thNum, useAnalitica } from "./Bloques";
+import { PedidosEnCamino } from "./PedidosEnCamino";
+import { BarraCelda, EstadoCarga, mensajeError, FilaKpis, Kpi, Panel, Tabla, td, tdCodigo, tdNum, th, thNum, useAnalitica } from "./Bloques";
 import { decimal, fecha, num, pct, usd } from "./formato";
 
 type Prioridad = "clave_cero" | "clave" | "normal";
 
 interface Linea {
-    codigo: string; nombre: string; familia: string | null; ref: string | null; prioridad: Prioridad;
-    stock: number; ventaMes: number; clientes: number; necesidad: number; comprar: number; parcial: boolean;
+    productoId: number; codigo: string; nombre: string; familia: string | null; ref: string | null; prioridad: Prioridad;
+    stock: number; enCamino: number; ventaMes: number; clientes: number; necesidad: number; comprar: number; parcial: boolean;
     costo: number; costoFecha: string; precio: number; inversion: number; margen: number; acumulado: number;
     masBarato: { proveedor: string; costo: number } | null;
 }
@@ -24,6 +26,7 @@ interface Datos {
     disponible: { cuentas: { numero: string; nombre: string; saldo: number }[]; total: number };
     monto: number; minimo: number; alcanza: boolean;
     cobertura: number; coberturas: number[];
+    enCamino: { pedidos: number; monto: number };
     resumen: { claves: number; clavesCero: number; clavesSinProveedor: number; puntuales: number };
     proveedores: ResumenProveedor[];
     pedido: (ResumenProveedor & { lineas: Linea[]; tramos: { desde: number; hasta: number; margen: number }[] }) | null;
@@ -47,6 +50,7 @@ async function exportarExcel(pedido: NonNullable<Datos["pedido"]>, hasta: string
         Repuesto: l.nombre,
         Familia: l.familia ?? "",
         Stock: l.stock,
+        "En camino": l.enCamino,
         "Vende al mes": Number(l.ventaMes.toFixed(1)),
         "Clientes (24 m)": l.clientes,
         Necesita: l.necesidad,
@@ -70,9 +74,30 @@ export function VistaPlanificador() {
     // null = el saldo disponible en bancos; un número = el monto que escribió el usuario
     const [monto, setMonto] = useState<number | null>(null);
     const [montoTexto, setMontoTexto] = useState("");
+    // Sube al guardar, anular o cerrar un pedido: recalcula el planificador y la lista de pedidos
+    const [recarga, setRecarga] = useState(0);
+    const [guardar, setGuardar] = useState<"nada" | "confirmar" | "enviando">("nada");
+    const [aviso, setAviso] = useState<{ ok: boolean; texto: string } | null>(null);
 
-    const ruta = `planificador?cobertura=${cobertura}${monto != null ? `&monto=${monto}` : ""}${proveedor ? `&proveedor=${proveedor}` : ""}`;
+    const ruta = `planificador?cobertura=${cobertura}${monto != null ? `&monto=${monto}` : ""}${proveedor ? `&proveedor=${proveedor}` : ""}&r=${recarga}`;
     const { datos, error, cargando } = useAnalitica<Datos>(ruta);
+
+    /** Guarda el pedido como "en camino": desde ese momento el planificador lo descuenta. */
+    const guardarPedido = async (pedido: NonNullable<Datos["pedido"]>) => {
+        setGuardar("enviando");
+        try {
+            const r = await api.post("/analitica/pedidos", {
+                proveedorId: pedido.proveedorId,
+                lineas: pedido.lineas.map((l) => ({ codigo: l.codigo, cantidad: l.comprar, costo: l.costo })),
+            });
+            setAviso({ ok: true, texto: `Pedido ${r.data.numero} a ${r.data.proveedor} guardado (${num(r.data.repuestos)} repuestos, ${usd(r.data.total)}). Ya cuenta como en camino.` });
+            setRecarga((n) => n + 1);
+        } catch (e) {
+            setAviso({ ok: false, texto: mensajeError(e, "No se pudo guardar el pedido.") });
+        } finally {
+            setGuardar("nada");
+        }
+    };
 
     const aplicarMonto = () => {
         const valor = Number(montoTexto.replace(/[^\d.]/g, ""));
@@ -150,7 +175,10 @@ export function VistaPlanificador() {
                     titulo="Disponible en bancos"
                     valor={usd(datos.disponible.total)}
                     detalle={monto != null ? `Planificando con ${usd(datos.monto)}` : "Planificando con este saldo"}
-                    extra={datos.disponible.cuentas.map((c) => `${c.nombre}: ${usd(c.saldo)}`)}
+                    extra={[
+                        ...datos.disponible.cuentas.map((c) => `${c.nombre}: ${usd(c.saldo)}`),
+                        ...(datos.enCamino.pedidos ? [`En camino: ${usd(datos.enCamino.monto)} en ${num(datos.enCamino.pedidos)} pedido${datos.enCamino.pedidos === 1 ? "" : "s"}`] : []),
+                    ]}
                 />
                 <Kpi
                     titulo="Pedido propuesto"
@@ -172,6 +200,16 @@ export function VistaPlanificador() {
                     extra={datos.resumen.clavesSinProveedor ? [`${num(datos.resumen.clavesSinProveedor)} sin proveedor activo`] : undefined}
                 />
             </FilaKpis>
+
+            {aviso && (
+                <div className={cn("flex items-center gap-2 rounded-lg border px-4 py-3 text-sm", aviso.ok ? "border-emerald-500 text-emerald-700 dark:text-emerald-300" : "border-red-500 text-red-700 dark:text-red-300")}>
+                    {aviso.ok ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <AlertCircle className="h-4 w-4 shrink-0" />}
+                    <span className="flex-1">{aviso.texto}</span>
+                    <button type="button" onClick={() => setAviso(null)} className="text-xs text-muted-foreground hover:text-foreground">Cerrar</button>
+                </div>
+            )}
+
+            <PedidosEnCamino recarga={recarga} onCambio={() => setRecarga((n) => n + 1)} />
 
             <Panel
                 titulo="Proveedores"
@@ -205,15 +243,33 @@ export function VistaPlanificador() {
             {p && (
                 <Panel
                     titulo={`Pedido a ${p.proveedor}`}
-                    detalle={`Compra para ${num(p.transito)} días de tránsito más ${num(datos.cobertura)} de venta: ${num(p.dias)} días. Costo de la última compra a este proveedor.${p.fuera.repuestos ? ` Quedan fuera ${num(p.fuera.repuestos)} repuestos por ${usd(p.fuera.inversion)} que no alcanzaron.` : " El monto alcanza para todo lo que necesita."}`}
+                    detalle={`Compra para ${num(p.transito)} días de tránsito más ${num(datos.cobertura)} de venta: ${num(p.dias)} días, menos el stock y lo que ya viene en camino. Costo de la última compra a este proveedor.${p.fuera.repuestos ? ` Quedan fuera ${num(p.fuera.repuestos)} repuestos por ${usd(p.fuera.inversion)} que no alcanzaron.` : " El monto alcanza para todo lo que necesita."}`}
                     accion={
-                        <button
-                            type="button"
-                            onClick={() => exportarExcel(p, datos.periodo.hasta)}
-                            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
-                        >
-                            <Download className="h-3.5 w-3.5" /> Excel
-                        </button>
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                            {guardar === "confirmar" ? (
+                                <span className="inline-flex flex-wrap items-center gap-1.5 text-xs">
+                                    ¿Guardar {num(p.repuestos)} repuestos por {usd(p.inversion)} a {p.proveedor} como pedido enviado?
+                                    <button type="button" onClick={() => guardarPedido(p)} className="rounded-md bg-primary px-2.5 py-1 font-medium text-primary-foreground">Sí, guardar</button>
+                                    <button type="button" onClick={() => setGuardar("nada")} className="rounded-md border border-border px-2.5 py-1 text-muted-foreground hover:text-foreground">No</button>
+                                </span>
+                            ) : (
+                                <button
+                                    type="button"
+                                    disabled={guardar === "enviando"}
+                                    onClick={() => setGuardar("confirmar")}
+                                    className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-60"
+                                >
+                                    <Save className="h-3.5 w-3.5" /> {guardar === "enviando" ? "Guardando…" : "Guardar pedido"}
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => exportarExcel(p, datos.periodo.hasta)}
+                                className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
+                            >
+                                <Download className="h-3.5 w-3.5" /> Excel
+                            </button>
+                        </div>
                     }
                 >
                     <Tabla>
@@ -228,7 +284,10 @@ export function VistaPlanificador() {
                                         <span className="block text-xs text-muted-foreground">{num(l.clientes)} clientes en 24 meses</span>
                                         {l.masBarato && <span className="block text-xs text-amber-700 dark:text-amber-300">Más barato en {l.masBarato.proveedor}: {usd(l.masBarato.costo)}</span>}
                                     </td>
-                                    <td className={cn(tdNum, l.stock <= 0 && "text-red-600 dark:text-red-400")}>{num(l.stock)}</td>
+                                    <td className={cn(tdNum, l.stock <= 0 && "text-red-600 dark:text-red-400")}>
+                                        {num(l.stock)}
+                                        {l.enCamino > 0 && <span className="block text-[11px] text-blue-700 dark:text-blue-300">+{num(l.enCamino)} en camino</span>}
+                                    </td>
                                     <td className={tdNum}>{decimal(l.ventaMes)}</td>
                                     <td className={cn(tdNum, "font-semibold")}>
                                         {num(l.comprar)}
