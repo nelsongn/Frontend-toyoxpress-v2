@@ -10,6 +10,7 @@ import { VistaVentas } from "@/components/analisis/VistaVentas";
 import { VistaInventario } from "@/components/analisis/VistaInventario";
 import { VistaCobranza } from "@/components/analisis/VistaCobranza";
 import { VistaCaja } from "@/components/analisis/VistaCaja";
+import { VistaPlanificador } from "@/components/analisis/VistaPlanificador";
 import { fecha } from "@/components/analisis/formato";
 
 const VISTAS = [
@@ -17,6 +18,7 @@ const VISTAS = [
     { id: "inventario", nombre: "Inventario y compras" },
     { id: "cobranza", nombre: "Cobranza" },
     { id: "caja", nombre: "Caja y bancos" },
+    { id: "planificador", nombre: "Planificador de compras" },
 ] as const;
 type IdVista = (typeof VISTAS)[number]["id"];
 
@@ -76,6 +78,7 @@ function Analisis() {
             {vista === "inventario" && <VistaInventario />}
             {vista === "cobranza" && <VistaCobranza />}
             {vista === "caja" && <VistaCaja />}
+            {vista === "planificador" && <VistaPlanificador />}
         </div>
     );
 }
