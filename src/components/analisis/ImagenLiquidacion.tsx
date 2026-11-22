@@ -20,9 +20,9 @@ const GRIS = "#6b6b6b";
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /** Número que el cliente reconoce: sin la G ni el sufijo de origen (-J, -T) de nuestros códigos. */
-const numeroPublico = (codigo: string) => codigo.replace(/^G(?=\d)/, "").replace(/-(J|T)$/, "");
+export const numeroPublico = (codigo: string) => codigo.replace(/^G(?=\d)/, "").replace(/-(J|T)$/, "");
 
-function cargarImagen(src: string): Promise<HTMLImageElement | null> {
+export function cargarImagen(src: string): Promise<HTMLImageElement | null> {
     return new Promise((ok) => {
         const img = new Image();
         img.onload = () => ok(img);
@@ -43,7 +43,7 @@ function redondeado(ctx: CanvasRenderingContext2D, x: number, y: number, w: numb
 }
 
 /** Corta un texto en líneas que caben en el ancho; la última con "…" si no cabe todo. */
-function lineas(ctx: CanvasRenderingContext2D, texto: string, ancho: number, max: number): string[] {
+export function lineas(ctx: CanvasRenderingContext2D, texto: string, ancho: number, max: number): string[] {
     const palabras = texto.split(/\s+/);
     const r: string[] = [];
     let actual = "";

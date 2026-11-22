@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, FileSpreadsheet, ImageIcon, Search } from "lucide-react";
+import { Download, FileSpreadsheet, FileText, ImageIcon, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EstadoCarga, FilaKpis, Kpi, Panel, Tabla, td, tdCodigo, tdNum, th, thNum, useAnalitica } from "./Bloques";
 import { decimal, fecha, num, pct, usd } from "./formato";
 import { ImagenLiquidacion } from "./ImagenLiquidacion";
+import { ListadoLiquidacionPdf } from "./ListadoLiquidacionPdf";
 
 /**
  * Lista de liquidación del dinero parado. Javier: liquidarlo en lote; si no se puede, un descuento
@@ -54,6 +55,12 @@ export function VistaLiquidacion() {
     useEffect(() => {
         if (imagenAbierta) panelImagen.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, [imagenAbierta]);
+    // Listado en PDF para los clientes
+    const [pdf, setPdf] = useState(false);
+    const panelPdf = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (pdf) panelPdf.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, [pdf]);
 
     const visibles = useMemo(() => {
         const t = buscar.trim().toLowerCase();
@@ -164,10 +171,13 @@ export function VistaLiquidacion() {
                     titulo="Imagen para redes"
                     detalle="Formato Instagram (1080×1350). Si son muchos repuestos salen varias imágenes para un carrusel."
                     accion={
-                        <select aria-label="Precio de la imagen" value={imagen} onChange={(e) => setImagen(e.target.value as "contado" | "lote")} className={control}>
-                            <option value="contado">Precio de contado (-{descPieza} %)</option>
-                            <option value="lote">Precio de lote (-{descLote} %)</option>
-                        </select>
+                        <div className="flex items-center gap-2">
+                            <select aria-label="Precio de la imagen" value={imagen} onChange={(e) => setImagen(e.target.value as "contado" | "lote")} className={control}>
+                                <option value="contado">Precio de contado (-{descPieza} %)</option>
+                                <option value="lote">Precio de lote (-{descLote} %)</option>
+                            </select>
+                            <button type="button" onClick={() => setImagen(null)} className={boton}><X className="h-3.5 w-3.5" /> Cerrar</button>
+                        </div>
                     }
                 >
                     <ImagenLiquidacion
@@ -183,6 +193,26 @@ export function VistaLiquidacion() {
                 </div>
             )}
 
+            {pdf && (
+                <div ref={panelPdf} className="scroll-mt-4">
+                <Panel
+                    titulo="Listado en PDF"
+                    detalle="Hoja A4 para mandar a los clientes por WhatsApp o correo, o para imprimir."
+                    accion={<button type="button" onClick={() => setPdf(false)} className={boton}><X className="h-3.5 w-3.5" /> Cerrar</button>}
+                >
+                    <ListadoLiquidacionPdf
+                        items={enLote.map((a) => ({
+                            codigo: a.codigo, nombre: a.nombre, marca: a.marca, origen: a.origen, disponible: a.liquidar, precioNormal: a.precio,
+                            contado: precioCon(a, descPieza, pisoCosto), lote: precioCon(a, descLote, pisoCosto),
+                        }))}
+                        descPieza={descPieza}
+                        descLote={descLote}
+                        datosAl={datos.datosAl}
+                    />
+                </Panel>
+                </div>
+            )}
+
             <Panel
                 titulo="Repuestos a liquidar"
                 detalle={`Del que más dinero tiene parado al que menos. Quita del lote los que no quieras ofrecer. Datos de Valery al ${fecha(datos.datosAl)}.`}
@@ -191,6 +221,7 @@ export function VistaLiquidacion() {
                         <button type="button" onClick={excelClientes} className={boton}><FileSpreadsheet className="h-3.5 w-3.5" /> Excel para clientes</button>
                         <button type="button" onClick={excelInterno} className={boton}><Download className="h-3.5 w-3.5" /> Excel interno</button>
                         <button type="button" onClick={() => setImagen(imagen ? null : "contado")} className={boton}><ImageIcon className="h-3.5 w-3.5" /> {imagen ? "Ocultar imagen" : "Imagen para redes"}</button>
+                        <button type="button" onClick={() => setPdf(!pdf)} className={boton}><FileText className="h-3.5 w-3.5" /> {pdf ? "Ocultar PDF" : "Listado en PDF"}</button>
                     </div>
                 }
             >
