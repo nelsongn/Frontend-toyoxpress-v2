@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, CheckCircle2, Download, FileSpreadsheet, Save, Search } from "lucide-react";
+import { AlertCircle, CheckCircle2, Download, FileSpreadsheet, Save } from "lucide-react";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { PedidosEnCamino } from "./PedidosEnCamino";
-import { BuscarEquivalencia, ListaProveedor } from "./ListaProveedor";
+import { Confianza, ListaProveedor, OpcionCruce, SelectorArticulo } from "./ListaProveedor";
 import { ArticuloProveedor, excelParaProveedor } from "./exportarPedido";
 import { BarraCelda, EstadoCarga, mensajeError, FilaKpis, Kpi, Panel, Tabla, td, tdCodigo, tdNum, th, thNum, useAnalitica } from "./Bloques";
 import { decimal, fecha, num, pct, usd } from "./formato";
@@ -21,6 +21,8 @@ interface Linea {
     articulo: ArticuloProveedor & { revisar: boolean };
     /** Nuestra marca y origen (modelo de Valery) y si al proveedor se le pide otra marca. */
     marca: string | null; origen: string | null; otraMarca: boolean;
+    /** Cruce con la lista del proveedor (null si no tiene lista cargada). */
+    confianza: Confianza | null; opciones: OpcionCruce[];
     /** Lo que sugirió el planificador (comprar puede haberlo cambiado la persona). */
     sugerido?: number;
 }
@@ -94,8 +96,6 @@ export function VistaPlanificador() {
     const [aviso, setAviso] = useState<{ ok: boolean; texto: string } | null>(null);
     // Cantidades que cambió la persona en el pedido sugerido, por "proveedor:código" (texto del campo)
     const [cantidades, setCantidades] = useState<Record<string, string>>({});
-    // Repuesto sin equivalencia al que se le está buscando su artículo en la lista del proveedor
-    const [buscando, setBuscando] = useState<number | null>(null);
 
     const ruta = `planificador?cobertura=${cobertura}${monto != null ? `&monto=${monto}` : ""}${proveedor ? `&proveedor=${proveedor}` : ""}&r=${recarga}`;
     const { datos, error, cargando } = useAnalitica<Datos>(ruta, { conservar: true });
@@ -293,7 +293,7 @@ export function VistaPlanificador() {
             {p && (
                 <Panel
                     titulo={`Pedido a ${p.proveedor}`}
-                    detalle={`Compra para ${num(p.transito)} días de tránsito más ${num(datos.cobertura)} de venta: ${num(p.dias)} días, menos el stock y lo que ya viene en camino. ${p.lista ? `Precios de su lista del ${fecha(p.lista.fecha)} (o de la última compra si no está en la lista).` : "Costo de la última compra a este proveedor (sube su lista para usar sus precios y números de pieza)."}${p.lineas.some((l) => l.articulo.revisar) ? ` ${num(p.lineas.filter((l) => l.articulo.revisar).length)} repuestos sin equivalencia salen con el número Toyota: búscalos en su lista.` : ""}${p.fuera.repuestos ? ` Quedan fuera ${num(p.fuera.repuestos)} repuestos por ${usd(p.fuera.inversion)} que no alcanzaron.` : " El monto alcanza para todo lo que necesita."}`}
+                    detalle={`Compra para ${num(p.transito)} días de tránsito más ${num(datos.cobertura)} de venta: ${num(p.dias)} días, menos el stock y lo que ya viene en camino. ${p.lista ? `Precios de su lista del ${fecha(p.lista.fecha)} (o de la última compra si no está en la lista).` : "Costo de la última compra a este proveedor (sube su lista para usar sus precios y números de pieza)."}${p.lista && p.lineas.some((l) => l.confianza === "revisar" || l.confianza === "sin_articulo") ? ` ${num(p.lineas.filter((l) => l.confianza === "revisar" || l.confianza === "sin_articulo").length)} repuestos marcados en ámbar o gris: confirma con qué artículo de su lista se piden.` : ""}${p.fuera.repuestos ? ` Quedan fuera ${num(p.fuera.repuestos)} repuestos por ${usd(p.fuera.inversion)} que no alcanzaron.` : " El monto alcanza para todo lo que necesita."}`}
                     accion={
                         <div className="flex flex-wrap items-center justify-end gap-2">
                             {guardar === "confirmar" ? (
@@ -350,29 +350,22 @@ export function VistaPlanificador() {
                                             {l.marca ? <>Nuestra marca: <span className="font-medium text-foreground">{l.marca}{l.origen ? ` (${l.origen})` : ""}</span> · </> : null}
                                             {num(l.clientes)} clientes en 24 meses
                                         </span>
-                                        {l.articulo.revisar ? (
-                                            <span className="block text-xs text-amber-700 dark:text-amber-300">
-                                                Sin equivalencia: saldría como {l.articulo.numeroPieza}
-                                                {p.lista && (
-                                                    <button type="button" onClick={() => setBuscando(buscando === l.productoId ? null : l.productoId)} className="ml-1 inline-flex items-center gap-0.5 underline">
-                                                        <Search className="h-3 w-3" /> buscar en su lista
-                                                    </button>
-                                                )}
-                                            </span>
+                                        {l.confianza ? (
+                                            <SelectorArticulo
+                                                proveedorId={p.proveedorId}
+                                                proveedor={p.proveedor}
+                                                producto={{ productoId: l.productoId, codigo: l.codigo, nombre: l.nombre, marca: l.marca }}
+                                                articulo={l.articulo.revisar ? null : l.articulo}
+                                                confianza={l.confianza}
+                                                opciones={l.opciones}
+                                                onCambio={() => setRecarga((n) => n + 1)}
+                                            />
                                         ) : (
-                                            <span className={cn("block text-xs", l.otraMarca ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground")}>
-                                                Se pide como <span className="font-mono">{l.articulo.numeroPieza}</span>{l.articulo.marca ? ` · ${l.articulo.marca}` : ""}{l.articulo.pais ? ` (${l.articulo.pais})` : ""}
-                                                {l.otraMarca && " · otra marca"}
+                                            <span className="block text-xs text-muted-foreground">
+                                                Se pide como <span className="font-mono">{l.articulo.numeroPieza}</span> (número Toyota; sube su lista para usar sus números)
                                             </span>
                                         )}
                                         {l.masBarato && <span className="block text-xs text-amber-700 dark:text-amber-300">Más barato en {l.masBarato.proveedor}: {usd(l.masBarato.costo)}</span>}
-                                        {buscando === l.productoId && (
-                                            <BuscarEquivalencia
-                                                proveedorId={p.proveedorId}
-                                                producto={{ productoId: l.productoId, codigo: l.codigo, nombre: l.nombre }}
-                                                onListo={() => { setBuscando(null); setRecarga((n) => n + 1); }}
-                                            />
-                                        )}
                                     </td>
                                     <td className={cn(tdNum, l.stock <= 0 && "text-red-600 dark:text-red-400")}>
                                         {num(l.stock)}
