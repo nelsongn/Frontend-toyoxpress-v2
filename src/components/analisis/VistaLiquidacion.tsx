@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Download, FileSpreadsheet, Search } from "lucide-react";
+import { Download, FileSpreadsheet, ImageIcon, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EstadoCarga, FilaKpis, Kpi, Panel, Tabla, td, tdCodigo, tdNum, th, thNum, useAnalitica } from "./Bloques";
 import { decimal, fecha, num, pct, usd } from "./formato";
+import { ImagenLiquidacion } from "./ImagenLiquidacion";
 
 /**
  * Lista de liquidación del dinero parado. Javier: liquidarlo en lote; si no se puede, un descuento
@@ -45,6 +46,8 @@ export function VistaLiquidacion() {
     const [buscar, setBuscar] = useState("");
     // Repuestos que se sacan del lote (por defecto van todos)
     const [fuera, setFuera] = useState<Set<number>>(new Set());
+    // Imagen para redes: si se muestra y con qué precio
+    const [imagen, setImagen] = useState<"contado" | "lote" | null>(null);
 
     const visibles = useMemo(() => {
         const t = buscar.trim().toLowerCase();
@@ -156,6 +159,7 @@ export function VistaLiquidacion() {
                     <div className="flex flex-wrap items-center gap-2">
                         <button type="button" onClick={excelClientes} className={boton}><FileSpreadsheet className="h-3.5 w-3.5" /> Excel para clientes</button>
                         <button type="button" onClick={excelInterno} className={boton}><Download className="h-3.5 w-3.5" /> Excel interno</button>
+                        <button type="button" onClick={() => setImagen(imagen ? null : "contado")} className={boton}><ImageIcon className="h-3.5 w-3.5" /> Imagen para redes</button>
                     </div>
                 }
             >
@@ -214,6 +218,29 @@ export function VistaLiquidacion() {
                     </tbody>
                 </Tabla>
             </Panel>
+
+            {imagen && (
+                <Panel
+                    titulo="Imagen para redes"
+                    detalle="Formato Instagram (1080×1350). Si son muchos repuestos salen varias imágenes para un carrusel."
+                    accion={
+                        <select aria-label="Precio de la imagen" value={imagen} onChange={(e) => setImagen(e.target.value as "contado" | "lote")} className={control}>
+                            <option value="contado">Precio de contado (-{descPieza} %)</option>
+                            <option value="lote">Precio de lote (-{descLote} %)</option>
+                        </select>
+                    }
+                >
+                    <ImagenLiquidacion
+                        items={enLote.map((a) => ({
+                            codigo: a.codigo, nombre: a.nombre, marca: a.marca, precioNormal: a.precio, disponible: a.liquidar,
+                            precio: precioCon(a, imagen === "contado" ? descPieza : descLote, pisoCosto),
+                        }))}
+                        descuento={imagen === "contado" ? descPieza : descLote}
+                        tipoPrecio={imagen}
+                        datosAl={datos.datosAl}
+                    />
+                </Panel>
+            )}
         </div>
     );
 }
