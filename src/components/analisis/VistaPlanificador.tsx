@@ -19,6 +19,8 @@ interface Linea {
     precio: number; inversion: number; margen: number; acumulado: number;
     masBarato: { proveedor: string; costo: number } | null;
     articulo: ArticuloProveedor & { revisar: boolean };
+    /** Lo que sugirió el planificador (comprar puede haberlo cambiado la persona). */
+    sugerido?: number;
 }
 interface ResumenProveedor {
     proveedorId: number; proveedor: string; transito: number; dias: number; repuestos: number;
@@ -61,6 +63,7 @@ async function exportarExcel(pedido: NonNullable<Datos["pedido"]>, hasta: string
         "Vende al mes": Number(l.ventaMes.toFixed(1)),
         "Clientes (24 m)": l.clientes,
         Necesita: l.necesidad,
+        Sugerido: l.sugerido ?? l.comprar,
         Comprar: l.comprar,
         "Costo unitario": l.costo,
         "Fecha del costo": l.costoFecha?.slice(0, 10) ?? "",
@@ -85,6 +88,8 @@ export function VistaPlanificador() {
     const [recarga, setRecarga] = useState(0);
     const [guardar, setGuardar] = useState<"nada" | "confirmar" | "enviando">("nada");
     const [aviso, setAviso] = useState<{ ok: boolean; texto: string } | null>(null);
+    // Cantidades que cambió la persona en el pedido sugerido, por "proveedor:código" (texto del campo)
+    const [cantidades, setCantidades] = useState<Record<string, string>>({});
     // Repuesto sin equivalencia al que se le está buscando su artículo en la lista del proveedor
     const [buscando, setBuscando] = useState<number | null>(null);
 
@@ -97,9 +102,10 @@ export function VistaPlanificador() {
         try {
             const r = await api.post("/analitica/pedidos", {
                 proveedorId: pedido.proveedorId,
-                lineas: pedido.lineas.map((l) => ({ codigo: l.codigo, cantidad: l.comprar, costo: l.costo, articulo: l.articulo })),
+                lineas: pedido.lineas.filter((l) => l.comprar > 0).map((l) => ({ codigo: l.codigo, cantidad: l.comprar, costo: l.costo, articulo: l.articulo })),
             });
             setAviso({ ok: true, texto: `Pedido ${r.data.numero} a ${r.data.proveedor} guardado (${num(r.data.repuestos)} repuestos, ${usd(r.data.total)}). Ya cuenta como en camino.` });
+            setCantidades({});
             setRecarga((n) => n + 1);
         } catch (e) {
             setAviso({ ok: false, texto: mensajeError(e, "No se pudo guardar el pedido.") });
@@ -160,7 +166,33 @@ export function VistaPlanificador() {
         );
     }
 
-    const p = datos.pedido;
+    // El pedido con las cantidades que eligió la persona: el planificador sugiere, la persona decide
+    const base = datos.pedido;
+    const llave = (codigo: string) => `${base?.proveedorId}:${codigo}`;
+    let acumuladoAjustado = 0;
+    const lineasAjustadas = (base?.lineas ?? []).map((l) => {
+        const texto = cantidades[llave(l.codigo)];
+        const comprar = texto == null ? l.comprar : Math.max(0, Math.floor(Number(texto) || 0));
+        const inversion = comprar * l.costo;
+        acumuladoAjustado += inversion;
+        return { ...l, sugerido: l.comprar, comprar, inversion, margen: comprar * (l.precio - l.costo), acumulado: acumuladoAjustado };
+    });
+    const conCantidad = lineasAjustadas.filter((l) => l.comprar > 0);
+    const p = base ? {
+        ...base,
+        lineas: lineasAjustadas,
+        repuestos: conCantidad.length,
+        clavesCero: conCantidad.filter((l) => l.prioridad === "clave_cero").length,
+        inversion: acumuladoAjustado,
+        margen: lineasAjustadas.reduce((t, l) => t + l.margen, 0),
+    } : null;
+    const hayCambios = lineasAjustadas.some((l) => l.comprar !== l.sugerido);
+    /** Suma o resta a la cantidad elegida (parte de lo último elegido, no de lo que muestra la pantalla). */
+    const sumar = (codigo: string, sugerido: number, delta: number) =>
+        setCantidades((c) => {
+            const actual = c[llave(codigo)] != null ? Number(c[llave(codigo)]) || 0 : sugerido;
+            return { ...c, [llave(codigo)]: String(Math.max(0, actual + delta)) };
+        });
     const maxTramo = Math.max(...(p?.tramos.map((t) => t.margen) ?? [0]));
 
     return (
@@ -193,7 +225,12 @@ export function VistaPlanificador() {
                     titulo="Pedido propuesto"
                     valor={usd(p?.inversion)}
                     detalle={p ? `${num(p.repuestos)} repuestos a ${p.proveedor}` : "Sin pedido"}
-                    extra={p ? [`Llega en unos ${num(p.transito)} días`] : undefined}
+                    alerta={!!p && p.inversion > datos.monto + 0.005}
+                    extra={p ? [
+                        `Llega en unos ${num(p.transito)} días`,
+                        ...(hayCambios ? [`Con tus cantidades (sugerido: ${usd(base?.inversion)})`] : []),
+                        ...(p.inversion > datos.monto + 0.005 ? [`Se pasa del monto por ${usd(p.inversion - datos.monto)}`] : []),
+                    ] : undefined}
                 />
                 <Kpi
                     titulo="Margen esperado"
@@ -288,11 +325,19 @@ export function VistaPlanificador() {
                         </div>
                     }
                 >
+                    <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <span>Las cantidades son una sugerencia: cámbialas en la columna «Comprar» (0 para sacar un repuesto). Los totales, el Excel y el pedido guardado usan las tuyas.</span>
+                        {hayCambios && (
+                            <button type="button" onClick={() => setCantidades({})} className="rounded-md border border-border px-2 py-1 font-medium text-foreground hover:bg-muted">
+                                Volver a las sugeridas
+                            </button>
+                        )}
+                    </div>
                     <Tabla>
                         <thead><tr><th className={th}>Prioridad</th><th className={th}>Código</th><th className={th}>Repuesto</th><th className={thNum}>Stock</th><th className={thNum}>Vende / mes</th><th className={thNum}>Comprar</th><th className={thNum}>Costo</th><th className={thNum}>Inversión</th><th className={thNum}>Margen esp.</th><th className={thNum}>Acumulado</th></tr></thead>
                         <tbody>
                             {p.lineas.map((l) => (
-                                <tr key={l.codigo}>
+                                <tr key={l.codigo} className={cn(l.comprar === 0 && "text-muted-foreground")}>
                                     <td className={td}><span className={cn("whitespace-nowrap rounded px-1.5 py-0.5 text-[11px] font-medium", TONO[l.prioridad])}>{ETIQUETA[l.prioridad]}</span></td>
                                     <td className={tdCodigo}>{l.codigo}{l.ref && <span className="block">{l.ref}</span>}</td>
                                     <td className={td}>
@@ -326,9 +371,30 @@ export function VistaPlanificador() {
                                         {l.enCamino > 0 && <span className="block text-[11px] text-blue-700 dark:text-blue-300">+{num(l.enCamino)} en camino</span>}
                                     </td>
                                     <td className={tdNum}>{decimal(l.ventaMes)}</td>
-                                    <td className={cn(tdNum, "font-semibold")}>
-                                        {num(l.comprar)}
-                                        {l.parcial && <span className="block text-[11px] font-normal text-muted-foreground">de {num(l.necesidad)}</span>}
+                                    <td className={cn(tdNum, "whitespace-nowrap")}>
+                                        <span className="inline-flex items-center gap-1">
+                                            <button
+                                                type="button" aria-label={`Una menos de ${l.codigo}`} disabled={l.comprar === 0}
+                                                onClick={() => sumar(l.codigo, l.sugerido ?? l.comprar, -1)}
+                                                className="h-6 w-6 rounded border border-border text-muted-foreground hover:text-foreground disabled:opacity-40"
+                                            >−</button>
+                                            <input
+                                                inputMode="numeric" aria-label={`Cantidad a comprar de ${l.codigo}`}
+                                                value={cantidades[llave(l.codigo)] ?? String(l.comprar)}
+                                                onChange={(e) => { const v = e.target.value.replace(/\D/g, ""); setCantidades((c) => ({ ...c, [llave(l.codigo)]: v })); }}
+                                                className={cn("w-14 rounded border bg-card px-1.5 py-0.5 text-right font-mono font-semibold", l.comprar !== l.sugerido ? "border-primary" : "border-border")}
+                                            />
+                                            <button
+                                                type="button" aria-label={`Una más de ${l.codigo}`}
+                                                onClick={() => sumar(l.codigo, l.sugerido ?? l.comprar, 1)}
+                                                className="h-6 w-6 rounded border border-border text-muted-foreground hover:text-foreground"
+                                            >+</button>
+                                        </span>
+                                        {l.comprar !== l.sugerido ? (
+                                            <span className="block text-[11px] text-primary">sugerido {num(l.sugerido)}</span>
+                                        ) : l.parcial ? (
+                                            <span className="block text-[11px] text-muted-foreground">de {num(l.necesidad)} necesarias</span>
+                                        ) : null}
                                     </td>
                                     <td className={cn(tdNum, "whitespace-nowrap")}>
                                         {usd(l.costo)}
