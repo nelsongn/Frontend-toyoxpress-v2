@@ -205,7 +205,7 @@ export function VistaInventario() {
 
                 <Panel
                     titulo="Dinero parado"
-                    detalle={`Sin ventas en 12 meses: ${usd(dormido.valorStock)} en ${num(dormido.productos)} repuestos. Stock para más de 15 meses: ${usd(dormido.sobreStock.valorStock)} en ${num(dormido.sobreStock.productos)}.`}
+                    detalle={`Solo repuestos cuya última compra fue hace más de 12 meses. Sin ventas en 12 meses: ${usd(dormido.valorStock)} en ${num(dormido.productos)} repuestos. Stock para más de 15 meses: ${usd(dormido.sobreStock.valorStock)} en ${num(dormido.sobreStock.productos)}.`}
                 >
                     <Tabla>
                         <thead><tr><th className={th}>Código</th><th className={th}>Repuesto</th><th className={thNum}>Stock</th><th className={thNum}>A costo</th><th className={thNum}>Alcanza para</th><th className={th}>Última compra</th></tr></thead>
