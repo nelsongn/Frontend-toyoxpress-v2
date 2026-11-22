@@ -85,6 +85,7 @@ export const MODULOS_PERMISOS: ModuloPermisos[] = [
         permisos: [
             { key: "cargarProductos", label: "Subir Excel y sincronizar con WooCommerce", ayuda: "También da acceso a la sección" },
             { key: "consultarPrecios", label: "Ver precios", ayuda: "También en ventas e inventario de Pedidos" },
+            { key: "verMovimientoInventario", label: "Ver movimiento de inventario", ayuda: "Al hacer clic en un repuesto: entradas, salidas y existencia" },
         ],
         // Independientes: "Cargar" da acceso por sí solo y "Ver precios" aplica también en Pedidos
         subpermisosIndependientes: true,
