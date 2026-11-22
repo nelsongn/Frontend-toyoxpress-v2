@@ -19,6 +19,8 @@ interface Linea {
     precio: number; inversion: number; margen: number; acumulado: number;
     masBarato: { proveedor: string; costo: number } | null;
     articulo: ArticuloProveedor & { revisar: boolean };
+    /** Nuestra marca y origen (modelo de Valery) y si al proveedor se le pide otra marca. */
+    marca: string | null; origen: string | null; otraMarca: boolean;
     /** Lo que sugirió el planificador (comprar puede haberlo cambiado la persona). */
     sugerido?: number;
 }
@@ -57,6 +59,8 @@ async function exportarExcel(pedido: NonNullable<Datos["pedido"]>, hasta: string
         "Número de pieza del proveedor": l.articulo?.numeroPieza ?? "",
         Ref: l.ref ?? "",
         Repuesto: l.nombre,
+        "Nuestra marca": l.marca ?? "",
+        "Marca del proveedor": l.articulo?.marca ?? "",
         Familia: l.familia ?? "",
         Stock: l.stock,
         "En camino": l.enCamino,
@@ -342,7 +346,10 @@ export function VistaPlanificador() {
                                     <td className={tdCodigo}>{l.codigo}{l.ref && <span className="block">{l.ref}</span>}</td>
                                     <td className={td}>
                                         <span className="line-clamp-2">{l.nombre}</span>
-                                        <span className="block text-xs text-muted-foreground">{num(l.clientes)} clientes en 24 meses</span>
+                                        <span className="block text-xs text-muted-foreground">
+                                            {l.marca ? <>Nuestra marca: <span className="font-medium text-foreground">{l.marca}{l.origen ? ` (${l.origen})` : ""}</span> · </> : null}
+                                            {num(l.clientes)} clientes en 24 meses
+                                        </span>
                                         {l.articulo.revisar ? (
                                             <span className="block text-xs text-amber-700 dark:text-amber-300">
                                                 Sin equivalencia: saldría como {l.articulo.numeroPieza}
@@ -353,8 +360,9 @@ export function VistaPlanificador() {
                                                 )}
                                             </span>
                                         ) : (
-                                            <span className="block text-xs text-muted-foreground">
+                                            <span className={cn("block text-xs", l.otraMarca ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground")}>
                                                 Se pide como <span className="font-mono">{l.articulo.numeroPieza}</span>{l.articulo.marca ? ` · ${l.articulo.marca}` : ""}{l.articulo.pais ? ` (${l.articulo.pais})` : ""}
+                                                {l.otraMarca && " · otra marca"}
                                             </span>
                                         )}
                                         {l.masBarato && <span className="block text-xs text-amber-700 dark:text-amber-300">Más barato en {l.masBarato.proveedor}: {usd(l.masBarato.costo)}</span>}

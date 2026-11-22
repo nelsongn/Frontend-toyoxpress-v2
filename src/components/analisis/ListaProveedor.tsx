@@ -8,8 +8,11 @@ import { EstadoCarga, mensajeError, Panel, Tabla, td, tdNum, th, thNum, useAnali
 import { fecha, num, usd } from "./formato";
 import { adivinarColumnas, CAMPOS, Campo, Columnas, extraerArticulos, filaEncabezado, leerArchivo, nombresColumnas } from "./listaExcel";
 
-interface Opcion { codigo: string | null; numeroPieza: string; descripcion: string | null; marca: string | null; pais: string | null; precio: number }
-interface Dudosa { productoId: number; codigo: string; nombre: string; venta12: number; costo: number | null; opciones: Opcion[] }
+interface Opcion { codigo: string | null; numeroPieza: string; descripcion: string | null; marca: string | null; pais: string | null; precio: number; mismaMarca?: boolean }
+interface Dudosa {
+    productoId: number; codigo: string; nombre: string; marca: string | null; origen: string | null; venta12: number;
+    costo: number | null; proveedorCosto: string | null; fechaCosto: string | null; opciones: Opcion[];
+}
 interface DatosLista {
     lista: { id: number; archivo: string | null; articulos: number; subidaPor: string | null; subidaEn: string } | null;
     columnas: Partial<Record<Campo, string>> | null;
@@ -186,7 +189,7 @@ export function ListaProveedor({ proveedores, proveedorInicial, onCambio }: {
 
                     {verDudosas && datos.dudosas.length > 0 && (
                         <div className="space-y-2">
-                            <p className="text-xs text-muted-foreground">Del que más vendemos al que menos. Elige cuál de sus artículos es el nuestro (el precio de nuestra última compra ayuda a reconocerlo) o marca que no lo tiene. Se guarda una sola vez.</p>
+                            <p className="text-xs text-muted-foreground">Del que más vendemos al que menos. Elige cuál de sus artículos es el nuestro (nuestra marca y el precio de la última compra ayudan a reconocerlo) o marca que no lo tiene. Se guarda una sola vez.</p>
                             <Tabla>
                                 <thead><tr><th className={th}>Nuestro repuesto</th><th className={thNum}>Última compra</th><th className={th}>Opciones del proveedor</th></tr></thead>
                                 <tbody>
@@ -197,9 +200,16 @@ export function ListaProveedor({ proveedores, proveedorInicial, onCambio }: {
                                                 <td className={td}>
                                                     <span className="block font-mono text-xs text-muted-foreground">{d.codigo}</span>
                                                     <span className="line-clamp-2">{d.nombre}</span>
+                                                    <span className="block text-xs font-medium text-foreground">
+                                                        Nuestra marca: {d.marca ? `${d.marca}${d.origen ? ` (${d.origen})` : ""}` : "sin marca en Valery"}
+                                                    </span>
                                                     <span className="block text-xs text-muted-foreground">Venta 12 m: {usd(d.venta12)}</span>
                                                 </td>
-                                                <td className={tdNum}>{d.costo != null ? usd(d.costo) : "—"}</td>
+                                                <td className={tdNum}>
+                                                    {d.costo != null ? usd(d.costo) : "—"}
+                                                    {d.proveedorCosto && <span className="block whitespace-nowrap text-[11px] font-sans text-muted-foreground">{d.proveedorCosto}</span>}
+                                                    {d.fechaCosto && <span className="block text-[11px] font-sans text-muted-foreground">{fecha(d.fechaCosto)}</span>}
+                                                </td>
                                                 <td className={td}>
                                                     <div className="flex flex-col gap-1">
                                                         {d.opciones.map((o) => (
@@ -210,7 +220,8 @@ export function ListaProveedor({ proveedores, proveedorInicial, onCambio }: {
                                                                     onChange={() => setElecciones((e) => ({ ...e, [d.productoId]: o }))}
                                                                 />
                                                                 <span>
-                                                                    <span className="font-mono">{o.numeroPieza}</span> · {o.marca ?? "—"} {o.pais ? `(${o.pais})` : ""} · <span className="font-semibold">{usd(o.precio)}</span>
+                                                                    <span className="font-mono">{o.numeroPieza}</span> · <span className={cn(o.mismaMarca && "font-semibold text-emerald-700 dark:text-emerald-300")}>{o.marca ?? "—"}</span> {o.pais ? `(${o.pais})` : ""} · <span className="font-semibold">{usd(o.precio)}</span>
+                                                                    {o.mismaMarca && <span className="ml-1 rounded bg-emerald-100 px-1 py-0.5 text-[10px] font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">misma marca</span>}
                                                                     {o.descripcion && <span className="block text-muted-foreground">{o.descripcion}</span>}
                                                                 </span>
                                                             </label>
