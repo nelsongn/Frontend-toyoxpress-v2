@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Download, Loader2, Search, X } from "lucide-react";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -73,7 +73,9 @@ export function BuscarCliente({ onElegir }: { onElegir: (c: ClienteEncontrado) =
     );
 }
 
-interface Documento { tipo: string; etiqueta: string; numero: string; emision: string; vencimiento?: string | null; monto: number; saldo: number; dias_vencido?: number }
+/** Pago o nota de crédito aplicado en parte a un documento: monto es lo aplicado, total lo que fue el pago. */
+interface Abono { tipo: string; etiqueta: string; numero: string; fecha: string; monto: number; total: number }
+interface Documento { tipo: string; etiqueta: string; numero: string; emision: string; vencimiento?: string | null; monto: number; saldo: number; dias_vencido?: number; abonos?: Abono[] }
 interface Estado {
     datosAl: string;
     cliente: {
@@ -101,10 +103,12 @@ export function EstadoCuenta({ clienteId, hasta, onCerrar }: { clienteId: number
     const exportar = async () => {
         const XLSX = await import("xlsx");
         const libro = XLSX.utils.book_new();
-        const pend = XLSX.utils.json_to_sheet(datos.pendientes.map((p) => ({
+        const pend = XLSX.utils.json_to_sheet(datos.pendientes.flatMap((p) => [{
             Documento: `${p.etiqueta} ${p.numero}`, Emisión: p.emision, Vence: p.vencimiento ?? "",
             "Días vencido": (p.dias_vencido ?? 0) > 0 ? p.dias_vencido : "", Monto: p.monto, Saldo: p.saldo,
-        })));
+        }, ...(p.abonos ?? []).map((a) => ({
+            Documento: `   ${a.etiqueta} ${a.numero}`, Emisión: a.fecha, Vence: "", "Días vencido": "", Monto: -a.monto, Saldo: "",
+        }))]));
         XLSX.utils.sheet_add_aoa(pend, [[], ["Saldo total", "", "", "", "", r.saldo], ["A favor", "", "", "", "", -r.aFavor], ["Neto", "", "", "", "", r.neto]], { origin: -1 });
         XLSX.utils.book_append_sheet(libro, pend, "Pendiente");
         XLSX.writeFile(libro, `Estado_de_cuenta_${c.rif.replace(/[^\w-]+/g, "")}_${datos.datosAl}.xlsx`);
@@ -165,16 +169,32 @@ export function EstadoCuenta({ clienteId, hasta, onCerrar }: { clienteId: number
                         <thead><tr><th className={th}>Documento</th><th className={th}>Emisión</th><th className={th}>Vence</th><th className={thNum}>Días vencido</th><th className={thNum}>Monto</th><th className={thNum}>Saldo</th></tr></thead>
                         <tbody>
                             {datos.pendientes.map((p) => (
-                                <tr key={`${p.tipo}-${p.numero}`}>
-                                    <td className={td}>{p.etiqueta} <span className="font-mono text-xs">{p.numero}</span></td>
-                                    <td className={cn(td, "whitespace-nowrap")}>{fecha(p.emision)}</td>
-                                    <td className={cn(td, "whitespace-nowrap")}>{fecha(p.vencimiento)}</td>
-                                    <td className={cn(tdNum, (p.dias_vencido ?? 0) > 30 ? "font-semibold text-red-600 dark:text-red-400" : (p.dias_vencido ?? 0) > 0 && "text-red-600 dark:text-red-400")}>
-                                        {(p.dias_vencido ?? 0) > 0 ? num(p.dias_vencido) : "por vencer"}
-                                    </td>
-                                    <td className={tdNum}>{usd(p.monto)}</td>
-                                    <td className={cn(tdNum, "font-semibold")}>{usd(p.saldo)}</td>
-                                </tr>
+                                <Fragment key={`${p.tipo}-${p.numero}`}>
+                                    <tr>
+                                        <td className={td}>{p.etiqueta} <span className="font-mono text-xs">{p.numero}</span></td>
+                                        <td className={cn(td, "whitespace-nowrap")}>{fecha(p.emision)}</td>
+                                        <td className={cn(td, "whitespace-nowrap")}>{fecha(p.vencimiento)}</td>
+                                        <td className={cn(tdNum, (p.dias_vencido ?? 0) > 30 ? "font-semibold text-red-600 dark:text-red-400" : (p.dias_vencido ?? 0) > 0 && "text-red-600 dark:text-red-400")}>
+                                            {(p.dias_vencido ?? 0) > 0 ? num(p.dias_vencido) : "por vencer"}
+                                        </td>
+                                        <td className={tdNum}>{usd(p.monto)}</td>
+                                        <td className={cn(tdNum, "font-semibold")}>{usd(p.saldo)}</td>
+                                    </tr>
+                                    {/* Abonos aplicados a este documento, como en Valery: debajo de la factura */}
+                                    {(p.abonos ?? []).map((a) => (
+                                        <tr key={`${p.numero}-${a.tipo}-${a.numero}`} className="text-emerald-700 dark:text-emerald-300">
+                                            <td className={cn(td, "pl-6")}>{a.etiqueta} <span className="font-mono text-xs">{a.numero}</span></td>
+                                            <td className={cn(td, "whitespace-nowrap")}>{fecha(a.fecha)}</td>
+                                            <td className={td}></td>
+                                            <td className={td}></td>
+                                            <td className={tdNum}>
+                                                −{usd(a.monto)}
+                                                {a.total - a.monto > 0.005 && <span className="block text-[11px] text-muted-foreground">de {usd(a.total)}</span>}
+                                            </td>
+                                            <td className={td}></td>
+                                        </tr>
+                                    ))}
+                                </Fragment>
                             ))}
                         </tbody>
                     </Tabla>

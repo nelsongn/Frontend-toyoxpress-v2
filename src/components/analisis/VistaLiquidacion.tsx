@@ -202,7 +202,7 @@ export function VistaLiquidacion() {
                 >
                     <ListadoLiquidacionPdf
                         items={enLote.map((a) => ({
-                            codigo: a.codigo, nombre: a.nombre, marca: a.marca, origen: a.origen, disponible: a.liquidar, precioNormal: a.precio,
+                            codigo: a.codigo, nombre: a.nombre, marca: a.marca, origen: a.origen, familia: a.familia, disponible: a.liquidar, precioNormal: a.precio,
                             contado: precioCon(a, descPieza, pisoCosto), lote: precioCon(a, descLote, pisoCosto),
                         }))}
                         descPieza={descPieza}
