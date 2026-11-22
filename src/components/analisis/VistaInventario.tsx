@@ -46,7 +46,7 @@ const GRUPOS_ABC: { clave: GrupoAbc; nombre: string; ayuda: string }[] = [
     { clave: "sinVenta", nombre: "Sin venta", ayuda: "nada en 12 meses" },
 ];
 
-const COLCHONES = [15, 30, 45, 60];
+const COLCHONES = [0, 5, 10];
 
 /** Fecha de recepción (la "Fecha Ult. Compra" de Valery), proveedor, factura y emisión de la última compra. */
 function CeldaUltimaCompra({ uc }: { uc: UltimaCompra | null }) {
@@ -63,7 +63,7 @@ function CeldaUltimaCompra({ uc }: { uc: UltimaCompra | null }) {
 
 export function VistaInventario() {
     // Días de colchón de la compra sugerida (además del tránsito de cada proveedor)
-    const [colchon, setColchon] = useState(30);
+    const [colchon, setColchon] = useState(10);
     const { datos, error, cargando } = useAnalitica<Datos>(`inventario?colchon=${colchon}`);
     // Grupo ABC abierto: muestra la lista de sus repuestos
     const [grupo, setGrupo] = useState<GrupoAbc | null>(null);
