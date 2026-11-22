@@ -18,7 +18,13 @@ export interface ArticuloLista {
     codigo: string | null; numeroPieza: string; descripcion: string | null;
     marca: string | null; pais: string | null; precio: number | null; disponible?: number | null;
 }
-export interface OpcionCruce extends ArticuloLista { mismaMarca: boolean; diferencia: number | null }
+export interface OpcionCruce extends ArticuloLista {
+    mismaMarca: boolean; diferencia: number | null;
+    /** Código del fabricante de nuestro nombre corto que aparece en su artículo. */
+    codigoFabricante?: string | null;
+    /** Se encontró por un número Toyota compatible de nuestro nombre corto. */
+    numeroAlterno?: boolean;
+}
 
 const ETIQUETA_CONFIANZA: Record<Confianza, string> = {
     confirmado: "confirmado", seguro: "seguro", probable: "probable", revisar: "confírmalo", sin_articulo: "no está en su lista", no_lo_vende: "no lo vende",
@@ -103,7 +109,7 @@ export function SelectorArticulo({ proveedorId, proveedor, producto, articulo, c
                     {valor === "actual" && articulo && <option value="actual">{articulo.numeroPieza} · {articulo.marca ?? "—"}</option>}
                     {opciones.map((o, i) => (
                         <option key={`${o.codigo}-${o.numeroPieza}`} value={String(i)}>
-                            {o.numeroPieza} · {o.marca ?? "—"}{o.pais ? ` (${o.pais})` : ""} · {usd(o.precio)}{o.diferencia != null ? `  ${diferenciaTexto(o.diferencia)}` : ""}{o.mismaMarca ? " · misma marca" : ""}
+                            {o.numeroPieza} · {o.marca ?? "—"}{o.pais ? ` (${o.pais})` : ""} · {usd(o.precio)}{o.diferencia != null ? `  ${diferenciaTexto(o.diferencia)}` : ""}{o.mismaMarca ? " · misma marca" : ""}{o.codigoFabricante ? ` · cód. ${o.codigoFabricante}` : ""}{o.numeroAlterno ? " · nº compatible" : ""}
                         </option>
                     ))}
                     <option value="ninguno">No lo vende</option>
@@ -113,6 +119,12 @@ export function SelectorArticulo({ proveedorId, proveedor, producto, articulo, c
                     {ETIQUETA_CONFIANZA[confianza]}{motivo ? ` · ${motivo}` : ""}
                 </span>
             </div>
+            {elegido?.codigoFabricante && (
+                <span className="block text-[11px] text-muted-foreground">Mismo código de fábrica que nuestro nombre corto: {elegido.codigoFabricante}</span>
+            )}
+            {!elegido?.codigoFabricante && elegido?.numeroAlterno && (
+                <span className="block text-[11px] text-muted-foreground">Por un número compatible de nuestro nombre corto</span>
+            )}
             {fallo && <span className="block text-[11px] text-red-600 dark:text-red-400">{fallo}</span>}
             {buscar && (
                 <BuscarEquivalencia
@@ -211,7 +223,7 @@ export function ListaProveedor({ proveedores, proveedorInicial, onCambio }: {
     return (
         <Panel
             titulo="Lista de precios del proveedor"
-            detalle="Sube el Excel que manda el proveedor tal cual. Cada repuesto nuestro se cruza solo con el artículo más probable de su lista (misma marca, precio parecido a nuestra última compra); en el pedido ves cuál quedó y lo cambias si hace falta."
+            detalle="Sube el Excel que manda el proveedor tal cual. Cada repuesto nuestro se cruza solo con el artículo más probable de su lista: por el número Toyota, los números compatibles y el código de fábrica de nuestro nombre corto, la marca y el precio de la última compra. En el pedido ves cuál quedó y lo cambias si hace falta."
             accion={
                 <select
                     aria-label="Proveedor de la lista"
