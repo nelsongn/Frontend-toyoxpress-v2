@@ -37,6 +37,11 @@ export function useAnalitica<T>(ruta: string | null) {
     return { datos: listo ? estado.datos : null, error: listo ? estado.error : null, cargando: !listo };
 }
 
+/** Mensaje de error que manda el backend, o uno por defecto. */
+export function mensajeError(e: unknown, porDefecto: string): string {
+    return (e as { response?: { data?: { message?: string } } })?.response?.data?.message || porDefecto;
+}
+
 export function EstadoCarga({ cargando, error }: { cargando: boolean; error: string | null }) {
     if (error) {
         return (
