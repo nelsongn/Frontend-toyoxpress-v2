@@ -5,10 +5,12 @@ import * as XLSX from "xlsx";
  *
  * El xlsx (SheetJS) del proyecto no escribe estilos, así que el libro se arma a mano (XML de Office Open)
  * y se empaqueta con el ZIP que trae SheetJS (XLSX.CFB). Una sola hoja, con la fila de títulos fija y filtro.
+ * Lleva un solo precio (oferta o mínimo, el que se elija en el modal) y no lleva leyenda de las reglas.
  */
 
 export type EstadoPrecio = "liquidacion" | "nuevo" | null;
 export type EstiloResaltado = "texto" | "fondo";
+export type PrecioLista = "minimo" | "oferta";
 
 export interface ArticuloLista {
     codigo: string;
@@ -16,22 +18,20 @@ export interface ArticuloLista {
     modelo: string | null;
     existencia: number;
     oferta: number | null;
-    mayor: number | null;
     minimo: number | null;
     estado: EstadoPrecio;
 }
 
 export interface OpcionesLista {
     estilo: EstiloResaltado;
+    precio: PrecioLista;
     /** Fecha de los datos (aaaa-mm-dd) */
     datosAl: string;
-    descuento: number;
-    mesesNuevo: number;
 }
 
-export const COLUMNAS_LISTA = ["Código", "Nombre", "Modelo", "Existencia", "Precio oferta", "Precio mayor", "Precio mínimo"];
-const ANCHOS = [18, 70, 20, 11, 14, 14, 14];
-const LETRAS = "ABCDEFG";
+export const COLUMNAS_LISTA = ["Código", "Nombre", "Modelo", "Existencia", "Precio"];
+const ANCHOS = [18, 70, 20, 11, 14];
+const LETRAS = "ABCDE";
 
 // Estilos (índices de cellXfs en styles.xml). Por fila: [texto, existencia, precio].
 const XF_TITULO = 1, XF_NOTA = 2, XF_CABECERA = 3;
@@ -103,7 +103,7 @@ const RELS = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 const LIBRO = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
 <sheets><sheet name="Lista de precios" sheetId="1" r:id="rId1"/></sheets>
-<definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="0" hidden="1">'Lista de precios'!$A$4:$G$FIN</definedName></definedNames>
+<definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="0" hidden="1">'Lista de precios'!$A$3:$E$FIN</definedName></definedNames>
 </workbook>`;
 
 const RELS_LIBRO = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -127,26 +127,14 @@ export function fechaCorta(iso: string): string {
     return `${d}/${m}/${a}`;
 }
 
-/** Texto de la leyenda, el mismo en Excel y PDF. */
-export function leyendaLista(o: OpcionesLista): { rojo: string; azul: string } {
-    return {
-        rojo: `Piezas de liquidación (compradas hace 12 meses o más): precio con ${o.descuento} % de descuento`,
-        azul: `Piezas nuevas (llegaron en los últimos ${o.mesesNuevo} meses)`,
-    };
-}
-
 export function excelListaPrecios(articulos: ArticuloLista[], o: OpcionesLista): Blob {
-    const ley = leyendaLista(o);
     const filas: string[] = [];
     filas.push(`<row r="1">${celdaTexto("A1", "ToyoXpress · Lista de precios", XF_TITULO)}</row>`);
     filas.push(`<row r="2">${celdaTexto("A2", `Precios en dólares · existencia al ${fechaCorta(o.datosAl)} · ${articulos.length} repuestos`, XF_NOTA)}</row>`);
-    const marca = o.estilo === "texto" ? "En rojo" : "Fondo rojo";
-    const marcaAzul = o.estilo === "texto" ? "En azul" : "Fondo azul";
-    filas.push(`<row r="3">${celdaTexto("A3", `${marca}: ${ley.rojo}. ${marcaAzul}: ${ley.azul}.`, XF_NOTA)}</row>`);
-    filas.push(`<row r="4">${COLUMNAS_LISTA.map((c, i) => celdaTexto(`${LETRAS[i]}4`, c, XF_CABECERA)).join("")}</row>`);
+    filas.push(`<row r="3">${COLUMNAS_LISTA.map((c, i) => celdaTexto(`${LETRAS[i]}3`, c, XF_CABECERA)).join("")}</row>`);
 
     articulos.forEach((a, i) => {
-        const r = i + 5;
+        const r = i + 4;
         const [t, e, p] = XF_FILA[o.estilo][a.estado ?? "normal"];
         filas.push(
             `<row r="${r}">` +
@@ -154,21 +142,19 @@ export function excelListaPrecios(articulos: ArticuloLista[], o: OpcionesLista):
             celdaTexto(`B${r}`, a.nombre, t) +
             celdaTexto(`C${r}`, a.modelo ?? "", t) +
             celdaNumero(`D${r}`, a.existencia, e) +
-            celdaNumero(`E${r}`, a.oferta, p) +
-            celdaNumero(`F${r}`, a.mayor, p) +
-            celdaNumero(`G${r}`, a.minimo, p) +
+            celdaNumero(`E${r}`, a[o.precio], p) +
             `</row>`
         );
     });
 
-    const ultima = Math.max(4, articulos.length + 4);
+    const ultima = Math.max(3, articulos.length + 3);
     const hoja = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-<sheetViews><sheetView workbookViewId="0"><pane ySplit="4" topLeftCell="A5" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
+<sheetViews><sheetView workbookViewId="0"><pane ySplit="3" topLeftCell="A4" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
 <sheetFormatPr defaultRowHeight="15"/>
 <cols>${ANCHOS.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("")}</cols>
 <sheetData>${filas.join("")}</sheetData>
-<autoFilter ref="A4:G${ultima}"/>
+<autoFilter ref="A3:E${ultima}"/>
 <pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>
 </worksheet>`;
 

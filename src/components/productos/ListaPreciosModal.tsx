@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { ListaPreciosDocument } from "./ListaPreciosDocument";
-import { excelListaPrecios, fechaCorta, type ArticuloLista, type EstiloResaltado, type OpcionesLista } from "./listaPreciosExcel";
+import { excelListaPrecios, fechaCorta, type ArticuloLista, type EstiloResaltado, type OpcionesLista, type PrecioLista } from "./listaPreciosExcel";
 
 // Lista de precios para descargar en Excel o PDF (botón "Lista de precios" del menú, debajo de Productos).
 // Los datos y las reglas (descuento, piezas nuevas, bujías, código 150) vienen del backend: GET /productos/lista-precios.
@@ -18,15 +18,26 @@ interface Respuesta {
     articulos: ArticuloLista[];
 }
 
+// Últimas opciones elegidas, guardadas por equipo
 const CLAVE_ESTILO = "toyoxpress-lista-precios-estilo";
+const CLAVE_PRECIO = "toyoxpress-lista-precios-precio";
 
-function leerEstilo(): EstiloResaltado {
+function leer(clave: string): string | null {
     try {
-        return localStorage.getItem(CLAVE_ESTILO) === "fondo" ? "fondo" : "texto";
+        return localStorage.getItem(clave);
     } catch {
-        return "texto";
+        return null;
     }
 }
+
+function guardar(clave: string, valor: string) {
+    try { localStorage.setItem(clave, valor); } catch { /* sin almacenamiento */ }
+}
+
+const PRECIOS: { valor: PrecioLista; texto: string }[] = [
+    { valor: "minimo", texto: "Precio mínimo" },
+    { valor: "oferta", texto: "Precio oferta" },
+];
 
 function descargar(blob: Blob, nombre: string) {
     const url = URL.createObjectURL(blob);
@@ -41,13 +52,15 @@ export function ListaPreciosModal({ open, onOpenChange }: { open: boolean; onOpe
     const [datos, setDatos] = useState<Respuesta | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [estilo, setEstilo] = useState<EstiloResaltado>("texto");
+    const [precio, setPrecio] = useState<PrecioLista>("minimo");
     const [armando, setArmando] = useState<"excel" | "pdf" | null>(null);
 
     // Datos frescos cada vez que se abre
     useEffect(() => {
         if (!open) return;
         let vigente = true;
-        setEstilo(leerEstilo());
+        setEstilo(leer(CLAVE_ESTILO) === "fondo" ? "fondo" : "texto");
+        setPrecio(leer(CLAVE_PRECIO) === "oferta" ? "oferta" : "minimo");
         setDatos(null);
         setError(null);
         api.get("/productos/lista-precios")
@@ -59,15 +72,13 @@ export function ListaPreciosModal({ open, onOpenChange }: { open: boolean; onOpe
         return () => { vigente = false; };
     }, [open]);
 
-    const elegirEstilo = (e: EstiloResaltado) => {
-        setEstilo(e);
-        try { localStorage.setItem(CLAVE_ESTILO, e); } catch { /* sin almacenamiento */ }
-    };
+    const elegirEstilo = (e: EstiloResaltado) => { setEstilo(e); guardar(CLAVE_ESTILO, e); };
+    const elegirPrecio = (p: PrecioLista) => { setPrecio(p); guardar(CLAVE_PRECIO, p); };
 
     const opciones: OpcionesLista | null = datos
-        ? { estilo, datosAl: datos.datosAl, descuento: datos.reglas.descuento, mesesNuevo: datos.reglas.mesesNuevo }
+        ? { estilo, precio, datosAl: datos.datosAl }
         : null;
-    const nombre = datos ? `Lista_de_precios_ToyoXpress_${datos.datosAl}` : "";
+    const nombre = datos ? `Lista_de_precios_ToyoXpress_${precio === "minimo" ? "minimo" : "oferta"}_${datos.datosAl}` : "";
     const cuantos = (e: ArticuloLista["estado"]) => datos?.articulos.filter((a) => a.estado === e).length ?? 0;
 
     const bajarExcel = () => {
@@ -97,14 +108,14 @@ export function ListaPreciosModal({ open, onOpenChange }: { open: boolean; onOpe
         }
     };
 
-    const opcionEstilo = (valor: EstiloResaltado, texto: string) => (
+    const opcion = (activa: boolean, elegir: () => void, texto: string) => (
         <button
             type="button"
-            onClick={() => elegirEstilo(valor)}
-            aria-pressed={estilo === valor}
+            onClick={elegir}
+            aria-pressed={activa}
             className={cn(
                 "flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors",
-                estilo === valor ? "border-primary bg-secondary text-foreground" : "border-border text-muted-foreground hover:bg-secondary hover:text-foreground"
+                activa ? "border-primary bg-secondary text-foreground" : "border-border text-muted-foreground hover:bg-secondary hover:text-foreground"
             )}
         >
             {texto}
@@ -134,10 +145,19 @@ export function ListaPreciosModal({ open, onOpenChange }: { open: boolean; onOpe
                 {datos && (
                     <div className="space-y-4">
                         <div>
+                            <p className="mb-1.5 text-xs font-medium text-muted-foreground">¿Qué precio va en el listado?</p>
+                            <div className="flex gap-2">
+                                {PRECIOS.map((p) => (
+                                    <span key={p.valor} className="contents">{opcion(precio === p.valor, () => elegirPrecio(p.valor), p.texto)}</span>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
                             <p className="mb-1.5 text-xs font-medium text-muted-foreground">Resaltar con</p>
                             <div className="flex gap-2">
-                                {opcionEstilo("texto", "Texto en color")}
-                                {opcionEstilo("fondo", "Fondo de celda")}
+                                {opcion(estilo === "texto", () => elegirEstilo("texto"), "Texto en color")}
+                                {opcion(estilo === "fondo", () => elegirEstilo("fondo"), "Fondo de celda")}
                             </div>
                         </div>
 
