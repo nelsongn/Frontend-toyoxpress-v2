@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
  * El xlsx (SheetJS) del proyecto no escribe estilos, así que el libro se arma a mano (XML de Office Open)
  * y se empaqueta con el ZIP que trae SheetJS (XLSX.CFB). Una sola hoja, con la fila de títulos fija y filtro.
  * Lleva un solo precio (oferta o mínimo, el que se elija en el modal) y no lleva leyenda de las reglas.
+ * En liquidación la celda de precio es texto con dos formatos: el regular tachado y el rebajado ("$41.00  $34.85").
  */
 
 export type EstadoPrecio = "liquidacion" | "nuevo" | null;
@@ -19,6 +20,9 @@ export interface ArticuloLista {
     existencia: number;
     oferta: number | null;
     minimo: number | null;
+    /** Precio regular, solo en liquidación (se muestra tachado) */
+    ofertaAntes: number | null;
+    minimoAntes: number | null;
     estado: EstadoPrecio;
 }
 
@@ -72,13 +76,13 @@ const ESTILOS = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
 <xf numFmtId="0" fontId="4" fillId="0" borderId="0" xfId="0" applyFont="1"/>
 <xf numFmtId="1" fontId="4" fillId="0" borderId="0" xfId="0" applyFont="1" applyNumberFormat="1"/>
-<xf numFmtId="164" fontId="4" fillId="0" borderId="0" xfId="0" applyFont="1" applyNumberFormat="1"/>
+<xf numFmtId="164" fontId="4" fillId="0" borderId="0" xfId="0" applyFont="1" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="right"/></xf>
 <xf numFmtId="0" fontId="5" fillId="0" borderId="0" xfId="0" applyFont="1"/>
 <xf numFmtId="1" fontId="5" fillId="0" borderId="0" xfId="0" applyFont="1" applyNumberFormat="1"/>
 <xf numFmtId="164" fontId="5" fillId="0" borderId="0" xfId="0" applyFont="1" applyNumberFormat="1"/>
 <xf numFmtId="0" fontId="4" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1"/>
 <xf numFmtId="1" fontId="4" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1" applyNumberFormat="1"/>
-<xf numFmtId="164" fontId="4" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1" applyNumberFormat="1"/>
+<xf numFmtId="164" fontId="4" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="right"/></xf>
 <xf numFmtId="0" fontId="5" fillId="4" borderId="0" xfId="0" applyFont="1" applyFill="1"/>
 <xf numFmtId="1" fontId="5" fillId="4" borderId="0" xfId="0" applyFont="1" applyFill="1" applyNumberFormat="1"/>
 <xf numFmtId="164" fontId="5" fillId="4" borderId="0" xfId="0" applyFont="1" applyFill="1" applyNumberFormat="1"/>
@@ -122,6 +126,23 @@ const celdaTexto = (ref: string, texto: string, s: number) =>
 const celdaNumero = (ref: string, n: number | null, s: number) =>
     n == null ? `<c r="${ref}" s="${s}"/>` : `<c r="${ref}" s="${s}"><v>${n}</v></c>`;
 
+/** Formato de dinero de la lista ("$1,234.50"), igual en Excel y PDF. */
+export const dinero = (n: number | null) =>
+    n == null ? "—" : `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+/** Precio regular a mostrar tachado: solo si es distinto del precio de la lista. */
+export function precioAntes(a: ArticuloLista, precio: PrecioLista): number | null {
+    const antes = precio === "minimo" ? a.minimoAntes : a.ofertaAntes;
+    return antes != null && antes !== a[precio] ? antes : null;
+}
+
+// Celda con el precio regular tachado (gris) y el rebajado (rojo negrita): texto enriquecido
+const celdaTachada = (ref: string, antes: number, ahora: number, s: number) =>
+    `<c r="${ref}" s="${s}" t="inlineStr"><is>` +
+    `<r><rPr><strike/><sz val="10"/><color rgb="FF8C8C8C"/><rFont val="Calibri"/></rPr><t xml:space="preserve">${dinero(antes)}  </t></r>` +
+    `<r><rPr><b/><sz val="10"/><color rgb="FFC00000"/><rFont val="Calibri"/></rPr><t>${dinero(ahora)}</t></r>` +
+    `</is></c>`;
+
 export function fechaCorta(iso: string): string {
     const [a, m, d] = iso.slice(0, 10).split("-");
     return `${d}/${m}/${a}`;
@@ -136,13 +157,17 @@ export function excelListaPrecios(articulos: ArticuloLista[], o: OpcionesLista):
     articulos.forEach((a, i) => {
         const r = i + 4;
         const [t, e, p] = XF_FILA[o.estilo][a.estado ?? "normal"];
+        const antes = precioAntes(a, o.precio);
+        const ahora = a[o.precio];
         filas.push(
             `<row r="${r}">` +
             celdaTexto(`A${r}`, a.codigo, t) +
             celdaTexto(`B${r}`, a.nombre, t) +
             celdaTexto(`C${r}`, a.modelo ?? "", t) +
             celdaNumero(`D${r}`, a.existencia, e) +
-            celdaNumero(`E${r}`, a[o.precio], p) +
+            (antes != null && ahora != null
+                ? celdaTachada(`E${r}`, antes, ahora, p)
+                : celdaNumero(`E${r}`, ahora, p)) +
             `</row>`
         );
     });
