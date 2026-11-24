@@ -1,10 +1,11 @@
 import React from "react";
 import { Page, Text, View, Document, StyleSheet, Image } from "@react-pdf/renderer";
 import { LOGO_BASE64 } from "@/lib/constants/logo";
-import { fechaCorta, type ArticuloLista, type OpcionesLista } from "./listaPreciosExcel";
+import { dinero, fechaCorta, precioAntes, type ArticuloLista, type OpcionesLista } from "./listaPreciosExcel";
 
 // PDF de la lista de precios (texto real, se puede buscar y copiar). Mismas reglas de color que el Excel,
-// un solo precio (el elegido en el modal) y sin leyenda de las reglas.
+// un solo precio (el elegido en el modal) y sin leyenda de las reglas. En liquidación, el precio regular va
+// tachado al lado del rebajado.
 
 const ROJO = "#c00000";
 const AZUL = "#1f4e9f";
@@ -24,16 +25,14 @@ const s = StyleSheet.create({
     fila: { flexDirection: "row", paddingVertical: 2.5, paddingHorizontal: 3, borderBottomWidth: 0.5, borderBottomColor: "#e2e8f0" },
     par: { backgroundColor: "#f8fafc" },
     cCodigo: { width: "17%", paddingRight: 3 },
-    cNombre: { width: "52%", paddingRight: 3 },
+    cNombre: { width: "47%", paddingRight: 3 },
     cModelo: { width: "15%", paddingRight: 3 },
     cExist: { width: "6%", textAlign: "right", paddingRight: 3 },
-    cPrecio: { width: "10%", textAlign: "right" },
+    cPrecio: { width: "15%", textAlign: "right" },
+    tachado: { textDecoration: "line-through", color: "#8c8c8c", fontFamily: "Helvetica" },
     footer: { position: "absolute", bottom: 14, left: 24, right: 24, borderTopWidth: 0.5, borderTopColor: "#e2e8f0", paddingTop: 4 },
     pieTexto: { fontSize: 6.5, color: "#64748b", textAlign: "right" },
 });
-
-const dinero = (n: number | null) =>
-    n == null ? "—" : `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export function ListaPreciosDocument({ articulos, opciones }: { articulos: ArticuloLista[]; opciones: OpcionesLista }) {
     const fondo = opciones.estilo === "fondo";
@@ -71,13 +70,17 @@ export function ListaPreciosDocument({ articulos, opciones }: { articulos: Artic
 
                 {articulos.map((a, i) => {
                     const t = estiloTexto(a);
+                    const antes = precioAntes(a, opciones.precio);
                     return (
                         <View key={a.codigo} style={[s.fila, estiloFila(a, i)]} wrap={false}>
                             <Text style={[s.cCodigo, t]}>{a.codigo}</Text>
                             <Text style={[s.cNombre, t]}>{a.nombre}</Text>
                             <Text style={[s.cModelo, t]}>{a.modelo || "—"}</Text>
                             <Text style={[s.cExist, t]}>{a.existencia}</Text>
-                            <Text style={[s.cPrecio, t]}>{dinero(a[opciones.precio])}</Text>
+                            <Text style={[s.cPrecio, t]}>
+                                {antes != null && <Text style={s.tachado}>{dinero(antes)}</Text>}
+                                {antes != null ? "  " : ""}{dinero(a[opciones.precio])}
+                            </Text>
                         </View>
                     );
                 })}
