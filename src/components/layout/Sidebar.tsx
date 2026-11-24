@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -11,6 +12,12 @@ import { MapModal } from "./MapModal";
 import { api, BASE_URL } from "@/lib/api";
 import { tienePermiso, veSeccionesGenerales } from "@/lib/permissions";
 import { navigation, type ItemNavegacion } from "./navegacion";
+
+// Se carga al abrirlo: trae el generador de PDF (@react-pdf), que es pesado
+const ListaPreciosModal = dynamic(
+    () => import("@/components/productos/ListaPreciosModal").then((m) => m.ListaPreciosModal),
+    { ssr: false, loading: () => null }
+);
 
 // Preferencia de menú contraído, guardada por equipo
 const CLAVE_CONTRAIDO = "toyoxpress-menu-contraido";
@@ -44,6 +51,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
     const logout = useAuthStore((state) => state.logout);
     const router = useRouter();
     const [mapOpen, setMapOpen] = useState(false);
+    const [modal, setModal] = useState<ItemNavegacion["modal"] | null>(null);
     const permissions = useAuthStore((state) => state.permissions);
     const verGenerales = veSeccionesGenerales(permissions);
 
@@ -100,6 +108,21 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
     const esActivo = (href: string) => pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
 
     const enlace = (item: ItemNavegacion) => {
+        // Ítems que abren un modal (p. ej. Lista de precios)
+        if (item.modal) {
+            return (
+                <button
+                    key={item.href}
+                    type="button"
+                    onClick={() => { setModal(item.modal!); onClose?.(); }}
+                    title={contraido ? item.name : undefined}
+                    className={cn(claseItem(false, contraido), "w-full")}
+                >
+                    <item.icon className="h-5 w-5 flex-shrink-0 text-muted-foreground group-hover:text-foreground" aria-hidden="true" />
+                    <span className={cn(contraido && "md:sr-only")}>{item.name}</span>
+                </button>
+            );
+        }
         const activo = esActivo(item.href);
         const contador = contadorDe(item.href);
         return (
@@ -236,6 +259,9 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
             </div>
 
             <MapModal open={mapOpen} onOpenChange={setMapOpen} />
+            {modal === "listaPrecios" && (
+                <ListaPreciosModal open onOpenChange={(abierto) => { if (!abierto) setModal(null); }} />
+            )}
         </div>
     );
 }
