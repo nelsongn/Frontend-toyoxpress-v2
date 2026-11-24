@@ -78,7 +78,7 @@ export function ListaPreciosModal({ open, onOpenChange }: { open: boolean; onOpe
     const opciones: OpcionesLista | null = datos
         ? { estilo, precio, datosAl: datos.datosAl }
         : null;
-    const nombre = datos ? `Lista_de_precios_ToyoXpress_${precio === "minimo" ? "minimo" : "oferta"}_${datos.datosAl}` : "";
+    const nombre = datos ? `Lista_de_precios_ToyoXpress_${datos.datosAl}` : "";
     const cuantos = (e: ArticuloLista["estado"]) => datos?.articulos.filter((a) => a.estado === e).length ?? 0;
 
     const bajarExcel = () => {
