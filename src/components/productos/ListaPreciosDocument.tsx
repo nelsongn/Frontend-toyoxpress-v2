@@ -25,9 +25,8 @@ const s = StyleSheet.create({
     fila: { flexDirection: "row", paddingVertical: 2.5, paddingHorizontal: 3, borderBottomWidth: 0.5, borderBottomColor: "#e2e8f0" },
     par: { backgroundColor: "#f8fafc" },
     cCodigo: { width: "17%", paddingRight: 3 },
-    cNombre: { width: "47%", paddingRight: 3 },
-    cModelo: { width: "15%", paddingRight: 3 },
-    cExist: { width: "6%", textAlign: "right", paddingRight: 3 },
+    cNombre: { width: "51%", paddingRight: 3 },
+    cModelo: { width: "17%", paddingRight: 3 },
     cPrecio: { width: "15%", textAlign: "right" },
     tachado: { textDecoration: "line-through", color: "#8c8c8c", fontFamily: "Helvetica" },
     footer: { position: "absolute", bottom: 14, left: 24, right: 24, borderTopWidth: 0.5, borderTopColor: "#e2e8f0", paddingTop: 4 },
@@ -56,14 +55,13 @@ export function ListaPreciosDocument({ articulos, opciones }: { articulos: Artic
                         <Image src={LOGO_BASE64} style={s.logo} />
                         <View>
                             <Text style={s.titulo}>LISTA DE PRECIOS</Text>
-                            <Text style={s.meta}>Precios en dólares · existencia al {fechaCorta(opciones.datosAl)} · {articulos.length} repuestos</Text>
+                            <Text style={s.meta}>Precios en dólares · actualizada al {fechaCorta(opciones.datosAl)} · {articulos.length} repuestos</Text>
                         </View>
                     </View>
                     <View style={s.thFila}>
                         <Text style={[s.th, s.cCodigo]}>Código</Text>
-                        <Text style={[s.th, s.cNombre]}>Nombre</Text>
-                        <Text style={[s.th, s.cModelo]}>Modelo</Text>
-                        <Text style={[s.th, s.cExist]}>Exist.</Text>
+                        <Text style={[s.th, s.cNombre]}>Descripción</Text>
+                        <Text style={[s.th, s.cModelo]}>Marca</Text>
                         <Text style={[s.th, s.cPrecio]}>Precio</Text>
                     </View>
                 </View>
@@ -76,7 +74,6 @@ export function ListaPreciosDocument({ articulos, opciones }: { articulos: Artic
                             <Text style={[s.cCodigo, t]}>{a.codigo}</Text>
                             <Text style={[s.cNombre, t]}>{a.nombre}</Text>
                             <Text style={[s.cModelo, t]}>{a.modelo || "—"}</Text>
-                            <Text style={[s.cExist, t]}>{a.existencia}</Text>
                             <Text style={[s.cPrecio, t]}>
                                 {antes != null && <Text style={s.tachado}>{dinero(antes)}</Text>}
                                 {antes != null ? "  " : ""}{dinero(a[opciones.precio])}

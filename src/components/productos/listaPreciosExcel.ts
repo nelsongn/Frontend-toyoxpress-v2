@@ -33,11 +33,12 @@ export interface OpcionesLista {
     datosAl: string;
 }
 
-export const COLUMNAS_LISTA = ["Código", "Nombre", "Modelo", "Existencia", "Precio"];
-const ANCHOS = [18, 70, 20, 11, 14];
-const LETRAS = "ABCDE";
+// Sin la existencia: el listado no muestra stock (solo entran repuestos con existencia)
+export const COLUMNAS_LISTA = ["Código", "Descripción", "Marca", "Precio"];
+const ANCHOS = [18, 70, 20, 16];
+const LETRAS = "ABCD";
 
-// Estilos (índices de cellXfs en styles.xml). Por fila: [texto, existencia, precio].
+// Estilos (índices de cellXfs en styles.xml). Por fila: [texto, número entero (sin uso), precio].
 const XF_TITULO = 1, XF_NOTA = 2, XF_CABECERA = 3;
 const XF_FILA: Record<EstiloResaltado, Record<"normal" | "liquidacion" | "nuevo", [number, number, number]>> = {
     texto: { normal: [4, 5, 6], liquidacion: [7, 8, 9], nuevo: [10, 11, 12] },
@@ -107,7 +108,7 @@ const RELS = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 const LIBRO = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
 <sheets><sheet name="Lista de precios" sheetId="1" r:id="rId1"/></sheets>
-<definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="0" hidden="1">'Lista de precios'!$A$3:$E$FIN</definedName></definedNames>
+<definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="0" hidden="1">'Lista de precios'!$A$3:$D$FIN</definedName></definedNames>
 </workbook>`;
 
 const RELS_LIBRO = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -151,12 +152,12 @@ export function fechaCorta(iso: string): string {
 export function excelListaPrecios(articulos: ArticuloLista[], o: OpcionesLista): Blob {
     const filas: string[] = [];
     filas.push(`<row r="1">${celdaTexto("A1", "ToyoXpress · Lista de precios", XF_TITULO)}</row>`);
-    filas.push(`<row r="2">${celdaTexto("A2", `Precios en dólares · existencia al ${fechaCorta(o.datosAl)} · ${articulos.length} repuestos`, XF_NOTA)}</row>`);
+    filas.push(`<row r="2">${celdaTexto("A2", `Precios en dólares · actualizada al ${fechaCorta(o.datosAl)} · ${articulos.length} repuestos`, XF_NOTA)}</row>`);
     filas.push(`<row r="3">${COLUMNAS_LISTA.map((c, i) => celdaTexto(`${LETRAS[i]}3`, c, XF_CABECERA)).join("")}</row>`);
 
     articulos.forEach((a, i) => {
         const r = i + 4;
-        const [t, e, p] = XF_FILA[o.estilo][a.estado ?? "normal"];
+        const [t, , p] = XF_FILA[o.estilo][a.estado ?? "normal"];
         const antes = precioAntes(a, o.precio);
         const ahora = a[o.precio];
         filas.push(
@@ -164,10 +165,9 @@ export function excelListaPrecios(articulos: ArticuloLista[], o: OpcionesLista):
             celdaTexto(`A${r}`, a.codigo, t) +
             celdaTexto(`B${r}`, a.nombre, t) +
             celdaTexto(`C${r}`, a.modelo ?? "", t) +
-            celdaNumero(`D${r}`, a.existencia, e) +
             (antes != null && ahora != null
-                ? celdaTachada(`E${r}`, antes, ahora, p)
-                : celdaNumero(`E${r}`, ahora, p)) +
+                ? celdaTachada(`D${r}`, antes, ahora, p)
+                : celdaNumero(`D${r}`, ahora, p)) +
             `</row>`
         );
     });
@@ -179,7 +179,7 @@ export function excelListaPrecios(articulos: ArticuloLista[], o: OpcionesLista):
 <sheetFormatPr defaultRowHeight="15"/>
 <cols>${ANCHOS.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("")}</cols>
 <sheetData>${filas.join("")}</sheetData>
-<autoFilter ref="A3:E${ultima}"/>
+<autoFilter ref="A3:D${ultima}"/>
 <pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>
 </worksheet>`;
 
